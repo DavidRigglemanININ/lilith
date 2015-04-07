@@ -390,6 +390,7 @@ project(':lilith') {
 			'CFBundleShortVersionString': version,
 			//'CFBundleGetInfoString': copyright,
 			'NSHumanReadableCopyright': copyright,
+                        'NSHighResolutionCapable':'true',	
 			//'CFBundleIdentifier': 'de.huxhorn.lilith'
 			// not possible to override CFBundleIdentifier
 		]
@@ -558,7 +559,7 @@ project(':lilith') {
 		//plist.root.'CFBundleSignature'='Llth'
 		plist.root.'CFBundleInfoDictionaryVersion'='6.0'
 		plist.root.'CFBundleIconFile'='Lilith.icns'
-		
+	
 		List macClasspath=new ArrayList()
 		//println configurations.default
 		configurations.default.collect  { File file -> 

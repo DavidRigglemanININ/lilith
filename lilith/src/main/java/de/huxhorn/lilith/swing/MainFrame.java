@@ -865,9 +865,8 @@ public class MainFrame
 		{
 			senderService.start();
 		}
-		if(Lilith.APP_SNAPSHOT || applicationPreferences.isCheckingForUpdate())
+		if(applicationPreferences.isCheckingForUpdate())
 		{
-			// always check for update in case of SNAPSHOT!
 			checkForUpdate(false);
 		}
 		updateConditions(); // to initialize active conditions.
