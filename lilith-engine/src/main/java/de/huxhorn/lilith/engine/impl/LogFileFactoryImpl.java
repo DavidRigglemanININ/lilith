@@ -1,42 +1,36 @@
 /*
  * Lilith - a log event viewer.
- * Copyright (C) 2007-2011 Joern Huxhorn
- * 
+ * Copyright (C) 2007-2017 Joern Huxhorn
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package de.huxhorn.lilith.engine.impl;
 
-import de.huxhorn.lilith.data.eventsource.SourceIdentifier;
 import de.huxhorn.lilith.api.FileConstants;
+import de.huxhorn.lilith.data.eventsource.SourceIdentifier;
 import de.huxhorn.lilith.engine.LogFileFactory;
-
 import java.io.File;
 
 public class LogFileFactoryImpl
 	implements LogFileFactory
 {
-	private File baseDir;
-	private String dataFileExtension;
+	private final File baseDir;
 
 	public LogFileFactoryImpl(File baseDir)
 	{
 		this.baseDir = baseDir;
-		this.dataFileExtension = FileConstants.FILE_EXTENSION;
-		if(!dataFileExtension.startsWith("."))
-		{
-			this.dataFileExtension = "." + this.dataFileExtension;
-		}
 	}
 
 	private String getBaseFileName(SourceIdentifier si)
@@ -70,34 +64,40 @@ public class LogFileFactoryImpl
 		return name;
 	}
 
+	@Override
 	public File getBaseDir()
 	{
 		return baseDir;
 	}
 
+	@Override
 	public File getIndexFile(SourceIdentifier sourceIdentifier)
 	{
 		String baseName = getBaseFileName(sourceIdentifier);
 		return new File(baseName + FileConstants.INDEX_FILE_EXTENSION);
 	}
 
+	@Override
 	public File getDataFile(SourceIdentifier sourceIdentifier)
 	{
 		String baseName = getBaseFileName(sourceIdentifier);
-		return new File(baseName + dataFileExtension);
+		return new File(baseName + FileConstants.FILE_EXTENSION);
 	}
 
+	@Override
 	public File getActiveFile(SourceIdentifier sourceIdentifier)
 	{
 		String baseName = getBaseFileName(sourceIdentifier);
 		return new File(baseName + FileConstants.ACTIVE_FILE_EXTENSION);
 	}
 
+	@Override
 	public String getDataFileExtension()
 	{
-		return dataFileExtension;
+		return FileConstants.FILE_EXTENSION;
 	}
 
+	@Override
 	public long getSizeOnDisk(SourceIdentifier sourceIdentifier)
 	{
 		File indexFile = getIndexFile(sourceIdentifier);
@@ -107,6 +107,7 @@ public class LogFileFactoryImpl
 		return indexSize + dataSize;
 	}
 
+	@Override
 	public long getNumberOfEvents(SourceIdentifier sourceIdentifier)
 	{
 		File indexFile = getIndexFile(sourceIdentifier);

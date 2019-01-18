@@ -1,6 +1,6 @@
 /*
  * Lilith - a log event viewer.
- * Copyright (C) 2007-2013 Joern Huxhorn
+ * Copyright (C) 2007-2016 Joern Huxhorn
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,10 +17,8 @@
  */
 package de.huxhorn.lilith.swing.actions;
 
-import de.huxhorn.lilith.data.eventsource.EventWrapper;
 import de.huxhorn.lilith.data.access.AccessEvent;
-
-import javax.swing.*;
+import de.huxhorn.lilith.data.eventsource.EventWrapper;
 import java.io.Serializable;
 
 public abstract class AbstractAccessFilterAction
@@ -30,18 +28,9 @@ public abstract class AbstractAccessFilterAction
 
 	protected AccessEvent accessEvent;
 
-	protected AbstractAccessFilterAction()
+	protected AbstractAccessFilterAction(String name, boolean htmlTooltip)
 	{
-	}
-
-	protected AbstractAccessFilterAction(String name)
-	{
-		super(name);
-	}
-
-	protected AbstractAccessFilterAction(String name, Icon icon)
-	{
-		super(name, icon);
+		super(name, htmlTooltip);
 	}
 
 	@Override

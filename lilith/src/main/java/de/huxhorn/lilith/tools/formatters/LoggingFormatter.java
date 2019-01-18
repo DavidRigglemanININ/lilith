@@ -1,6 +1,6 @@
 /*
  * Lilith - a log event viewer.
- * Copyright (C) 2007-2011 Joern Huxhorn
+ * Copyright (C) 2007-2018 Joern Huxhorn
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,9 +15,9 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package de.huxhorn.lilith.tools.formatters;
 
-import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.spi.ClassPackagingData;
 import ch.qos.logback.classic.spi.ILoggingEvent;
@@ -34,15 +34,15 @@ import de.huxhorn.lilith.data.logging.Message;
 import de.huxhorn.lilith.data.logging.ThreadInfo;
 import de.huxhorn.lilith.data.logging.ThrowableInfo;
 import de.huxhorn.lilith.logback.tools.ContextHelper;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Marker;
 import org.slf4j.MarkerFactory;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
+@SuppressWarnings({"PMD.MethodReturnsInternalArray", "PMD.ArrayIsStoredDirectly"})
 public class LoggingFormatter
 	implements Formatter<EventWrapper<LoggingEvent>>
 {
@@ -63,6 +63,7 @@ public class LoggingFormatter
 		this.pattern = pattern;
 	}
 
+	@Override
 	public String format(EventWrapper<LoggingEvent> wrapper)
 	{
 		initLayout();
@@ -113,13 +114,14 @@ public class LoggingFormatter
 	private static class LoggingFoo
 		implements ILoggingEvent
 	{
-		private LoggingEvent event;
+		private final LoggingEvent event;
 
-		public LoggingFoo(LoggingEvent event)
+		LoggingFoo(LoggingEvent event)
 		{
 			this.event=event;
 		}
 
+		@Override
 		public String getThreadName()
 		{
 			if(event != null)
@@ -133,7 +135,8 @@ public class LoggingFormatter
 			return null;
 		}
 
-		public Level getLevel()
+		@Override
+		public ch.qos.logback.classic.Level getLevel()
 		{
 			if(event != null)
 			{
@@ -150,7 +153,7 @@ public class LoggingFormatter
 							return ch.qos.logback.classic.Level.INFO;
 						case WARN:
 							return ch.qos.logback.classic.Level.WARN;
-						case ERROR:
+						default: // ERROR
 							return ch.qos.logback.classic.Level.ERROR;
 					}
 				}
@@ -158,6 +161,7 @@ public class LoggingFormatter
 			return null;
 		}
 
+		@Override
 		public String getMessage()
 		{
 			if(event != null)
@@ -171,6 +175,7 @@ public class LoggingFormatter
 			return null;
 		}
 
+		@Override
 		public Object[] getArgumentArray()
 		{
 			Message message = event.getMessage();
@@ -181,6 +186,7 @@ public class LoggingFormatter
 			return new Object[0];
 		}
 
+		@Override
 		public String getFormattedMessage()
 		{
 			if(event != null)
@@ -194,6 +200,7 @@ public class LoggingFormatter
 			return null;
 		}
 
+		@Override
 		public String getLoggerName()
 		{
 			if(event != null)
@@ -203,6 +210,7 @@ public class LoggingFormatter
 			return null;
 		}
 
+		@Override
 		public LoggerContextVO getLoggerContextVO()
 		{
 			LoggerContextVO result=null;
@@ -217,6 +225,7 @@ public class LoggingFormatter
 			return result;
 		}
 
+		@Override
 		public IThrowableProxy getThrowableProxy()
 		{
 			if(event != null)
@@ -226,6 +235,7 @@ public class LoggingFormatter
 			return null;
 		}
 
+		@Override
 		public StackTraceElement[] getCallerData()
 		{
 			if(event != null)
@@ -236,7 +246,14 @@ public class LoggingFormatter
 					StackTraceElement[] result=new StackTraceElement[callStack.length];
 					for(int i=0;i<callStack.length;i++)
 					{
-						result[i]=callStack[i].getStackTraceElement();
+						ExtendedStackTraceElement current = callStack[i];
+
+						if(current == null)
+						{
+							continue;
+						}
+
+						result[i] = current.getStackTraceElement();
 					}
 					return result;
 				}
@@ -244,6 +261,7 @@ public class LoggingFormatter
 			return new StackTraceElement[0];
 		}
 
+		@Override
 		public boolean hasCallerData()
 		{
 			if(event != null)
@@ -255,16 +273,18 @@ public class LoggingFormatter
 			return false;
 		}
 
+		@Override
 		public Marker getMarker()
 		{
 			if(event != null)
 			{
-				Map<String, Marker> markerMap = new HashMap<String, Marker>();
+				Map<String, Marker> markerMap = new HashMap<>();
 				return convert(event.getMarker(), markerMap);
 			}
 			return null;
 		}
 
+		@Override
 		public Map<String, String> getMDCPropertyMap()
 		{
 			if(event != null)
@@ -274,6 +294,7 @@ public class LoggingFormatter
 			return null;
 		}
 
+		@Override
 		public Map<String, String> getMdc()
 		{
 			if(event != null)
@@ -283,6 +304,7 @@ public class LoggingFormatter
 			return null;
 		}
 
+		@Override
 		public long getTimeStamp()
 		{
 			if(event != null)
@@ -296,8 +318,10 @@ public class LoggingFormatter
 			return 0;
 		}
 
+		@Override
 		public void prepareForDeferredProcessing()
 		{
+			// no-op
 		}
 
 		private static Marker convert(de.huxhorn.lilith.data.logging.Marker originalMarker, Map<String, Marker> markerMap)
@@ -346,6 +370,7 @@ public class LoggingFormatter
 		private int commonFrames;
 		private IThrowableProxy[] suppressed;
 
+		@Override
 		public String getMessage()
 		{
 			return message;
@@ -356,6 +381,7 @@ public class LoggingFormatter
 			this.message = message;
 		}
 
+		@Override
 		public String getClassName()
 		{
 			return className;
@@ -366,6 +392,7 @@ public class LoggingFormatter
 			this.className = className;
 		}
 
+		@Override
 		public StackTraceElementProxy[] getStackTraceElementProxyArray()
 		{
 			return stackTraceElementProxyArray;
@@ -376,6 +403,7 @@ public class LoggingFormatter
 			this.stackTraceElementProxyArray = stackTraceElementProxyArray;
 		}
 
+		@Override
 		public IThrowableProxy[] getSuppressed()
 		{
 			return suppressed;
@@ -386,6 +414,7 @@ public class LoggingFormatter
 			this.suppressed = suppressed;
 		}
 
+		@Override
 		public IThrowableProxy getCause()
 		{
 			return cause;
@@ -396,6 +425,7 @@ public class LoggingFormatter
 			this.cause = cause;
 		}
 
+		@Override
 		public int getCommonFrames()
 		{
 			return commonFrames;
@@ -449,13 +479,13 @@ public class LoggingFormatter
 					{
 						continue;
 					}
-					result[i] = new StackTraceElementProxy(ste);
+					result[i] = new StackTraceElementProxy(ste); // NOPMD - AvoidInstantiatingObjectsInLoops
 					String codeLocation=current.getCodeLocation();
 					String version=current.getVersion();
 					if(codeLocation != null || version != null)
 					{
 						boolean exact = current.isExact();
-						ClassPackagingData cpd=new ClassPackagingData(codeLocation, version, exact);
+						ClassPackagingData cpd=new ClassPackagingData(codeLocation, version, exact); // NOPMD - AvoidInstantiatingObjectsInLoops
 						result[i].setClassPackagingData(cpd);
 					}
 				}

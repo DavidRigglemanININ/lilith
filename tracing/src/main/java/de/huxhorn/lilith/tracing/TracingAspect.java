@@ -1,6 +1,6 @@
 /*
  * Lilith - a log event viewer.
- * Copyright (C) 2007-2013 Joern Huxhorn
+ * Copyright (C) 2007-2017 Joern Huxhorn
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -17,7 +17,7 @@
  */
 
 /*
- * Copyright 2007-2013 Joern Huxhorn
+ * Copyright 2007-2017 Joern Huxhorn
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,17 +35,16 @@
 package de.huxhorn.lilith.tracing;
 
 import de.huxhorn.sulky.formatting.SafeString;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.Signature;
 import org.aspectj.lang.reflect.MethodSignature;
-import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 import org.slf4j.Marker;
 import org.slf4j.MarkerFactory;
-
-import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
 
 public class TracingAspect
 {
@@ -142,6 +141,7 @@ public class TracingAspect
 		}
 	}
 
+	@Override
 	public String toString()
 	{
 		return "TracingAspect{loggerName="+loggerName+", showingParameterValues="+ showingParameterValues +", usingShortClassName="+ usingShortClassName +", showingModifiers="+showingModifiers+", profilingHandler="+profilingHandler+"}";
@@ -166,7 +166,7 @@ public class TracingAspect
 		StringBuilder msg=new StringBuilder();
 		if(showingModifiers)
 		{
-			msg.append(Modifier.toString(signature.getModifiers())).append(" ");
+			msg.append(Modifier.toString(signature.getModifiers())).append(' ');
 		}
 		if(usingShortClassName)
 		{
@@ -176,12 +176,12 @@ public class TracingAspect
 		{
 			msg.append(fullClassName);
 		}
-		msg.append(".").append(methodName);
+		msg.append('.').append(methodName);
 		String methodBaseName = msg.toString();
 		if(signature instanceof MethodSignature)
 		{
 			MethodSignature methodSignature=(MethodSignature)signature;
-			msg.append("(");
+			msg.append('(');
 			if(showingParameterValues)
 			{
 				Object[] args=call.getArgs();
@@ -196,7 +196,7 @@ public class TracingAspect
 					{
 						msg.append(", ");
 					}
-					msg.append(SafeString.toString(arg));
+					msg.append(SafeString.toString(arg, SafeString.StringWrapping.ALL, SafeString.StringStyle.GROOVY, SafeString.MapStyle.GROOVY));
 				}
 			}
 			else
@@ -223,7 +223,7 @@ public class TracingAspect
 					msg.append("...");
 				}
 			}
-			msg.append(")");
+			msg.append(')');
 		}
 		String methodSignatureString=msg.toString();
 

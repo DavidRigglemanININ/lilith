@@ -1,6 +1,6 @@
 /*
  * Lilith - a log event viewer.
- * Copyright (C) 2007-2013 Joern Huxhorn
+ * Copyright (C) 2007-2016 Joern Huxhorn
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,45 +18,27 @@
 package de.huxhorn.lilith.swing.actions;
 
 import de.huxhorn.lilith.conditions.LoggerStartsWithCondition;
-import de.huxhorn.lilith.data.eventsource.EventWrapper;
-import de.huxhorn.lilith.swing.ViewContainer;
 import de.huxhorn.sulky.conditions.Condition;
+import java.awt.event.ActionEvent;
 
 public class FocusLoggerAction
-		extends AbstractFilterAction
+		extends AbstractBasicFilterAction
 {
 	private static final long serialVersionUID = -7615646386307125745L;
 
 	private final String loggerName;
 
-	public FocusLoggerAction(ViewContainer viewContainer, String loggerName)
+	public FocusLoggerAction(String loggerName)
 	{
-		super(loggerName);
+		super(loggerName, false);
 		this.loggerName = loggerName;
-		setViewContainer(viewContainer);
+		viewContainerUpdated();
 	}
 
 	@Override
-	protected void updateState()
+	public Condition resolveCondition(ActionEvent e)
 	{
-		if(viewContainer == null)
-		{
-			setEnabled(false);
-			return;
-		}
-		setEnabled(true);
-	}
-
-	@Override
-	public void setEventWrapper(EventWrapper eventWrapper)
-	{
-		// ignore
-	}
-
-	@Override
-	public Condition resolveCondition()
-	{
-		if(loggerName == null)
+		if(!isEnabled())
 		{
 			return null;
 		}

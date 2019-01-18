@@ -1,6 +1,6 @@
 /*
  * Lilith - a log event viewer.
- * Copyright (C) 2007-2013 Joern Huxhorn
+ * Copyright (C) 2007-2016 Joern Huxhorn
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,53 +18,37 @@
 package de.huxhorn.lilith.swing.actions;
 
 import de.huxhorn.lilith.conditions.MDCContainsCondition;
-import de.huxhorn.lilith.data.eventsource.EventWrapper;
 import de.huxhorn.lilith.swing.TextPreprocessor;
-import de.huxhorn.lilith.swing.ViewContainer;
 import de.huxhorn.sulky.conditions.Condition;
-
-import javax.swing.*;
+import java.awt.event.ActionEvent;
 
 public class FocusMDCAction
-		extends AbstractFilterAction
+		extends AbstractBasicFilterAction
 {
 	private static final long serialVersionUID = -1245643497938628684L;
 
 	private final String key;
 	private final String value;
 
-	public FocusMDCAction(ViewContainer viewContainer, String key, String value)
+	public FocusMDCAction(String key, String value)
 	{
-		super(TextPreprocessor.cropToSingleLine(key));
+		super(TextPreprocessor.cropToSingleLine(key), false);
 		this.key = key;
 		this.value = value;
-		putValue(Action.SHORT_DESCRIPTION, TextPreprocessor.preformattedTooltip(TextPreprocessor.cropTextBlock(value)));
-		setViewContainer(viewContainer);
+		initializeCroppedTooltip(value);
+		viewContainerUpdated();
 	}
 
 	@Override
-	protected void updateState()
+	public Condition resolveCondition(ActionEvent e)
 	{
-		if(viewContainer == null)
-		{
-			setEnabled(false);
-			return;
-		}
-		setEnabled(true);
-	}
-
-	@Override
-	public void setEventWrapper(EventWrapper eventWrapper)
-	{
-		// ignore
-	}
-
-	@Override
-	public Condition resolveCondition()
-	{
-		if(key == null)
+		if(!isEnabled())
 		{
 			return null;
+		}
+		if(isAlternativeBehaviorRequested(e))
+		{
+			return new MDCContainsCondition(key, null);
 		}
 		return new MDCContainsCondition(key, value);
 	}

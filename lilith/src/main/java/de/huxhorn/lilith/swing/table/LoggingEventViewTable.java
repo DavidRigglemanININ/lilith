@@ -1,59 +1,81 @@
 /*
  * Lilith - a log event viewer.
- * Copyright (C) 2007-2011 Joern Huxhorn
- * 
+ * Copyright (C) 2007-2017 Joern Huxhorn
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package de.huxhorn.lilith.swing.table;
 
 import de.huxhorn.lilith.data.logging.LoggingEvent;
 import de.huxhorn.lilith.swing.MainFrame;
 import de.huxhorn.lilith.swing.table.model.EventWrapperTableModel;
+import de.huxhorn.lilith.swing.table.renderer.ApplicationRenderer;
+import de.huxhorn.lilith.swing.table.renderer.ContextRenderer;
+import de.huxhorn.lilith.swing.table.renderer.IdRenderer;
+import de.huxhorn.lilith.swing.table.renderer.LevelRenderer;
+import de.huxhorn.lilith.swing.table.renderer.LoggerNameRenderer;
+import de.huxhorn.lilith.swing.table.renderer.MarkerRenderer;
+import de.huxhorn.lilith.swing.table.renderer.MessageRenderer;
+import de.huxhorn.lilith.swing.table.renderer.NdcRenderer;
+import de.huxhorn.lilith.swing.table.renderer.SourceRenderer;
+import de.huxhorn.lilith.swing.table.renderer.ThreadRenderer;
+import de.huxhorn.lilith.swing.table.renderer.ThrowableRenderer;
+import de.huxhorn.lilith.swing.table.renderer.TimestampRenderer;
+import de.huxhorn.lilith.swing.table.tooltips.ApplicationTooltipGenerator;
+import de.huxhorn.lilith.swing.table.tooltips.ContextTooltipGenerator;
+import de.huxhorn.lilith.swing.table.tooltips.LoggerNameTooltipGenerator;
+import de.huxhorn.lilith.swing.table.tooltips.MarkerTooltipGenerator;
+import de.huxhorn.lilith.swing.table.tooltips.MessageTooltipGenerator;
+import de.huxhorn.lilith.swing.table.tooltips.NdcTooltipGenerator;
+import de.huxhorn.lilith.swing.table.tooltips.SourceTooltipGenerator;
+import de.huxhorn.lilith.swing.table.tooltips.ThreadTooltipGenerator;
+import de.huxhorn.lilith.swing.table.tooltips.ThrowableTooltipGenerator;
+import de.huxhorn.lilith.swing.table.tooltips.TimestampTooltipGenerator;
 import de.huxhorn.sulky.swing.PersistentTableColumnModel;
-import de.huxhorn.lilith.swing.table.renderer.*;
-import de.huxhorn.lilith.swing.table.tooltips.*;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-
 import javax.swing.table.TableColumn;
 
 public class LoggingEventViewTable
 	extends EventWrapperViewTable<LoggingEvent>
 {
-	public static final String DEFAULT_COLUMN_NAME_ID = "ID";
-	public static final String DEFAULT_COLUMN_NAME_TIMESTAMP = "Timestamp";
-	public static final String DEFAULT_COLUMN_NAME_LEVEL = "Level";
-	public static final String DEFAULT_COLUMN_NAME_LOGGER_NAME = "Logger";
-	public static final String DEFAULT_COLUMN_NAME_MESSAGE = "Message";
-	public static final String DEFAULT_COLUMN_NAME_THROWABLE = "Throwable";
-	public static final String DEFAULT_COLUMN_NAME_THREAD = "Thread";
-	public static final String DEFAULT_COLUMN_NAME_MARKER = "Marker";
-	public static final String DEFAULT_COLUMN_NAME_NDC = "NDC";
-	public static final String DEFAULT_COLUMN_NAME_APPLICATIION = "Application";
-	public static final String DEFAULT_COLUMN_NAME_CONTEXT = "Context";
-	public static final String DEFAULT_COLUMN_NAME_SOURCE = "Source";
+	private static final long serialVersionUID = 2969867582530249593L;
+
+	private static final String DEFAULT_COLUMN_NAME_ID = "ID";
+	private static final String DEFAULT_COLUMN_NAME_TIMESTAMP = "Timestamp";
+	private static final String DEFAULT_COLUMN_NAME_LEVEL = "Level";
+	private static final String DEFAULT_COLUMN_NAME_LOGGER_NAME = "Logger";
+	private static final String DEFAULT_COLUMN_NAME_MESSAGE = "Message";
+	private static final String DEFAULT_COLUMN_NAME_THROWABLE = "Throwable";
+	private static final String DEFAULT_COLUMN_NAME_THREAD = "Thread";
+	private static final String DEFAULT_COLUMN_NAME_MARKER = "Marker";
+	private static final String DEFAULT_COLUMN_NAME_NDC = "NDC";
+	private static final String DEFAULT_COLUMN_NAME_APPLICATION = "Application";
+	private static final String DEFAULT_COLUMN_NAME_CONTEXT = "Context";
+	private static final String DEFAULT_COLUMN_NAME_SOURCE = "Source";
 
 	public LoggingEventViewTable(MainFrame mainFrame, EventWrapperTableModel<LoggingEvent> model, boolean global)
 	{
 		super(mainFrame, model, global);
 	}
 
+	@Override
 	protected void initTooltipGenerators()
 	{
-		tooltipGenerators = new HashMap<Object, TooltipGenerator>();
+		tooltipGenerators = new HashMap<>();
 		tooltipGenerators.put(DEFAULT_COLUMN_NAME_LOGGER_NAME,
 			new LoggerNameTooltipGenerator());
 		tooltipGenerators.put(DEFAULT_COLUMN_NAME_MARKER,
@@ -68,7 +90,7 @@ public class LoggingEventViewTable
 			new ThrowableTooltipGenerator());
 		tooltipGenerators.put(DEFAULT_COLUMN_NAME_TIMESTAMP,
 			new TimestampTooltipGenerator());
-		tooltipGenerators.put(DEFAULT_COLUMN_NAME_APPLICATIION,
+		tooltipGenerators.put(DEFAULT_COLUMN_NAME_APPLICATION,
 			new ApplicationTooltipGenerator());
 		tooltipGenerators.put(DEFAULT_COLUMN_NAME_CONTEXT,
 			new ContextTooltipGenerator());
@@ -76,9 +98,10 @@ public class LoggingEventViewTable
 			new SourceTooltipGenerator());
 	}
 
+	@Override
 	protected void initTableColumns()
 	{
-		tableColumns = new HashMap<Object, TableColumn>();
+		tableColumns = new HashMap<>();
 		{
 			TableColumn col = new TableColumn(0);
 			col.setHeaderValue(DEFAULT_COLUMN_NAME_ID);
@@ -135,7 +158,7 @@ public class LoggingEventViewTable
 		}
 		{
 			TableColumn col = new TableColumn(0);
-			col.setHeaderValue(DEFAULT_COLUMN_NAME_APPLICATIION);
+			col.setHeaderValue(DEFAULT_COLUMN_NAME_APPLICATION);
 			col.setCellRenderer(new ApplicationRenderer());
 			tableColumns.put(col.getHeaderValue(), col);
 		}
@@ -153,10 +176,11 @@ public class LoggingEventViewTable
 		}
 	}
 
+	@Override
 	protected List<PersistentTableColumnModel.TableColumnLayoutInfo> getDefaultLayout()
 	{
 		ArrayList<PersistentTableColumnModel.TableColumnLayoutInfo> result =
-			new ArrayList<PersistentTableColumnModel.TableColumnLayoutInfo>();
+			new ArrayList<>();
 
 		result.add(new PersistentTableColumnModel.TableColumnLayoutInfo(DEFAULT_COLUMN_NAME_ID, 75, true));
 		result.add(new PersistentTableColumnModel.TableColumnLayoutInfo(DEFAULT_COLUMN_NAME_TIMESTAMP, 75, true));
@@ -167,19 +191,21 @@ public class LoggingEventViewTable
 		result.add(new PersistentTableColumnModel.TableColumnLayoutInfo(DEFAULT_COLUMN_NAME_THREAD, 75, true));
 		result.add(new PersistentTableColumnModel.TableColumnLayoutInfo(DEFAULT_COLUMN_NAME_MARKER, 75, true));
 		result.add(new PersistentTableColumnModel.TableColumnLayoutInfo(DEFAULT_COLUMN_NAME_NDC, 75, true));
-		result.add(new PersistentTableColumnModel.TableColumnLayoutInfo(DEFAULT_COLUMN_NAME_APPLICATIION, 75, true));
+		result.add(new PersistentTableColumnModel.TableColumnLayoutInfo(DEFAULT_COLUMN_NAME_APPLICATION, 75, true));
 		result.add(new PersistentTableColumnModel.TableColumnLayoutInfo(DEFAULT_COLUMN_NAME_CONTEXT, 75, true));
 		result.add(new PersistentTableColumnModel.TableColumnLayoutInfo(DEFAULT_COLUMN_NAME_SOURCE, 75, isGlobal()));
 
 		return result;
 	}
 
+	@Override
 	public void saveLayout()
 	{
-		List<PersistentTableColumnModel.TableColumnLayoutInfo> infos = tableColumnModel.getColumnLayoutInfos();
-		mainFrame.getApplicationPreferences().writeLoggingColumnLayout(isGlobal(), infos);
+		List<PersistentTableColumnModel.TableColumnLayoutInfo> layoutInfoList = tableColumnModel.getColumnLayoutInfos();
+		mainFrame.getApplicationPreferences().writeLoggingColumnLayout(isGlobal(), layoutInfoList);
 	}
 
+	@Override
 	protected List<PersistentTableColumnModel.TableColumnLayoutInfo> loadLayout()
 	{
 		return mainFrame.getApplicationPreferences().readLoggingColumnLayout(isGlobal());

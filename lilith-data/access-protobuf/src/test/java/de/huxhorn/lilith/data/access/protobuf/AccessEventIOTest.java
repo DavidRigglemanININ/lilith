@@ -1,6 +1,6 @@
 /*
  * Lilith - a log event viewer.
- * Copyright (C) 2007-2014 Joern Huxhorn
+ * Copyright (C) 2007-2018 Joern Huxhorn
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -17,7 +17,7 @@
  */
 
 /*
- * Copyright 2007-2014 Joern Huxhorn
+ * Copyright 2007-2018 Joern Huxhorn
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,14 +36,13 @@ package de.huxhorn.lilith.data.access.protobuf;
 
 import de.huxhorn.lilith.data.access.AccessEvent;
 import de.huxhorn.lilith.data.eventsource.LoggerContext;
-
-import static org.junit.Assert.assertEquals;
+import java.util.HashMap;
+import java.util.Map;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.HashMap;
-import java.util.Map;
+import static org.junit.Assert.assertEquals;
 
 public class AccessEventIOTest
 {
@@ -62,8 +61,8 @@ public class AccessEventIOTest
 		AccessEvent event = createMinimalEvent();
 		LoggerContext value = new LoggerContext();
 		value.setName("ContextName");
-		value.setBirthTime(1234567890000L);
-		Map<String, String> propperties = new HashMap<String, String>();
+		value.setBirthTime(1_234_567_890_000L);
+		Map<String, String> propperties = new HashMap<>();
 		propperties.put("foo", "bar");
 		value.setProperties(propperties);
 		event.setLoggerContext(value);
@@ -146,7 +145,7 @@ public class AccessEventIOTest
 	public void timeStamp()
 	{
 		AccessEvent event = createMinimalEvent();
-		Long value = 1234567890000L;
+		Long value = 1_234_567_890_000L;
 		event.setTimeStamp(value);
 		check(event);
 	}
@@ -155,7 +154,7 @@ public class AccessEventIOTest
 	public void elapsedTime()
 	{
 		AccessEvent event = createMinimalEvent();
-		Long value = 1234567890000L;
+		Long value = 1_234_567_890_000L;
 		event.setElapsedTime(value);
 		check(event);
 	}
@@ -182,7 +181,7 @@ public class AccessEventIOTest
 	public void requestHeaders()
 	{
 		AccessEvent event = createMinimalEvent();
-		Map<String, String> value = new HashMap<String, String>();
+		Map<String, String> value = new HashMap<>();
 		value.put("foo", "bar");
 		event.setRequestHeaders(value);
 		check(event);
@@ -192,7 +191,7 @@ public class AccessEventIOTest
 	public void emptyRequestHeaders()
 	{
 		AccessEvent event = createMinimalEvent();
-		Map<String, String> value = new HashMap<String, String>();
+		Map<String, String> value = new HashMap<>();
 		event.setRequestHeaders(value);
 		check(event);
 	}
@@ -201,7 +200,7 @@ public class AccessEventIOTest
 	public void responseHeaders()
 	{
 		AccessEvent event = createMinimalEvent();
-		Map<String, String> value = new HashMap<String, String>();
+		Map<String, String> value = new HashMap<>();
 		value.put("foo", "bar");
 		event.setResponseHeaders(value);
 		check(event);
@@ -211,7 +210,7 @@ public class AccessEventIOTest
 	public void emptyResponseHeaders()
 	{
 		AccessEvent event = createMinimalEvent();
-		Map<String, String> value = new HashMap<String, String>();
+		Map<String, String> value = new HashMap<>();
 		event.setResponseHeaders(value);
 		check(event);
 	}
@@ -220,7 +219,7 @@ public class AccessEventIOTest
 	public void requestParameters()
 	{
 		AccessEvent event = createMinimalEvent();
-		Map<String, String[]> value = new HashMap<String, String[]>();
+		Map<String, String[]> value = new HashMap<>();
 		value.put("foo", new String[]{"val1", "val2"});
 		event.setRequestParameters(value);
 		check(event);
@@ -230,7 +229,7 @@ public class AccessEventIOTest
 	public void emptyRequestParameters()
 	{
 		AccessEvent event = createMinimalEvent();
-		Map<String, String[]> value = new HashMap<String, String[]>();
+		Map<String, String[]> value = new HashMap<>();
 		event.setRequestParameters(value);
 		check(event);
 	}
@@ -243,12 +242,12 @@ public class AccessEventIOTest
 		check(event);
 	}
 
-	public AccessEvent createMinimalEvent()
+	private static AccessEvent createMinimalEvent()
 	{
 		return new AccessEvent();
 	}
 
-	public void check(AccessEvent event)
+	private void check(AccessEvent event)
 	{
 		if(logger.isDebugEnabled()) logger.debug("Processing AccessEvent:\n{}", event);
 		byte[] bytes;
@@ -265,15 +264,15 @@ public class AccessEventIOTest
 		assertEquals(event, readEvent);
 	}
 
-	public byte[] write(AccessEvent event, boolean compressing)
+	private static byte[] write(AccessEvent event, boolean compressing)
 	{
-		AccessEventProtobufEncoder ser = new AccessEventProtobufEncoder(compressing);
+		AccessEventProtobufCodec ser = new AccessEventProtobufCodec(compressing);
 		return ser.encode(event);
 	}
 
-	public AccessEvent read(byte[] bytes, boolean compressing)
+	private static AccessEvent read(byte[] bytes, boolean compressing)
 	{
-		AccessEventProtobufDecoder des = new AccessEventProtobufDecoder(compressing);
+		AccessEventProtobufCodec des = new AccessEventProtobufCodec(compressing);
 		return des.decode(bytes);
 	}
 }

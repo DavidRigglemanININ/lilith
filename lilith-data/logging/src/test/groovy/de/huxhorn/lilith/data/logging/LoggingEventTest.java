@@ -1,6 +1,6 @@
 /*
  * Lilith - a log event viewer.
- * Copyright (C) 2007-2011 Joern Huxhorn
+ * Copyright (C) 2007-2018 Joern Huxhorn
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -17,7 +17,7 @@
  */
 
 /*
- * Copyright 2007-2011 Joern Huxhorn
+ * Copyright 2007-2018 Joern Huxhorn
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,17 +34,19 @@
 
 package de.huxhorn.lilith.data.logging;
 
-import static de.huxhorn.sulky.junit.JUnitTools.testSerialization;
-import static de.huxhorn.sulky.junit.JUnitTools.testXmlSerialization;
 import de.huxhorn.lilith.data.eventsource.LoggerContext;
-
-import static org.junit.Assert.*;
-import org.junit.Before;
-import org.junit.Test;
-
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import org.junit.Before;
+import org.junit.Test;
+
+import static de.huxhorn.sulky.junit.JUnitTools.testSerialization;
+import static de.huxhorn.sulky.junit.JUnitTools.testXmlSerialization;
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertSame;
 
 public class LoggingEventTest
 {
@@ -73,9 +75,9 @@ public class LoggingEventTest
 		LoggingEvent instance = new LoggingEvent();
 
 		LoggerContext value = new LoggerContext();
-		value.setBirthTime(1234567890000L);
+		value.setBirthTime(1_234_567_890_000L);
 		value.setName("contextName");
-		Map<String, String> properties = new HashMap<String, String>();
+		Map<String, String> properties = new HashMap<>();
 		properties.put("foo", "bar");
 		value.setProperties(properties);
 		instance.setLoggerContext(value);
@@ -83,12 +85,12 @@ public class LoggingEventTest
 		{
 			LoggingEvent obj = testSerialization(instance);
 			assertEquals(value, obj.getLoggerContext());
-			assertFalse(fresh.equals(obj));
+			assertNotEquals(fresh, obj);
 		}
 		{
 			LoggingEvent obj = testXmlSerialization(instance);
 			assertEquals(value, obj.getLoggerContext());
-			assertFalse(fresh.equals(obj));
+			assertNotEquals(fresh, obj);
 		}
 	}
 
@@ -104,12 +106,12 @@ public class LoggingEventTest
 		{
 			LoggingEvent obj = testSerialization(instance);
 			assertEquals(value, obj.getLogger());
-			assertFalse(fresh.equals(obj));
+			assertNotEquals(fresh, obj);
 		}
 		{
 			LoggingEvent obj = testXmlSerialization(instance);
 			assertEquals(value, obj.getLogger());
-			assertFalse(fresh.equals(obj));
+			assertNotEquals(fresh, obj);
 		}
 	}
 
@@ -126,12 +128,12 @@ public class LoggingEventTest
 		{
 			LoggingEvent obj = testSerialization(instance);
 			assertEquals(value, obj.getMessage());
-			assertFalse(fresh.equals(obj));
+			assertNotEquals(fresh, obj);
 		}
 		{
 			LoggingEvent obj = testXmlSerialization(instance);
 			assertEquals(value, obj.getMessage());
-			assertFalse(fresh.equals(obj));
+			assertNotEquals(fresh, obj);
 		}
 	}
 
@@ -147,13 +149,13 @@ public class LoggingEventTest
 		{
 			LoggingEvent obj = testSerialization(instance);
 			assertSame(value, obj.getLevel());
-			assertFalse(fresh.equals(obj));
+			assertNotEquals(fresh, obj);
 		}
 		{
 			// http://weblogs.java.net/blog/malenkov/archive/2006/08/how_to_encode_e.html
 			LoggingEvent obj = testXmlSerialization(instance, LoggingEvent.Level.class);
 			assertSame(value, obj.getLevel());
-			assertFalse(fresh.equals(obj));
+			assertNotEquals(fresh, obj);
 		}
 	}
 
@@ -169,12 +171,12 @@ public class LoggingEventTest
 		{
 			LoggingEvent obj = testSerialization(instance);
 			assertEquals(value, obj.getThreadInfo());
-			assertFalse(fresh.equals(obj));
+			assertNotEquals(fresh, obj);
 		}
 		{
 			LoggingEvent obj = testXmlSerialization(instance);
 			assertEquals(value, obj.getThreadInfo());
-			assertFalse(fresh.equals(obj));
+			assertNotEquals(fresh, obj);
 		}
 	}
 
@@ -190,12 +192,12 @@ public class LoggingEventTest
 		{
 			LoggingEvent obj = testSerialization(instance);
 			assertEquals(value, obj.getThrowable());
-			assertFalse(fresh.equals(obj));
+			assertNotEquals(fresh, obj);
 		}
 		{
 			LoggingEvent obj = testXmlSerialization(instance);
 			assertEquals(value, obj.getThrowable());
-			assertFalse(fresh.equals(obj));
+			assertNotEquals(fresh, obj);
 		}
 	}
 
@@ -205,18 +207,18 @@ public class LoggingEventTest
 	{
 		LoggingEvent instance = new LoggingEvent();
 
-		Long value = 1234567890000L;
+		Long value = 1_234_567_890_000L;
 		instance.setTimeStamp(value);
 
 		{
 			LoggingEvent obj = testSerialization(instance);
 			assertEquals(value, obj.getTimeStamp());
-			assertFalse(fresh.equals(obj));
+			assertNotEquals(fresh, obj);
 		}
 		{
 			LoggingEvent obj = testXmlSerialization(instance);
 			assertEquals(value, obj.getTimeStamp());
-			assertFalse(fresh.equals(obj));
+			assertNotEquals(fresh, obj);
 		}
 	}
 
@@ -232,12 +234,12 @@ public class LoggingEventTest
 		{
 			LoggingEvent obj = testSerialization(instance);
 			assertEquals(value, obj.getSequenceNumber());
-			assertFalse(fresh.equals(obj));
+			assertNotEquals(fresh, obj);
 		}
 		{
 			LoggingEvent obj = testXmlSerialization(instance);
 			assertEquals(value, obj.getSequenceNumber());
-			assertFalse(fresh.equals(obj));
+			assertNotEquals(fresh, obj);
 		}
 	}
 
@@ -253,12 +255,12 @@ public class LoggingEventTest
 		{
 			LoggingEvent obj = testSerialization(instance);
 			assertArrayEquals(value, obj.getCallStack());
-			assertFalse(fresh.equals(obj));
+			assertNotEquals(fresh, obj);
 		}
 		{
 			LoggingEvent obj = testXmlSerialization(instance);
 			assertArrayEquals(value, obj.getCallStack());
-			assertFalse(fresh.equals(obj));
+			assertNotEquals(fresh, obj);
 		}
 	}
 
@@ -274,12 +276,12 @@ public class LoggingEventTest
 		{
 			LoggingEvent obj = testSerialization(instance);
 			assertEquals(value, obj.getMarker());
-			assertFalse(fresh.equals(obj));
+			assertNotEquals(fresh, obj);
 		}
 		{
 			LoggingEvent obj = testXmlSerialization(instance);
 			assertEquals(value, obj.getMarker());
-			assertFalse(fresh.equals(obj));
+			assertNotEquals(fresh, obj);
 		}
 	}
 
@@ -289,7 +291,7 @@ public class LoggingEventTest
 	{
 		LoggingEvent instance = new LoggingEvent();
 
-		Map<String, String> value = new HashMap<String, String>();
+		Map<String, String> value = new HashMap<>();
 		value.put("foo", "bar");
 
 		instance.setMdc(value);
@@ -297,12 +299,12 @@ public class LoggingEventTest
 		{
 			LoggingEvent obj = testSerialization(instance);
 			assertEquals(value, obj.getMdc());
-			assertFalse(fresh.equals(obj));
+			assertNotEquals(fresh, obj);
 		}
 		{
 			LoggingEvent obj = testXmlSerialization(instance);
 			assertEquals(value, obj.getMdc());
-			assertFalse(fresh.equals(obj));
+			assertNotEquals(fresh, obj);
 		}
 	}
 
@@ -313,19 +315,20 @@ public class LoggingEventTest
 		LoggingEvent instance = new LoggingEvent();
 
 		Message[] value = new Message[]{
-			new Message("pattern", new String[]{"foo", "bar"})};
+			new Message("pattern", new String[]{"foo", "bar"}),
+		};
 
 		instance.setNdc(value);
 
 		{
 			LoggingEvent obj = testSerialization(instance);
 			assertArrayEquals(value, obj.getNdc());
-			assertFalse(fresh.equals(obj));
+			assertNotEquals(fresh, obj);
 		}
 		{
 			LoggingEvent obj = testXmlSerialization(instance);
 			assertArrayEquals(value, obj.getNdc());
-			assertFalse(fresh.equals(obj));
+			assertNotEquals(fresh, obj);
 		}
 	}
 }

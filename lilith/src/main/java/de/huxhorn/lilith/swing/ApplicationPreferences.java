@@ -1,20 +1,21 @@
 /*
  * Lilith - a log event viewer.
- * Copyright (C) 2007-2013 Joern Huxhorn
- * 
+ * Copyright (C) 2007-2018 Joern Huxhorn
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package de.huxhorn.lilith.swing;
 
 import de.huxhorn.lilith.Lilith;
@@ -31,25 +32,19 @@ import de.huxhorn.lilith.conditions.LoggerEqualsCondition;
 import de.huxhorn.lilith.conditions.LoggerStartsWithCondition;
 import de.huxhorn.lilith.conditions.MessagePatternContainsCondition;
 import de.huxhorn.lilith.conditions.MessagePatternEqualsCondition;
+import de.huxhorn.lilith.conditions.ThreadGroupNameCondition;
+import de.huxhorn.lilith.conditions.ThreadNameCondition;
+import de.huxhorn.lilith.conditions.ThrowableCondition;
 import de.huxhorn.lilith.data.access.HttpStatus;
 import de.huxhorn.lilith.data.logging.LoggingEvent;
 import de.huxhorn.lilith.prefs.LilithPreferences;
 import de.huxhorn.lilith.swing.filefilters.GroovyConditionFileFilter;
 import de.huxhorn.lilith.swing.preferences.SavedCondition;
 import de.huxhorn.lilith.swing.table.ColorScheme;
-import de.huxhorn.sulky.swing.PersistentTableColumnModel;
 import de.huxhorn.sulky.conditions.Condition;
-
-import de.huxhorn.sulky.io.IOUtilities;
-import org.apache.commons.io.IOUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.awt.*;
+import de.huxhorn.sulky.swing.PersistentTableColumnModel;
+import java.awt.Color;
 import java.awt.event.ActionEvent;
-import java.beans.Encoder;
-import java.beans.Expression;
-import java.beans.PersistenceDelegate;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.beans.XMLDecoder;
@@ -59,34 +54,39 @@ import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
 import java.io.DataInputStream;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Properties;
 import java.util.Set;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
-
-import javax.swing.*;
+import java.util.stream.Collectors;
+import javax.swing.LookAndFeel;
+import javax.swing.UIManager;
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class ApplicationPreferences
 {
-
 	private static final Preferences PREFERENCES =
 		Preferences.userNodeForPackage(ApplicationPreferences.class);
 
@@ -103,49 +103,49 @@ public class ApplicationPreferences
 	public static final String DETAILS_VIEW_GROOVY_FILENAME = "detailsView.groovy";
 	public static final String CONDITIONS_XML_FILENAME = "savedConditions.xml";
 
-	public static final String STATUS_COLORS_PROPERTY = "statusColors";
-	public static final String LEVEL_COLORS_PROPERTY = "levelColors";
-	public static final String LOOK_AND_FEEL_PROPERTY = "lookAndFeel";
-	public static final String CLEANING_LOGS_ON_EXIT_PROPERTY = "cleaningLogsOnExit";
-	public static final String COLORING_WHOLE_ROW_PROPERTY = "coloringWholeRow";
-	public static final String SHOWING_TOOLBAR_PROPERTY = "showingToolbar";
-	public static final String SHOWING_STATUSBAR_PROPERTY = "showingStatusbar";
-	public static final String SHOWING_IDENTIFIER_PROPERTY = "showingIdentifier";
-	public static final String SHOWING_FULL_CALLSTACK_PROPERTY = "showingFullCallstack";
-	public static final String USING_WRAPPED_EXCEPTION_STYLE_PROPERTY = "usingWrappedExceptionStyle";
-	public static final String SHOWING_STACKTRACE_PROPERTY = "showingStackTrace";
-	public static final String CHECKING_FOR_UPDATE_PROPERTY = "checkingForUpdate";
-	public static final String CHECKING_FOR_SNAPSHOT_PROPERTY = "checkingForSnapshot";
-	public static final String SOURCE_FILTERING_PROPERTY = "sourceFiltering";
-	public static final String SOUND_LOCATIONS_PROPERTY = "soundLocations";
-	public static final String SCALE_FACTOR_PROPERTY = "scaleFactor";
-	public static final String MUTE_PROPERTY = "mute";
-	public static final String USING_INTERNAL_FRAMES_PROPERTY = "usingInternalFrames";
-	public static final String SCROLLING_TO_BOTTOM_PROPERTY = "scrollingToBottom";
-	public static final String SOURCE_NAMES_PROPERTY = "sourceNames";
-	public static final String APPLICATION_PATH_PROPERTY = "applicationPath";
-	public static final String TRAY_ACTIVE_PROPERTY = "trayActive";
-	public static final String HIDING_ON_CLOSE_PROPERTY = "hidingOnClose";
-	public static final String AUTO_OPENING_PROPERTY = "autoOpening";
-	public static final String AUTO_CLOSING_PROPERTY = "autoClosing";
-	public static final String IMAGE_PATH_PROPERTY = "imagePath";
-	public static final String SOUND_PATH_PROPERTY = "soundPath";
-	public static final String AUTO_FOCUSING_WINDOW_PROPERTY = "autoFocusingWindow";
-	public static final String SOURCE_LISTS_PROPERTY = "sourceLists";
-	public static final String BLACK_LIST_NAME_PROPERTY = "blackListName";
-	public static final String WHITE_LIST_NAME_PROPERTY = "whiteListName";
-	public static final String CONDITIONS_PROPERTY = "conditions";
-	public static final String SPLASH_SCREEN_DISABLED_PROPERTY = "splashScreenDisabled";
-	public static final String ASKING_BEFORE_QUIT_PROPERTY = "askingBeforeQuit";
-	public static final String CURRENT_TIP_OF_THE_DAY_PROPERTY = "currentTipOfTheDay";
-	public static final String SHOWING_TIP_OF_THE_DAY_PROPERTY = "showingTipOfTheDay";
-	public static final String MAXIMIZING_INTERNAL_FRAMES_PROPERTY = "maximizingInternalFrames";
-	public static final String GLOBAL_LOGGING_ENABLED_PROPERTY = "globalLoggingEnabled";
-	public static final String LOGGING_STATISTIC_ENABLED_PROPERTY = "loggingStatisticEnabled";
-	public static final String PREVIOUS_SEARCH_STRINGS_PROPERTY = "previousSearchStrings";
-	public static final String RECENT_FILES_PROPERTY = "recentFiles";
-	public static final String SHOWING_FULL_RECENT_PATH_PROPERTY="showingFullRecentPath";
-	public static final String DEFAULT_CONDITION_NAME_PROPERTY = "defaultConditionName";
+	static final String STATUS_COLORS_PROPERTY = "statusColors";
+	static final String LEVEL_COLORS_PROPERTY = "levelColors";
+	static final String LOOK_AND_FEEL_PROPERTY = "lookAndFeel";
+	private static final String CLEANING_LOGS_ON_EXIT_PROPERTY = "cleaningLogsOnExit";
+	static final String COLORING_WHOLE_ROW_PROPERTY = "coloringWholeRow";
+	static final String SCROLLING_SMOOTHLY_PROPERTY = "scrollingSmoothly";
+	static final String SHOWING_TOOLBAR_PROPERTY = "showingToolbar";
+	static final String SHOWING_STATUS_BAR_PROPERTY = "showingStatusBar";
+	static final String SHOWING_PRIMARY_IDENTIFIER_PROPERTY = "showingPrimaryIdentifier";
+	static final String SHOWING_SECONDARY_IDENTIFIER_PROPERTY = "showingSecondaryIdentifier";
+	static final String SHOWING_FULL_CALL_STACK_PROPERTY = "showingFullCallStack";
+	static final String USING_WRAPPED_EXCEPTION_STYLE_PROPERTY = "usingWrappedExceptionStyle";
+	static final String SHOWING_STACKTRACE_PROPERTY = "showingStackTrace";
+	static final String CHECKING_FOR_UPDATE_PROPERTY = "checkingForUpdate";
+	static final String CHECKING_FOR_SNAPSHOT_PROPERTY = "checkingForSnapshot";
+	static final String SOURCE_FILTERING_PROPERTY = "sourceFiltering";
+	static final String SOUND_LOCATIONS_PROPERTY = "soundLocations";
+	static final String SCALE_FACTOR_PROPERTY = "scaleFactor";
+	static final String MUTE_PROPERTY = "mute";
+	private static final String USING_INTERNAL_FRAMES_PROPERTY = "usingInternalFrames";
+	private static final String SCROLLING_TO_BOTTOM_PROPERTY = "scrollingToBottom";
+	static final String SOURCE_NAMES_PROPERTY = "sourceNames";
+	static final String APPLICATION_PATH_PROPERTY = "applicationPath";
+	static final String TRAY_ACTIVE_PROPERTY = "trayActive";
+	private static final String HIDING_ON_CLOSE_PROPERTY = "hidingOnClose";
+	private static final String AUTO_OPENING_PROPERTY = "autoOpening";
+	private static final String AUTO_CLOSING_PROPERTY = "autoClosing";
+	private static final String SOUND_PATH_PROPERTY = "soundPath";
+	private static final String AUTO_FOCUSING_WINDOW_PROPERTY = "autoFocusingWindow";
+	private static final String SOURCE_LISTS_PROPERTY = "sourceLists";
+	static final String BLACK_LIST_NAME_PROPERTY = "blackListName";
+	static final String WHITE_LIST_NAME_PROPERTY = "whiteListName";
+	static final String CONDITIONS_PROPERTY = "conditions";
+	private static final String SPLASH_SCREEN_DISABLED_PROPERTY = "splashScreenDisabled";
+	private static final String ASKING_BEFORE_QUIT_PROPERTY = "askingBeforeQuit";
+	private static final String CURRENT_TIP_OF_THE_DAY_PROPERTY = "currentTipOfTheDay";
+	static final String SHOWING_TIP_OF_THE_DAY_PROPERTY = "showingTipOfTheDay";
+	private static final String MAXIMIZING_INTERNAL_FRAMES_PROPERTY = "maximizingInternalFrames";
+	static final String GLOBAL_LOGGING_ENABLED_PROPERTY = "globalLoggingEnabled";
+	static final String PREVIOUS_SEARCH_STRINGS_PROPERTY = "previousSearchStrings";
+	static final String RECENT_FILES_PROPERTY = "recentFiles";
+	static final String SHOWING_FULL_RECENT_PATH_PROPERTY="showingFullRecentPath";
+	private static final String DEFAULT_CONDITION_NAME_PROPERTY = "defaultConditionName";
 
 
 	public static final String LOGGING_LAYOUT_GLOBAL_XML_FILENAME = "loggingLayoutGlobal.xml";
@@ -155,14 +155,14 @@ public class ApplicationPreferences
 
 	public static final String SOURCE_NAMES_XML_FILENAME = "SourceNames.xml";
 	public static final String SOURCE_LISTS_XML_FILENAME = "SourceLists.xml";
-	public static final String SOURCE_NAMES_PROPERTIES_FILENAME = "SourceNames.properties";
+	private static final String SOURCE_NAMES_PROPERTIES_FILENAME = "SourceNames.properties";
 	public static final String SOUND_LOCATIONS_XML_FILENAME = "SoundLocations.xml";
 	//public static final String SOUND_LOCATIONS_PROPERTIES_FILENAME = "SoundLocations.properties";
 	public static final String PREVIOUS_APPLICATION_PATH_FILENAME = ".previous.application.path";
 
 	private static final String OLD_LICENSED_PREFERENCES_KEY = "licensed";
 	private static final String LICENSED_PREFERENCES_KEY = "licensedVersion";
-	public static final String USER_HOME;
+	private static final String USER_HOME;
 	public static final String DEFAULT_APPLICATION_PATH;
 	private static final Map<String, String> DEFAULT_SOURCE_NAMES;
 	private static final Map<String, String> DEFAULT_SOUND_LOCATIONS;
@@ -174,13 +174,13 @@ public class ApplicationPreferences
 
 	public static final String STARTUP_LOOK_AND_FEEL;
 
-	private static final long CONDITIONS_CHECK_INTERVAL = 30000;
+	private static final long CONDITIONS_CHECK_INTERVAL = 30_000L;
 	private static final String GROOVY_SUFFIX = ".groovy";
 	private static final String EXAMPLE_GROOVY_CONDITIONS_BASE = "/conditions/";
 	private static final String EXAMPLE_GROOVY_CLIPBOARD_FORMATTERS_BASE = "/clipboardFormatters/";
 	private static final String GROOVY_EXAMPLE_LIST = "list.txt";
 
-	public static final String SAVED_CONDITION = "Saved";
+	static final String SAVED_CONDITION = "Saved";
 
 	private static final String[] DEFAULT_CONDITIONS = new String[]{
 		EventContainsCondition.DESCRIPTION,
@@ -193,217 +193,34 @@ public class ApplicationPreferences
 		LoggerContainsCondition.DESCRIPTION,
 		LoggerEqualsCondition.DESCRIPTION,
 		CallLocationCondition.DESCRIPTION,
+		ThrowableCondition.DESCRIPTION,
+		ThreadNameCondition.DESCRIPTION,
+		ThreadGroupNameCondition.DESCRIPTION,
 		SAVED_CONDITION,
 	};
 
 	private static final String[] LEVEL_VALUES = {
-			"TRACE", "DEBUG", "INFO", "WARN", "ERROR"
+			"TRACE",
+			"DEBUG",
+			"INFO",
+			"WARN",
+			"ERROR",
 	};
+
 	private String[] clipboardFormatterScriptFiles;
 	private long lastClipboardFormatterCheck;
 
 	private static final LilithPreferences DEFAULT_VALUES=new LilithPreferences();
 
-	static
-	{
-		PREFERENCES.remove(OLD_LICENSED_PREFERENCES_KEY); // remove garbage
-
-		USER_HOME = System.getProperty("user.home");
-		File defaultAppPath = new File(USER_HOME, ".lilith");
-		DEFAULT_APPLICATION_PATH = defaultAppPath.getAbsolutePath();
-
-		Map<String, String> defaultSoundLocations = new HashMap<String, String>();
-		defaultSoundLocations.put(LilithSounds.SOURCE_ADDED, "/events/SourceAdded.mp3");
-		defaultSoundLocations.put(LilithSounds.SOURCE_REMOVED, "/events/SourceRemoved.mp3");
-		defaultSoundLocations.put(LilithSounds.ERROR_EVENT_ALARM, "/events/ErrorEventAlarm.mp3");
-		defaultSoundLocations.put(LilithSounds.WARN_EVENT_ALARM, "/events/WarnEventAlarm.mp3");
-		DEFAULT_SOUND_LOCATIONS = Collections.unmodifiableMap(defaultSoundLocations);
-
-		Map<String, String> defaultSourceNames = new HashMap<String, String>();
-		defaultSourceNames.put("127.0.0.1", "Localhost");
-		DEFAULT_SOURCE_NAMES = Collections.unmodifiableMap(defaultSourceNames);
-
-		HashMap<LoggingEvent.Level, ColorScheme> defaultLevelColors = new HashMap<LoggingEvent.Level, ColorScheme>();
-		defaultLevelColors.put(LoggingEvent.Level.TRACE,
-			new ColorScheme(new Color(0x1F, 0x44, 0x58), new Color(0x80, 0xBA, 0xD9), new Color(0x80, 0xBA, 0xD9)));
-		defaultLevelColors.put(LoggingEvent.Level.DEBUG,
-			new ColorScheme(Color.BLACK, Color.GREEN, Color.GREEN));
-		defaultLevelColors.put(LoggingEvent.Level.INFO,
-			new ColorScheme(Color.BLACK, Color.WHITE, Color.WHITE));
-		defaultLevelColors.put(LoggingEvent.Level.WARN,
-			new ColorScheme(Color.BLACK, Color.YELLOW, Color.YELLOW));
-		defaultLevelColors.put(LoggingEvent.Level.ERROR,
-			new ColorScheme(Color.YELLOW, Color.RED, Color.ORANGE));
-		DEFAULT_LEVEL_COLOR_SCHEMES = Collections.unmodifiableMap(defaultLevelColors);
-
-		HashMap<HttpStatus.Type, ColorScheme> defaultStatusColors = new HashMap<HttpStatus.Type, ColorScheme>();
-		defaultStatusColors.put(HttpStatus.Type.SUCCESSFUL,
-			new ColorScheme(Color.BLACK, Color.GREEN, Color.GREEN));
-		defaultStatusColors.put(HttpStatus.Type.INFORMATIONAL,
-			new ColorScheme(Color.BLACK, Color.WHITE, Color.WHITE));
-		defaultStatusColors.put(HttpStatus.Type.REDIRECTION,
-			new ColorScheme(Color.BLACK, Color.YELLOW, Color.YELLOW));
-		defaultStatusColors.put(HttpStatus.Type.CLIENT_ERROR,
-			new ColorScheme(Color.GREEN, Color.RED, Color.ORANGE));
-		defaultStatusColors.put(HttpStatus.Type.SERVER_ERROR,
-			new ColorScheme(Color.YELLOW, Color.RED, Color.ORANGE));
-		DEFAULT_STATUS_COLOR_SCHEMES = Collections.unmodifiableMap(defaultStatusColors);
-
-		STARTUP_LOOK_AND_FEEL = UIManager.getLookAndFeel().getName();
-	}
-
-	/**
-	 * Creates a condition of the given name and value.
-	 *
-	 * @param conditionName the name of the condition
-	 * @param value the value for the condition
-	 * @return the created condition
-	 * @throws IllegalArgumentException if value is not allowed for conditionName.
-	 */
-	public Condition createCondition(String conditionName, String value)
-	{
-		if(conditionName == null)
-		{
-			throw new NullPointerException("conditionName must not be null!");
-		}
-
-		if(EventContainsCondition.DESCRIPTION.equals(conditionName))
-		{
-			return new EventContainsCondition(value);
-		}
-
-		if(LevelCondition.DESCRIPTION.equals(conditionName))
-		{
-			boolean found = false;
-			for(String current : LEVEL_VALUES)
-			{
-				if(current.equalsIgnoreCase(value))
-				{
-					value=current;
-					found=true;
-				}
-			}
-			if(found)
-			{
-				return new LevelCondition(value);
-			}
-			throw new IllegalArgumentException("Unknown level value '"+value+"'!");
-		}
-
-		if(FormattedMessageContainsCondition.DESCRIPTION.equals(conditionName))
-		{
-			return new FormattedMessageContainsCondition(value);
-		}
-
-		if(FormattedMessageEqualsCondition.DESCRIPTION.equals(conditionName))
-		{
-			return new FormattedMessageEqualsCondition(value);
-		}
-
-		if(MessagePatternContainsCondition.DESCRIPTION.equals(conditionName))
-		{
-			return new MessagePatternContainsCondition(value);
-		}
-
-		if(MessagePatternEqualsCondition.DESCRIPTION.equals(conditionName))
-		{
-			return new MessagePatternEqualsCondition(value);
-		}
-
-		if(LoggerStartsWithCondition.DESCRIPTION.equals(conditionName))
-		{
-			return new LoggerStartsWithCondition(value);
-		}
-
-		if(LoggerContainsCondition.DESCRIPTION.equals(conditionName))
-		{
-			return new LoggerContainsCondition(value);
-		}
-
-		if(LoggerEqualsCondition.DESCRIPTION.equals(conditionName))
-		{
-			return new LoggerEqualsCondition(value);
-		}
-
-		if(CallLocationCondition.DESCRIPTION.equals(conditionName))
-		{
-			return new CallLocationCondition(value);
-		}
-
-
-		if(SAVED_CONDITION.equals(conditionName))
-		{
-			SavedCondition savedCondition = resolveSavedCondition(value);
-			if(savedCondition != null)
-			{
-				return savedCondition.getCondition();
-			}
-			throw new IllegalArgumentException("Couldn't find saved condition named '" + value + "'.");
-		}
-
-		// we assume a groovy condition...
-		File resolvedScriptFile = resolveGroovyConditionScriptFile(conditionName);
-		if(resolvedScriptFile != null)
-		{
-			// there is a file...
-			return new GroovyCondition(resolvedScriptFile.getAbsolutePath(), value);
-		}
-		throw new IllegalArgumentException("Couldn't find condition '"+conditionName+"'!");
-	}
-
-	public String resolveConditionName(Condition condition)
-	{
-		if(condition instanceof GroovyCondition)
-		{
-			// special handling of script files, even though it's also a LilithCondition
-			GroovyCondition groovyCondition = (GroovyCondition) condition;
-			String scriptFileName = groovyCondition.getScriptFileName();
-			if(scriptFileName != null)
-			{
-				File scriptFile = new File(scriptFileName);
-				// return the pure filename without the path
-				return scriptFile.getName();
-			}
-			return null;
-		}
-
-		if(condition instanceof LilithCondition)
-		{
-			return ((LilithCondition)condition).getDescription();
-		}
-		// TODO? Special handling of SAVED_CONDITION
-
-		return null;
-	}
-
-	public List<String> retrieveLevelValues()
-	{
-		return Arrays.asList(LEVEL_VALUES);
-	}
-
-	public List<String> retrieveAllConditions()
-	{
-		List<String> itemsVector = new ArrayList<String>();
-
-		itemsVector.addAll(Arrays.asList(DEFAULT_CONDITIONS));
-
-		String[] groovyConditions = getAllGroovyConditionScriptFiles();
-		if(groovyConditions != null)
-		{
-			itemsVector.addAll(Arrays.asList(groovyConditions));
-		}
-		return itemsVector;
-	}
-
 	private final Logger logger = LoggerFactory.getLogger(ApplicationPreferences.class);
 
-	private PropertyChangeSupport propertyChangeSupport;
+	private final PropertyChangeSupport propertyChangeSupport;
 
-	private File startupApplicationPath;
+	private final File startupApplicationPath;
 
 	private File detailsViewRoot;
 
-	private List<String> installedLookAndFeels;
+	private final List<String> installedLookAndFeels;
 	private String[] conditionScriptFiles;
 	private long lastConditionsCheck;
 
@@ -435,8 +252,195 @@ public class ApplicationPreferences
 
 	private List<String> recentFiles;
 
-	private File groovyConditionsPath;
-	private File groovyClipboardFormattersPath;
+	private final File groovyConditionsPath;
+	private final File groovyClipboardFormattersPath;
+
+	static
+	{
+		PREFERENCES.remove(OLD_LICENSED_PREFERENCES_KEY); // remove garbage
+
+		USER_HOME = System.getProperty("user.home");
+		File defaultAppPath = new File(USER_HOME, ".lilith");
+		DEFAULT_APPLICATION_PATH = defaultAppPath.getAbsolutePath();
+
+		Map<String, String> defaultSoundLocations = new HashMap<>();
+		defaultSoundLocations.put(LilithSounds.SOURCE_ADDED, "/events/SourceAdded.mp3");
+		defaultSoundLocations.put(LilithSounds.SOURCE_REMOVED, "/events/SourceRemoved.mp3");
+		defaultSoundLocations.put(LilithSounds.ERROR_EVENT_ALARM, "/events/ErrorEventAlarm.mp3");
+		defaultSoundLocations.put(LilithSounds.WARN_EVENT_ALARM, "/events/WarnEventAlarm.mp3");
+		DEFAULT_SOUND_LOCATIONS = Collections.unmodifiableMap(defaultSoundLocations);
+
+		Map<String, String> defaultSourceNames = new HashMap<>();
+		defaultSourceNames.put("127.0.0.1", "Localhost"); // NOPMD
+		DEFAULT_SOURCE_NAMES = Collections.unmodifiableMap(defaultSourceNames);
+
+		Map<LoggingEvent.Level, ColorScheme> defaultLevelColors = new HashMap<>();
+		defaultLevelColors.put(LoggingEvent.Level.TRACE,
+			new ColorScheme(new Color(0x1F, 0x44, 0x58), new Color(0x80, 0xBA, 0xD9), new Color(0x80, 0xBA, 0xD9)));
+		defaultLevelColors.put(LoggingEvent.Level.DEBUG,
+			new ColorScheme(Color.BLACK, Color.GREEN, Color.GREEN));
+		defaultLevelColors.put(LoggingEvent.Level.INFO,
+			new ColorScheme(Color.BLACK, Color.WHITE, Color.WHITE));
+		defaultLevelColors.put(LoggingEvent.Level.WARN,
+			new ColorScheme(Color.BLACK, Color.YELLOW, Color.YELLOW));
+		defaultLevelColors.put(LoggingEvent.Level.ERROR,
+			new ColorScheme(Color.YELLOW, Color.RED, Color.ORANGE));
+		DEFAULT_LEVEL_COLOR_SCHEMES = Collections.unmodifiableMap(defaultLevelColors);
+
+		Map<HttpStatus.Type, ColorScheme> defaultStatusColors = new HashMap<>();
+		defaultStatusColors.put(HttpStatus.Type.SUCCESSFUL,
+			new ColorScheme(Color.BLACK, Color.GREEN, Color.GREEN));
+		defaultStatusColors.put(HttpStatus.Type.INFORMATIONAL,
+			new ColorScheme(Color.BLACK, Color.WHITE, Color.WHITE));
+		defaultStatusColors.put(HttpStatus.Type.REDIRECTION,
+			new ColorScheme(Color.BLACK, Color.YELLOW, Color.YELLOW));
+		defaultStatusColors.put(HttpStatus.Type.CLIENT_ERROR,
+			new ColorScheme(Color.GREEN, Color.RED, Color.ORANGE));
+		defaultStatusColors.put(HttpStatus.Type.SERVER_ERROR,
+			new ColorScheme(Color.YELLOW, Color.RED, Color.ORANGE));
+		DEFAULT_STATUS_COLOR_SCHEMES = Collections.unmodifiableMap(defaultStatusColors);
+
+		String lafName = null;
+		LookAndFeel laf = UIManager.getLookAndFeel();
+		if(laf != null)
+		{
+			lafName = laf.getName();
+		}
+		STARTUP_LOOK_AND_FEEL = lafName;
+	}
+
+	private boolean usingScreenMenuBar;
+
+	/**
+	 * Creates a condition of the given name and value.
+	 *
+	 * @param conditionName the name of the condition
+	 * @param value the value for the condition
+	 * @return the created condition
+	 * @throws IllegalArgumentException if value is not allowed for conditionName.
+	 */
+	Condition createCondition(String conditionName, String value)
+	{
+		Objects.requireNonNull(conditionName, "conditionName must not be null!");
+
+		switch(conditionName)
+		{
+			case EventContainsCondition.DESCRIPTION:
+				return new EventContainsCondition(value);
+
+			case LevelCondition.DESCRIPTION:
+				boolean found = false;
+				for(String current : LEVEL_VALUES)
+				{
+					if(current.equalsIgnoreCase(value))
+					{
+						value=current;
+						found=true;
+					}
+				}
+				if(found)
+				{
+					return new LevelCondition(value);
+				}
+				throw new IllegalArgumentException("Unknown level value '"+value+"'!");
+
+			case FormattedMessageContainsCondition.DESCRIPTION:
+				return new FormattedMessageContainsCondition(value);
+
+			case FormattedMessageEqualsCondition.DESCRIPTION:
+				return new FormattedMessageEqualsCondition(value);
+
+			case MessagePatternContainsCondition.DESCRIPTION:
+				return new MessagePatternContainsCondition(value);
+
+			case MessagePatternEqualsCondition.DESCRIPTION:
+				return new MessagePatternEqualsCondition(value);
+
+			case LoggerStartsWithCondition.DESCRIPTION:
+				return new LoggerStartsWithCondition(value);
+
+			case LoggerContainsCondition.DESCRIPTION:
+				return new LoggerContainsCondition(value);
+
+			case LoggerEqualsCondition.DESCRIPTION:
+				return new LoggerEqualsCondition(value);
+
+			case ThrowableCondition.DESCRIPTION:
+				return new ThrowableCondition(value);
+
+			case ThreadNameCondition.DESCRIPTION:
+				return new ThreadNameCondition(value);
+
+			case ThreadGroupNameCondition.DESCRIPTION:
+				return new ThreadGroupNameCondition(value);
+
+			case CallLocationCondition.DESCRIPTION:
+				return new CallLocationCondition(value);
+
+			case SAVED_CONDITION:
+				SavedCondition savedCondition = resolveSavedCondition(value);
+				if(savedCondition != null)
+				{
+					return savedCondition.getCondition();
+				}
+				throw new IllegalArgumentException("Couldn't find saved condition named '" + value + "'.");
+
+			default: // we assume a groovy condition...
+				File resolvedScriptFile = resolveGroovyConditionScriptFile(conditionName);
+				if(resolvedScriptFile != null)
+				{
+					// there is a file...
+					return new GroovyCondition(resolvedScriptFile.getAbsolutePath(), value);
+				}
+				throw new IllegalArgumentException("Couldn't find condition '"+conditionName+"'!");
+		}
+	}
+
+	String resolveConditionName(Condition condition)
+	{
+		if(condition instanceof GroovyCondition)
+		{
+			// special handling of script files, even though it's also a LilithCondition
+			GroovyCondition groovyCondition = (GroovyCondition) condition;
+			String scriptFileName = groovyCondition.getScriptFileName();
+			if(scriptFileName != null)
+			{
+				File scriptFile = new File(scriptFileName);
+				// return the pure filename without the path
+				return scriptFile.getName();
+			}
+			return null;
+		}
+
+		if(condition instanceof LilithCondition)
+		{
+			return ((LilithCondition)condition).getDescription();
+		}
+		// TODO? Special handling of SAVED_CONDITION
+
+		return null;
+	}
+
+	List<String> retrieveLevelValues()
+	{
+		return Arrays.asList(LEVEL_VALUES);
+	}
+
+	@SuppressWarnings("PMD.MethodReturnsInternalArray") // TODO
+	public List<String> retrieveAllConditions()
+	{
+		List<String> itemsVector = new ArrayList<>();
+
+		itemsVector.addAll(Arrays.asList(DEFAULT_CONDITIONS));
+
+		String[] groovyConditions = getAllGroovyConditionScriptFiles();
+		if(groovyConditions != null)
+		{
+			itemsVector.addAll(Arrays.asList(groovyConditions));
+		}
+		return itemsVector;
+	}
+
 
 	public ApplicationPreferences()
 	{
@@ -445,7 +449,7 @@ public class ApplicationPreferences
 		propertyChangeSupport = new PropertyChangeSupport(this);
 		startupApplicationPath = getApplicationPath();
 
-		installedLookAndFeels = new ArrayList<String>();
+		installedLookAndFeels = new ArrayList<>();
 		for(UIManager.LookAndFeelInfo info : UIManager.getInstalledLookAndFeels())
 		{
 			installedLookAndFeels.add(info.getName());
@@ -476,7 +480,7 @@ public class ApplicationPreferences
 		return groovyClipboardFormattersPath;
 	}
 
-	public void addRecentFile(File dataFile)
+	void addRecentFile(File dataFile)
 	{
 		if(dataFile == null)
 		{
@@ -484,17 +488,17 @@ public class ApplicationPreferences
 		}
 		if(!dataFile.isFile() || !dataFile.canRead())
 		{
-			if(logger.isWarnEnabled()) logger.warn("Tried to add invalid recent file.");
+			if(logger.isWarnEnabled()) logger.warn("Tried to add invalid recent file."); // NOPMD
 		}
 		String absName=dataFile.getAbsolutePath();
 
-		List<String> recents = getRecentFiles();
-		recents.remove(absName); // remove previous entry if available
-		recents.add(0, absName); // add to start of list.
-		setRecentFiles(recents);
+		List<String> recentFiles = getRecentFiles();
+		recentFiles.remove(absName); // remove previous entry if available
+		recentFiles.add(0, absName); // add to start of list.
+		setRecentFiles(recentFiles);
 	}
 
-	public void removeRecentFile(File dataFile)
+	void removeRecentFile(File dataFile)
 	{
 		if(dataFile == null)
 		{
@@ -502,22 +506,22 @@ public class ApplicationPreferences
 		}
 		String absName=dataFile.getAbsolutePath();
 
-		List<String> recents = getRecentFiles();
-		recents.remove(absName); // remove previous entry if available
-		setRecentFiles(recents);
+		List<String> recentFiles = getRecentFiles();
+		recentFiles.remove(absName); // remove previous entry if available
+		setRecentFiles(recentFiles);
 	}
 
-
-	private void setRecentFiles(List<String> recents)
+	@SuppressWarnings("PMD.AvoidInstantiatingObjectsInLoops")
+	private void setRecentFiles(List<String> recentFiles)
 	{
 		List<String> copy;
-		if(recents == null)
+		if(recentFiles == null)
 		{
-			copy=new ArrayList<String>();
+			copy=new ArrayList<>();
 		}
 		else
 		{
-			copy=new ArrayList<String>(recents);
+			copy=new ArrayList<>(recentFiles);
 		}
 		Iterator<String> iter = copy.iterator();
 		while(iter.hasNext())
@@ -541,21 +545,23 @@ public class ApplicationPreferences
 		if(logger.isInfoEnabled()) logger.info("recentFiles set to {}.", newValue);
 	}
 
-	public void clearRecentFiles()
+	void clearRecentFiles()
 	{
-		setRecentFiles(new ArrayList<String>());
+		setRecentFiles(new ArrayList<>());
 	}
 
-	public List<String> getRecentFiles()
+	List<String> getRecentFiles()
 	{
 		initRecentFiles();
-		return new ArrayList<String>(recentFiles);
+		return new ArrayList<>(recentFiles);
 	}
 
+	/*
 	public void clearPreviousSearchStrings()
 	{
-		setPreviousSearchStrings(new ArrayList<String>());
+		setPreviousSearchStrings(new ArrayList<>());
 	}
+	*/
 
 	/**
 	 * This will prevent unchecked warnings and will also validate the content properly.
@@ -564,32 +570,35 @@ public class ApplicationPreferences
 	 * @param obj the input Object, ideally a List of the given type
 	 * @return the input as a List of the given type.
 	 */
-	private static <T> List<T> transformToList(Class<T> iface, Object obj)
+	private static <T> List<T> transformToList(Logger logger, Class<T> iface, Object obj)
 	{
-		final Logger logger = LoggerFactory.getLogger(ApplicationPreferences.class);
-
 		List<T> resultList = null;
 		if(obj instanceof List)
 		{
 			List list = (List) obj;
-			resultList = new ArrayList<T>(list.size());
-			for(Object current:list)
-			{
-				if(iface.isInstance(current))
-				{
-					resultList.add(iface.cast(current));
-				}
-				else
-				{
-					if(logger.isWarnEnabled()) logger.warn("Expected {} but got {}!", iface.getName(), current);
-				}
-			}
+			resultList = new ArrayList<>(list.size());
+			move(logger, iface, list, resultList);
 		}
 		else
 		{
 			if(logger.isWarnEnabled()) logger.warn("Expected List but got {}!", obj);
 		}
 		return resultList;
+	}
+
+	private static <T> void move(Logger logger, Class<T> iface, Collection source, Collection<T> target)
+	{
+		for(Object current:source)
+		{
+			if(iface.isInstance(current))
+			{
+				target.add(iface.cast(current));
+			}
+			else
+			{
+				if(logger.isWarnEnabled()) logger.warn("Expected {} but got {}!", iface.getName(), current);
+			}
+		}
 	}
 
 	/**
@@ -599,26 +608,14 @@ public class ApplicationPreferences
 	 * @param obj the input Object, ideally a Set of the given type
 	 * @return the input as a Set of the given type.
 	 */
-	private static <T> Set<T> transformToSet(Class<T> iface, Object obj)
+	private static <T> Set<T> transformToSet(Logger logger, Class<T> iface, Object obj)
 	{
-		final Logger logger = LoggerFactory.getLogger(ApplicationPreferences.class);
-
 		Set<T> resultSet = null;
 		if(obj instanceof Set)
 		{
 			Set set = (Set) obj;
-			resultSet = new HashSet<T>(set.size());
-			for(Object current:set)
-			{
-				if(iface.isInstance(current))
-				{
-					resultSet.add(iface.cast(current));
-				}
-				else
-				{
-					if(logger.isWarnEnabled()) logger.warn("Expected {} but got {}!", iface.getName(), current);
-				}
-			}
+			resultSet = new HashSet<>(set.size());
+			move(logger, iface, set, resultSet);
 		}
 		else
 		{
@@ -643,7 +640,7 @@ public class ApplicationPreferences
 		if(obj instanceof Map)
 		{
 			Map map = (Map) obj;
-			resultMap = new HashMap<K,V>(map.size());
+			resultMap = new HashMap<>(map.size());
 			for(Object c:map.entrySet())
 			{
 				Map.Entry current = (Map.Entry) c;
@@ -677,30 +674,19 @@ public class ApplicationPreferences
 
 		if(file.isFile() && this.recentFiles == null)
 		{
-			XMLDecoder d = null;
-			try
+			try(XMLDecoder d = new XMLDecoder(new BufferedInputStream(Files.newInputStream(file.toPath()))))
 			{
-				d = new XMLDecoder(new BufferedInputStream(new FileInputStream(file)));
-
-				this.recentFiles = transformToList(String.class, d.readObject());
+				this.recentFiles = transformToList(logger, String.class, d.readObject());
 			}
 			catch(Throwable ex)
 			{
 				if(logger.isWarnEnabled()) logger.warn("Exception while loading recentFiles from file '" + file.getAbsolutePath() + "'!", ex);
-				IOUtilities.interruptIfNecessary(ex);
-			}
-			finally
-			{
-				if(d != null)
-				{
-					d.close();
-				}
 			}
 		}
 
 		if(this.recentFiles == null)
 		{
-			this.recentFiles = new ArrayList<String>();
+			this.recentFiles = new ArrayList<>();
 		}
 	}
 
@@ -708,15 +694,27 @@ public class ApplicationPreferences
 	{
 		File appPath = getStartupApplicationPath();
 		File file = new File(appPath, RECENT_FILES_XML_FILENAME);
+		Throwable error = writeXml(file, recentFiles);
+		this.recentFiles = null;
+		if(error != null)
+		{
+			if(logger.isWarnEnabled()) logger.warn("Exception while writing recentFiles!", error);
+			return false;
+		}
+		return true;
+	}
+
+	private static Throwable writeXml(File file, Object object)
+	{
 		XMLEncoder e = null;
 		Throwable error = null;
 		try
 		{
-			BufferedOutputStream bos = new BufferedOutputStream(new FileOutputStream(file));
+			BufferedOutputStream bos = new BufferedOutputStream(Files.newOutputStream(file.toPath()));
 			e = new XMLEncoder(bos);
-			e.writeObject(recentFiles);
+			e.writeObject(object);
 		}
-		catch(FileNotFoundException ex)
+		catch(IOException ex)
 		{
 			error = ex;
 		}
@@ -727,27 +725,17 @@ public class ApplicationPreferences
 				e.close();
 			}
 		}
-		this.recentFiles = null;
-		if(error != null)
-		{
-			if(logger.isWarnEnabled()) logger.warn("Exception while writing recentFiles!", error);
-			return false;
-		}
-		return true;
+		return error;
 	}
 
-	public void addPreviousSearchString(String searchString)
+	void addPreviousSearchString(String searchString)
 	{
-		if(searchString == null)
+		if(StringUtils.isBlank(searchString))
 		{
+			// ignore null and whitespace-only strings
 			return;
 		}
 
-		if(searchString.trim().length() == 0)
-		{
-			// ignore whitespace-only strings
-			return;
-		}
 		List<String> previousSearchStrings=getPreviousSearchStrings();
 		if(previousSearchStrings.contains(searchString))
 		{
@@ -771,10 +759,10 @@ public class ApplicationPreferences
 		if(logger.isInfoEnabled()) logger.info("previousSearchStrings set to {}.", newValue);
 	}
 
-	public List<String> getPreviousSearchStrings()
+	List<String> getPreviousSearchStrings()
 	{
 		initPreviousSearchStrings();
-		return new ArrayList<String>(previousSearchStrings);
+		return new ArrayList<>(previousSearchStrings);
 	}
 
 	private void initPreviousSearchStrings()
@@ -784,30 +772,19 @@ public class ApplicationPreferences
 
 		if(file.isFile() && this.previousSearchStrings == null)
 		{
-			XMLDecoder d = null;
-			try
+			try(XMLDecoder d = new XMLDecoder(new BufferedInputStream(Files.newInputStream(file.toPath()))))
 			{
-				d = new XMLDecoder(new BufferedInputStream(new FileInputStream(file)));
-
-				this.previousSearchStrings = transformToList(String.class, d.readObject());
+				this.previousSearchStrings = transformToList(logger, String.class, d.readObject());
 			}
 			catch(Throwable ex)
 			{
 				if(logger.isWarnEnabled()) logger.warn("Exception while loading previous search strings from file '" + file.getAbsolutePath() + "'!", ex);
-				IOUtilities.interruptIfNecessary(ex);
-			}
-			finally
-			{
-				if(d != null)
-				{
-					d.close();
-				}
 			}
 		}
 
 		if(this.previousSearchStrings == null)
 		{
-			this.previousSearchStrings = new ArrayList<String>();
+			this.previousSearchStrings = new ArrayList<>();
 		}
 	}
 
@@ -815,25 +792,7 @@ public class ApplicationPreferences
 	{
 		File appPath = getStartupApplicationPath();
 		File file = new File(appPath, PREVIOUS_SEARCH_STRINGS_XML_FILENAME);
-		XMLEncoder e = null;
-		Throwable error = null;
-		try
-		{
-			BufferedOutputStream bos = new BufferedOutputStream(new FileOutputStream(file));
-			e = new XMLEncoder(bos);
-			e.writeObject(searchStrings);
-		}
-		catch(FileNotFoundException ex)
-		{
-			error = ex;
-		}
-		finally
-		{
-			if(e != null)
-			{
-				e.close();
-			}
-		}
+		Throwable error = writeXml(file, searchStrings);
 		this.previousSearchStrings = null;
 		if(error != null)
 		{
@@ -843,28 +802,11 @@ public class ApplicationPreferences
 		return true;
 	}
 
-	public File resolveGroovyConditionScriptFile(String input)
-	{
-		if(input == null)
-		{
-			return null;
-		}
-		if(!input.endsWith(GROOVY_SUFFIX))
-		{
-			input = input + GROOVY_SUFFIX;
-		}
-		File scriptFile = new File(groovyConditionsPath, input);
-		if(scriptFile.isFile())
-		{
-			return scriptFile;
-		}
-		return null;
-	}
-
+	@SuppressWarnings("PMD.MethodReturnsInternalArray") // TODO
 	public String[] getAllGroovyConditionScriptFiles()
 	{
-		if(conditionScriptFiles == null || ((System
-			.currentTimeMillis() - lastConditionsCheck) > CONDITIONS_CHECK_INTERVAL))
+		if(conditionScriptFiles == null
+				|| ((System.currentTimeMillis() - lastConditionsCheck) > CONDITIONS_CHECK_INTERVAL))
 		{
 
 			File[] groovyFiles = groovyConditionsPath.listFiles(new GroovyConditionFileFilter());
@@ -883,17 +825,27 @@ public class ApplicationPreferences
 		return conditionScriptFiles;
 	}
 
-	public File resolveClipboardFormatterScriptFile(String input)
+	File resolveGroovyConditionScriptFile(String input)
 	{
-		if(input == null)
+		return resolveGroovyScriptFile(groovyConditionsPath, input);
+	}
+
+	File resolveClipboardFormatterScriptFile(String input)
+	{
+		return resolveGroovyScriptFile(groovyClipboardFormattersPath, input);
+	}
+
+	private static File resolveGroovyScriptFile(File parent, String relativeFile)
+	{
+		if(relativeFile == null)
 		{
 			return null;
 		}
-		if(!input.endsWith(GROOVY_SUFFIX))
+		if(!relativeFile.endsWith(GROOVY_SUFFIX))
 		{
-			input = input + GROOVY_SUFFIX;
+			relativeFile = relativeFile + GROOVY_SUFFIX;
 		}
-		File scriptFile = new File(groovyClipboardFormattersPath, input);
+		File scriptFile = new File(parent, relativeFile);
 		if(scriptFile.isFile())
 		{
 			return scriptFile;
@@ -901,6 +853,7 @@ public class ApplicationPreferences
 		return null;
 	}
 
+	@SuppressWarnings("PMD.MethodReturnsInternalArray") // TODO
 	public String[] getClipboardFormatterScriptFiles()
 	{
 		if(clipboardFormatterScriptFiles == null || ((System.currentTimeMillis() - lastClipboardFormatterCheck) > CONDITIONS_CHECK_INTERVAL))
@@ -926,56 +879,43 @@ public class ApplicationPreferences
 		return clipboardFormatterScriptFiles;
 	}
 
-	public void installExampleConditions()
+	public final void installExampleConditions()
 	{
 		String path = EXAMPLE_GROOVY_CONDITIONS_BASE + GROOVY_EXAMPLE_LIST;
-		URL url = ApplicationPreferences.class.getResource(path);
-		if(url == null)
-		{
-			if(logger.isErrorEnabled()) logger.error("Couldn't find resource at {}!", path);
-		}
-		else
-		{
-			List<String> lines = readLines(url);
-			for(String current : lines)
-			{
-				path = EXAMPLE_GROOVY_CONDITIONS_BASE + current;
-				url = ApplicationPreferences.class.getResource(path);
-				if(url == null)
-				{
-					if(logger.isErrorEnabled()) logger.error("Couldn't find resource at {}!", path);
-					continue;
-				}
-				File target = new File(groovyConditionsPath, current);
-				copy(url, target, true);
-			}
-		}
+		installFromList(logger, path, EXAMPLE_GROOVY_CONDITIONS_BASE, groovyConditionsPath);
 	}
 
-	public void installExampleClipboardFormatters()
+	public final void installExampleClipboardFormatters()
 	{
 		String path = EXAMPLE_GROOVY_CLIPBOARD_FORMATTERS_BASE + GROOVY_EXAMPLE_LIST;
-		URL url = ApplicationPreferences.class.getResource(path);
+		installFromList(logger, path, EXAMPLE_GROOVY_CLIPBOARD_FORMATTERS_BASE, groovyClipboardFormattersPath);
+	}
+
+	@SuppressWarnings("PMD.AvoidInstantiatingObjectsInLoops")
+	private static void installFromList(Logger logger, String listPath, String basePath, File targetPath)
+	{
+		URL url = ApplicationPreferences.class.getResource(listPath);
 		if(url == null)
 		{
-			if(logger.isErrorEnabled()) logger.error("Couldn't find resource at {}!", path);
+			if(logger.isErrorEnabled()) logger.error("Couldn't find resource at {}!", listPath);
 		}
 		else
 		{
 			List<String> lines = readLines(url);
 			for(String current : lines)
 			{
-				path = EXAMPLE_GROOVY_CLIPBOARD_FORMATTERS_BASE + current;
-				url = ApplicationPreferences.class.getResource(path);
+				listPath = basePath + current;
+				url = ApplicationPreferences.class.getResource(listPath);
 				if(url == null)
 				{
-					if(logger.isErrorEnabled()) logger.error("Couldn't find resource at {}!", path);
+					if(logger.isErrorEnabled()) logger.error("Couldn't find resource at {}!", listPath);
 					continue;
 				}
-				File target = new File(groovyClipboardFormattersPath, current);
-				copy(url, target, true);
+				File target = new File(targetPath, current);
+				copy(logger, url, target, true);
 			}
 		}
+
 	}
 
 	private void initLevelColors()
@@ -987,25 +927,14 @@ public class ApplicationPreferences
 
 			if(levelColorsFile.isFile())
 			{
-				XMLDecoder d = null;
-				try
+				try(XMLDecoder d = new XMLDecoder(new BufferedInputStream(Files.newInputStream(levelColorsFile.toPath()))))
 				{
-					d = new XMLDecoder(new BufferedInputStream(new FileInputStream(levelColorsFile)));
-
 					levelColors = transformToMap(LoggingEvent.Level.class, ColorScheme.class, d.readObject());
 				}
 				catch(Throwable ex)
 				{
 					if(logger.isWarnEnabled()) logger.warn("Exception while loading Level-ColorSchemes from file '"	+ levelColorsFile.getAbsolutePath() + "'!", ex);
 					levelColors = null;
-					IOUtilities.interruptIfNecessary(ex);
-				}
-				finally
-				{
-					if(d != null)
-					{
-						d.close();
-					}
 				}
 			}
 		}
@@ -1035,7 +964,7 @@ public class ApplicationPreferences
 			input = DEFAULT_LEVEL_COLOR_SCHEMES;
 		}
 
-		Map<LoggingEvent.Level, ColorScheme> result = new HashMap<LoggingEvent.Level, ColorScheme>();
+		Map<LoggingEvent.Level, ColorScheme> result = new HashMap<>();
 
 		for(Map.Entry<LoggingEvent.Level, ColorScheme> current : input.entrySet())
 		{
@@ -1066,19 +995,13 @@ public class ApplicationPreferences
 	{
 		File appPath = getStartupApplicationPath();
 		File file = new File(appPath, LEVEL_COLORS_XML_FILENAME);
-		try
+		try(BufferedOutputStream bos = new BufferedOutputStream(Files.newOutputStream(file.toPath()));XMLEncoder e = new XMLEncoder(bos))
 		{
-			BufferedOutputStream bos = new BufferedOutputStream(new FileOutputStream(file));
-			XMLEncoder e = new XMLEncoder(bos);
-			PersistenceDelegate delegate = new EnumPersistenceDelegate();
-			e.setPersistenceDelegate(LoggingEvent.Level.class, delegate);
 			e.writeObject(colors);
-			e.close();
 		}
 		catch(Throwable ex)
 		{
 			if(logger.isWarnEnabled()) logger.warn("Exception while writing colors!", ex);
-			IOUtilities.interruptIfNecessary(ex);
 		}
 	}
 
@@ -1100,25 +1023,14 @@ public class ApplicationPreferences
 
 			if(statusColorsFile.isFile())
 			{
-				XMLDecoder d = null;
-				try
+				try(XMLDecoder d = new XMLDecoder(new BufferedInputStream(Files.newInputStream(statusColorsFile.toPath()))))
 				{
-					d = new XMLDecoder(new BufferedInputStream(new FileInputStream(statusColorsFile)));
-
 					statusColors = transformToMap(HttpStatus.Type.class, ColorScheme.class, d.readObject());
 				}
 				catch(Throwable ex)
 				{
 					if(logger.isWarnEnabled()) logger.warn("Exception while loading status Status-ColorSchemes from file '" + statusColorsFile.getAbsolutePath() + "'!", ex);
 					statusColors = null;
-					IOUtilities.interruptIfNecessary(ex);
-				}
-				finally
-				{
-					if(d != null)
-					{
-						d.close();
-					}
 				}
 			}
 		}
@@ -1148,7 +1060,7 @@ public class ApplicationPreferences
 			input = DEFAULT_STATUS_COLOR_SCHEMES;
 		}
 
-		Map<HttpStatus.Type, ColorScheme> result = new HashMap<HttpStatus.Type, ColorScheme>();
+		Map<HttpStatus.Type, ColorScheme> result = new HashMap<>();
 
 		for(Map.Entry<HttpStatus.Type, ColorScheme> current : input.entrySet())
 		{
@@ -1179,19 +1091,14 @@ public class ApplicationPreferences
 	{
 		File appPath = getStartupApplicationPath();
 		File file = new File(appPath, STATUS_COLORS_XML_FILENAME);
-		try
+		try(BufferedOutputStream bos = new BufferedOutputStream(Files.newOutputStream(file.toPath()));
+		    XMLEncoder e = new XMLEncoder(bos))
 		{
-			BufferedOutputStream bos = new BufferedOutputStream(new FileOutputStream(file));
-			XMLEncoder e = new XMLEncoder(bos);
-			PersistenceDelegate delegate = new EnumPersistenceDelegate();
-			e.setPersistenceDelegate(HttpStatus.Type.class, delegate);
 			e.writeObject(colors);
-			e.close();
 		}
 		catch(Throwable ex)
 		{
 			if(logger.isWarnEnabled()) logger.warn("Exception while writing colors!", ex);
-			IOUtilities.interruptIfNecessary(ex);
 		}
 	}
 
@@ -1217,20 +1124,18 @@ public class ApplicationPreferences
 				if(logger.isDebugEnabled()) logger.debug("Won't reload source lists.");
 				return;
 			}
-			XMLDecoder d = null;
-			try
-			{
-				d = new XMLDecoder(new BufferedInputStream(new FileInputStream(sourceListsFile)));
 
+			try(XMLDecoder d = new XMLDecoder(new BufferedInputStream(Files.newInputStream(sourceListsFile.toPath()))))
+			{
 				Map<String, Set> interimMap = transformToMap(String.class, Set.class, d.readObject());
 
-				HashMap<String, Set<String>> resultMap = null;
+				Map<String, Set<String>> resultMap = null;
 				if(interimMap != null)
 				{
-					resultMap = new HashMap<String, Set<String>>();
+					resultMap = new HashMap<>();
 					for(Map.Entry<String, Set> current : interimMap.entrySet())
 					{
-						Set<String> value = transformToSet(String.class, current.getValue());
+						Set<String> value = transformToSet(logger, String.class, current.getValue());
 						if(value == null)
 						{
 							continue;
@@ -1244,27 +1149,19 @@ public class ApplicationPreferences
 			catch(Throwable ex)
 			{
 				if(logger.isWarnEnabled()) logger.warn("Exception while loading source lists from sourceListsFile '" + sourceListsFile.getAbsolutePath() + "'!", ex);
-				sourceLists = new HashMap<String, Set<String>>();
-				IOUtilities.interruptIfNecessary(ex);
-			}
-			finally
-			{
-				if(d != null)
-				{
-					d.close();
-				}
+				sourceLists = new HashMap<>();
 			}
 		}
 		else if(sourceLists == null)
 		{
-			sourceLists = new HashMap<String, Set<String>>();
+			sourceLists = new HashMap<>();
 		}
 	}
 
 	public Map<String, Set<String>> getSourceLists()
 	{
 		initSourceLists();
-		return new HashMap<String, Set<String>>(sourceLists);
+		return new HashMap<>(sourceLists);
 	}
 
 	public void setSourceLists(Map<String, Set<String>> sourceLists)
@@ -1337,7 +1234,7 @@ public class ApplicationPreferences
 		detailsViewRoot = new File(startupApplicationPath, DETAILS_VIEW_ROOT_FOLDER);
 		if(detailsViewRoot.mkdirs())
 		{
-			if(logger.isInfoEnabled()) logger.info("Created directory {}.", detailsViewRoot.getAbsolutePath());
+			if(logger.isInfoEnabled()) logger.info("Created directory {}.", detailsViewRoot.getAbsolutePath()); // NOPMD
 		}
 		try
 		{
@@ -1379,10 +1276,10 @@ public class ApplicationPreferences
 
 			try
 			{
-				FileInputStream availableFile = new FileInputStream(file);
+				InputStream availableFile = Files.newInputStream(file.toPath());
 				available = getMD5(availableFile);
 			}
-			catch(FileNotFoundException e)
+			catch(IOException e)
 			{
 				// ignore
 			}
@@ -1401,6 +1298,7 @@ public class ApplicationPreferences
 				URL historyUrl = getClass().getResource(historyBasePath + "history.txt");
 				if(historyUrl != null)
 				{
+					byte[] checksum = new byte[16];
 					List<String> historyList = readLines(historyUrl);
 
 					for(String currentLine : historyList)
@@ -1408,9 +1306,7 @@ public class ApplicationPreferences
 						InputStream is = getClass().getResourceAsStream(historyBasePath + currentLine + ".md5");
 						if(is != null)
 						{
-							DataInputStream dis = new DataInputStream(is);
-							byte[] checksum = new byte[16];
-							try
+							try(DataInputStream dis = new DataInputStream(is)) // NOPMD - AvoidInstantiatingObjectsInLoops
 							{
 								dis.readFully(checksum);
 								if(Arrays.equals(available, checksum))
@@ -1423,17 +1319,6 @@ public class ApplicationPreferences
 							catch(IOException e)
 							{
 								if(logger.isWarnEnabled()) logger.warn("Exception while reading checksum of {}!", currentLine, e);
-							}
-							finally
-							{
-								try
-								{
-									dis.close();
-								}
-								catch(IOException e)
-								{
-									// ignore
-								}
 							}
 						}
 					}
@@ -1452,45 +1337,33 @@ public class ApplicationPreferences
 			if(logger.isErrorEnabled()) logger.error("Couldn't find resource {}!", resourcePath);
 			return;
 		}
-		copy(resourceUrl, file, delete);
+		copy(logger, resourceUrl, file, delete);
 	}
 
-	private void copy(URL source, File target, boolean overwrite)
+	private static void copy(Logger logger, URL source, File target, boolean overwrite)
 	{
-		if(overwrite)
+		if(overwrite && target.isFile())
 		{
-			if(target.isFile())
+			if(target.delete())
 			{
-				if(target.delete())
-				{
-					if(logger.isInfoEnabled()) logger.info("Deleted {}. ", target.getAbsolutePath());
-				}
-				else
-				{
-					if(logger.isWarnEnabled()) logger.warn("Tried to delete {} but couldn't!", target.getAbsolutePath());
-				}
+				if(logger.isInfoEnabled()) logger.info("Deleted {}. ", target.getAbsolutePath());
+			}
+			else
+			{
+				if(logger.isWarnEnabled()) logger.warn("Tried to delete {} but couldn't!", target.getAbsolutePath());
 			}
 		}
 
 		if(!target.isFile())
 		{
-			InputStream is = null;
-			FileOutputStream os = null;
-			try
+			try(InputStream is = source.openStream();OutputStream os = Files.newOutputStream(target.toPath()))
 			{
-				os = new FileOutputStream(target);
-				is = source.openStream();
 				IOUtils.copy(is, os);
 				if(logger.isInfoEnabled()) logger.info("Initialized file at '{}' with data from '{}'.", target.getAbsolutePath(), source);
 			}
 			catch(IOException e)
 			{
-				if(logger.isWarnEnabled()) logger.warn("Exception while initializing '" + target.getAbsolutePath() + "' with data from '" + source + "'.!", e);
-			}
-			finally
-			{
-				IOUtilities.closeQuietly(is);
-				IOUtilities.closeQuietly(os);
+				if(logger.isWarnEnabled()) logger.warn("Exception while initializing '{}' with data from '{}'.!", target.getAbsolutePath(), source, e);
 			}
 		}
 		else
@@ -1506,14 +1379,15 @@ public class ApplicationPreferences
 	 * @param url the URL to read the lines from.
 	 * @return a List of type String containing all non-empty, non-comment lines.
 	 */
-	private List<String> readLines(URL url)
+	private static List<String> readLines(URL url)
 	{
-		List<String> result = new ArrayList<String>();
+		final Logger logger = LoggerFactory.getLogger(ApplicationPreferences.class);
+		List<String> result = new ArrayList<>();
 		BufferedReader reader = null;
 		try
 		{
-			reader = new BufferedReader(new InputStreamReader(url.openStream()));
-			for(; ;)
+			reader = new BufferedReader(new InputStreamReader(url.openStream(), StandardCharsets.UTF_8));
+			for(;;)
 			{
 				String currentLine = reader.readLine();
 				if(currentLine == null)
@@ -1521,7 +1395,7 @@ public class ApplicationPreferences
 					break;
 				}
 				currentLine = currentLine.trim();
-				if(!"".equals(currentLine) && !currentLine.startsWith("#"))
+				if(!currentLine.isEmpty() && currentLine.charAt(0) != '#')
 				{
 					result.add(currentLine);
 				}
@@ -1581,11 +1455,12 @@ public class ApplicationPreferences
 				return !isBlackListed(source);
 			case WHITELIST:
 				return isWhiteListed(source);
+			default: // NONE
+				return true;
 		}
-		return true;
 	}
 
-	public boolean isBlackListed(String source)
+	private boolean isBlackListed(String source)
 	{
 		if(blackList == null)
 		{
@@ -1618,7 +1493,7 @@ public class ApplicationPreferences
 		return PREFERENCES.get(BLACK_LIST_NAME_PROPERTY, "");
 	}
 
-	public boolean isWhiteListed(String source)
+	private boolean isWhiteListed(String source)
 	{
 		if(whiteList == null)
 		{
@@ -1671,7 +1546,7 @@ public class ApplicationPreferences
 		return result;
 	}
 
-	public void setCurrentTipOfTheDay(int currentTipOfTheDay)
+	void setCurrentTipOfTheDay(int currentTipOfTheDay)
 	{
 		Object oldValue = getCurrentTipOfTheDay();
 		PREFERENCES.putInt(CURRENT_TIP_OF_THE_DAY_PROPERTY, currentTipOfTheDay);
@@ -1679,7 +1554,7 @@ public class ApplicationPreferences
 		propertyChangeSupport.firePropertyChange(CURRENT_TIP_OF_THE_DAY_PROPERTY, oldValue, newValue);
 	}
 
-	public int getCurrentTipOfTheDay()
+	int getCurrentTipOfTheDay()
 	{
 		return PREFERENCES.getInt(CURRENT_TIP_OF_THE_DAY_PROPERTY, -1);
 	}
@@ -1723,19 +1598,6 @@ public class ApplicationPreferences
 		return PREFERENCES.getBoolean(GLOBAL_LOGGING_ENABLED_PROPERTY, DEFAULT_VALUES.isGlobalLoggingEnabled());
 	}
 
-	public void setLoggingStatisticEnabled(boolean enabled)
-	{
-		Object oldValue = isLoggingStatisticEnabled();
-		PREFERENCES.putBoolean(LOGGING_STATISTIC_ENABLED_PROPERTY, enabled);
-		Object newValue = isLoggingStatisticEnabled();
-		propertyChangeSupport.firePropertyChange(LOGGING_STATISTIC_ENABLED_PROPERTY, oldValue, newValue);
-	}
-
-	public boolean isLoggingStatisticEnabled()
-	{
-		return PREFERENCES.getBoolean(LOGGING_STATISTIC_ENABLED_PROPERTY, DEFAULT_VALUES.isLoggingStatisticEnabled());
-	}
-
 
 	private void initConditions()
 	{
@@ -1750,36 +1612,26 @@ public class ApplicationPreferences
 				if(logger.isDebugEnabled()) logger.debug("Won't reload conditions.");
 				return;
 			}
-			XMLDecoder d = null;
-			try
-			{
-				d = new XMLDecoder(new BufferedInputStream(new FileInputStream(conditionsFile)));
 
-				conditions = transformToList(SavedCondition.class, d.readObject());
+			try(XMLDecoder d = new XMLDecoder(new BufferedInputStream(Files.newInputStream(conditionsFile.toPath()))))
+			{
+				conditions = transformToList(logger, SavedCondition.class, d.readObject());
 				lastConditionsModified = lastModified;
 				if(logger.isDebugEnabled()) logger.debug("Loaded conditions {}.", conditions);
 			}
 			catch(Throwable ex)
 			{
 				if(logger.isWarnEnabled()) logger.warn("Exception while loading conditions from file '" + conditionsFile.getAbsolutePath() + "'!", ex);
-				IOUtilities.interruptIfNecessary(ex);
-			}
-			finally
-			{
-				if(d != null)
-				{
-					d.close();
-				}
 			}
 		}
 
 		if(conditions == null)
 		{
-			conditions = new ArrayList<SavedCondition>();
+			conditions = new ArrayList<>();
 		}
 	}
 
-	public SavedCondition resolveSavedCondition(Condition condition)
+	SavedCondition resolveSavedCondition(Condition condition)
 	{
 		if(condition == null)
 		{
@@ -1832,8 +1684,8 @@ public class ApplicationPreferences
 	{
 		initConditions();
 
-		// perform deep clone... otherwise no propchange would be fired.
-		ArrayList<SavedCondition> result = new ArrayList<SavedCondition>(conditions.size());
+		// perform deep clone... otherwise no property change would be fired.
+		ArrayList<SavedCondition> result = new ArrayList<>(conditions.size());
 		for(SavedCondition current : conditions)
 		{
 			try
@@ -1853,12 +1705,11 @@ public class ApplicationPreferences
 	{
 		initConditions();
 
-		// perform deep clone... otherwise no propchange would be fired.
-		ArrayList<String> result = new ArrayList<String>(conditions.size());
-		for(SavedCondition current : conditions)
-		{
-			result.add(current.getName());
-		}
+		// perform deep clone... otherwise no property change would be fired.
+		ArrayList<String> result = new ArrayList<>(conditions.size());
+		result.addAll(conditions.stream()
+				.map(SavedCondition::getName)
+				.collect(Collectors.toList()));
 
 		return result;
 	}
@@ -1910,10 +1761,23 @@ public class ApplicationPreferences
 		return PREFERENCES.getBoolean(HIDING_ON_CLOSE_PROPERTY, DEFAULT_VALUES.isHidingOnClose());
 	}
 
-	public void setShowingToolbar(boolean showingToolbarName)
+	public boolean isScrollingSmoothly()
+	{
+		return PREFERENCES.getBoolean(SCROLLING_SMOOTHLY_PROPERTY, DEFAULT_VALUES.isScrollingSmoothly());
+	}
+
+	public void setScrollingSmoothly(boolean scrollingSmoothly)
+	{
+		Object oldValue = isScrollingSmoothly();
+		PREFERENCES.putBoolean(SCROLLING_SMOOTHLY_PROPERTY, scrollingSmoothly);
+		Object newValue = isScrollingSmoothly();
+		propertyChangeSupport.firePropertyChange(SCROLLING_SMOOTHLY_PROPERTY, oldValue, newValue);
+	}
+
+	public void setShowingToolbar(boolean showingToolbar)
 	{
 		Object oldValue = isShowingToolbar();
-		PREFERENCES.putBoolean(SHOWING_TOOLBAR_PROPERTY, showingToolbarName);
+		PREFERENCES.putBoolean(SHOWING_TOOLBAR_PROPERTY, showingToolbar);
 		Object newValue = isShowingToolbar();
 		propertyChangeSupport.firePropertyChange(SHOWING_TOOLBAR_PROPERTY, oldValue, newValue);
 	}
@@ -1923,31 +1787,44 @@ public class ApplicationPreferences
 		return PREFERENCES.getBoolean(SHOWING_TOOLBAR_PROPERTY, DEFAULT_VALUES.isShowingToolbar());
 	}
 
-	public boolean isShowingStatusbar()
+	public boolean isShowingStatusBar()
 	{
-		return PREFERENCES.getBoolean(SHOWING_STATUSBAR_PROPERTY, DEFAULT_VALUES.isShowingStatusbar());
+		return PREFERENCES.getBoolean(SHOWING_STATUS_BAR_PROPERTY, DEFAULT_VALUES.isShowingStatusBar());
 	}
 
-	public void setShowingStatusbar(boolean showingStatusbarName)
+	public void setShowingStatusBar(boolean showingStatusBar)
 	{
-		Object oldValue = isShowingStatusbar();
-		PREFERENCES.putBoolean(SHOWING_STATUSBAR_PROPERTY, showingStatusbarName);
-		Object newValue = isShowingStatusbar();
-		propertyChangeSupport.firePropertyChange(SHOWING_STATUSBAR_PROPERTY, oldValue, newValue);
+		Object oldValue = isShowingStatusBar();
+		PREFERENCES.putBoolean(SHOWING_STATUS_BAR_PROPERTY, showingStatusBar);
+		Object newValue = isShowingStatusBar();
+		propertyChangeSupport.firePropertyChange(SHOWING_STATUS_BAR_PROPERTY, oldValue, newValue);
 	}
 
 
-	public void setShowingIdentifier(boolean showingIdentifierWithName)
+	public void setShowingPrimaryIdentifier(boolean showingPrimaryIdentifier)
 	{
-		Object oldValue = isShowingIdentifier();
-		PREFERENCES.putBoolean(SHOWING_IDENTIFIER_PROPERTY, showingIdentifierWithName);
-		Object newValue = isShowingIdentifier();
-		propertyChangeSupport.firePropertyChange(SHOWING_IDENTIFIER_PROPERTY, oldValue, newValue);
+		Object oldValue = isShowingPrimaryIdentifier();
+		PREFERENCES.putBoolean(SHOWING_PRIMARY_IDENTIFIER_PROPERTY, showingPrimaryIdentifier);
+		Object newValue = isShowingPrimaryIdentifier();
+		propertyChangeSupport.firePropertyChange(SHOWING_PRIMARY_IDENTIFIER_PROPERTY, oldValue, newValue);
 	}
 
-	public boolean isShowingIdentifier()
+	public boolean isShowingPrimaryIdentifier()
 	{
-		return PREFERENCES.getBoolean(SHOWING_IDENTIFIER_PROPERTY, DEFAULT_VALUES.isShowingIdentifier());
+		return PREFERENCES.getBoolean(SHOWING_PRIMARY_IDENTIFIER_PROPERTY, DEFAULT_VALUES.isShowingPrimaryIdentifier());
+	}
+
+	public void setShowingSecondaryIdentifier(boolean showingSecondaryIdentifier)
+	{
+		Object oldValue = isShowingSecondaryIdentifier();
+		PREFERENCES.putBoolean(SHOWING_SECONDARY_IDENTIFIER_PROPERTY, showingSecondaryIdentifier);
+		Object newValue = isShowingSecondaryIdentifier();
+		propertyChangeSupport.firePropertyChange(SHOWING_SECONDARY_IDENTIFIER_PROPERTY, oldValue, newValue);
+	}
+
+	public boolean isShowingSecondaryIdentifier()
+	{
+		return PREFERENCES.getBoolean(SHOWING_SECONDARY_IDENTIFIER_PROPERTY, DEFAULT_VALUES.isShowingPrimaryIdentifier());
 	}
 
 	public void setSplashScreenDisabled(boolean splashScreenDisabled)
@@ -1976,23 +1853,23 @@ public class ApplicationPreferences
 		return PREFERENCES.getBoolean(ASKING_BEFORE_QUIT_PROPERTY, DEFAULT_VALUES.isAskingBeforeQuit());
 	}
 
-	public void setShowingFullCallstack(boolean showingFullCallstack)
+	public void setShowingFullCallStack(boolean showingFullCallStack)
 	{
-		Object oldValue = isShowingFullCallstack();
-		PREFERENCES.putBoolean(SHOWING_FULL_CALLSTACK_PROPERTY, showingFullCallstack);
-		Object newValue = isShowingFullCallstack();
-		propertyChangeSupport.firePropertyChange(SHOWING_FULL_CALLSTACK_PROPERTY, oldValue, newValue);
+		Object oldValue = isShowingFullCallStack();
+		PREFERENCES.putBoolean(SHOWING_FULL_CALL_STACK_PROPERTY, showingFullCallStack);
+		Object newValue = isShowingFullCallStack();
+		propertyChangeSupport.firePropertyChange(SHOWING_FULL_CALL_STACK_PROPERTY, oldValue, newValue);
 	}
 
-	public boolean isShowingFullCallstack()
+	public boolean isShowingFullCallStack()
 	{
-		return PREFERENCES.getBoolean(SHOWING_FULL_CALLSTACK_PROPERTY, DEFAULT_VALUES.isShowingFullCallstack());
+		return PREFERENCES.getBoolean(SHOWING_FULL_CALL_STACK_PROPERTY, DEFAULT_VALUES.isShowingFullCallStack());
 	}
 
-	public void setUsingWrappedExceptionStyle(boolean showingFullCallstack)
+	public void setUsingWrappedExceptionStyle(boolean usingWrappedExceptionStyle)
 	{
 		Object oldValue = isUsingWrappedExceptionStyle();
-		PREFERENCES.putBoolean(USING_WRAPPED_EXCEPTION_STYLE_PROPERTY, showingFullCallstack);
+		PREFERENCES.putBoolean(USING_WRAPPED_EXCEPTION_STYLE_PROPERTY, usingWrappedExceptionStyle);
 		Object newValue = isUsingWrappedExceptionStyle();
 		propertyChangeSupport.firePropertyChange(USING_WRAPPED_EXCEPTION_STYLE_PROPERTY, oldValue, newValue);
 	}
@@ -2080,30 +1957,7 @@ public class ApplicationPreferences
 		return PREFERENCES.getBoolean(AUTO_CLOSING_PROPERTY, DEFAULT_VALUES.isAutoClosing());
 	}
 
-	public File getImagePath()
-	{
-		String imagePath = PREFERENCES.get(IMAGE_PATH_PROPERTY, USER_HOME);
-		File result = new File(imagePath);
-		if(!result.isDirectory())
-		{
-			result = new File(USER_HOME);
-		}
-		return result;
-	}
-
-	public void setImagePath(File imagePath)
-	{
-		if(!imagePath.isDirectory())
-		{
-			throw new IllegalArgumentException("'" + imagePath.getAbsolutePath() + "' is not a directory!");
-		}
-		Object oldValue = getImagePath();
-		PREFERENCES.put(IMAGE_PATH_PROPERTY, imagePath.getAbsolutePath());
-		Object newValue = getImagePath();
-		propertyChangeSupport.firePropertyChange(IMAGE_PATH_PROPERTY, oldValue, newValue);
-	}
-
-	public File getPreviousOpenPath()
+	File getPreviousOpenPath()
 	{
 		String imagePath = PREFERENCES.get(PREVIOUS_OPEN_PATH_PROPERTY, USER_HOME);
 		File result = new File(imagePath);
@@ -2114,7 +1968,7 @@ public class ApplicationPreferences
 		return result;
 	}
 
-	public void setPreviousOpenPath(File openPath)
+	void setPreviousOpenPath(File openPath)
 	{
 		if(!openPath.isDirectory())
 		{
@@ -2126,7 +1980,7 @@ public class ApplicationPreferences
 		propertyChangeSupport.firePropertyChange(PREVIOUS_OPEN_PATH_PROPERTY, oldValue, newValue);
 	}
 
-	public File getPreviousImportPath()
+	File getPreviousImportPath()
 	{
 		String path = PREFERENCES.get(PREVIOUS_IMPORT_PATH_PROPERTY, USER_HOME);
 		File result = new File(path);
@@ -2137,7 +1991,7 @@ public class ApplicationPreferences
 		return result;
 	}
 
-	public void setPreviousImportPath(File importPath)
+	void setPreviousImportPath(File importPath)
 	{
 		if(!importPath.isDirectory())
 		{
@@ -2149,7 +2003,7 @@ public class ApplicationPreferences
 		propertyChangeSupport.firePropertyChange(PREVIOUS_IMPORT_PATH_PROPERTY, oldValue, newValue);
 	}
 
-	public File getPreviousExportPath()
+	File getPreviousExportPath()
 	{
 		String path = PREFERENCES.get(PREVIOUS_EXPORT_PATH_PROPERTY, USER_HOME);
 		File result = new File(path);
@@ -2160,7 +2014,7 @@ public class ApplicationPreferences
 		return result;
 	}
 
-	public void setPreviousExportPath(File exportPath)
+	void setPreviousExportPath(File exportPath)
 	{
 		if(!exportPath.isDirectory())
 		{
@@ -2195,7 +2049,7 @@ public class ApplicationPreferences
 		propertyChangeSupport.firePropertyChange(SOUND_PATH_PROPERTY, oldValue, newValue);
 	}
 
-	public void setScaleFactor(double scale)
+	void setScaleFactor(double scale)
 	{
 		Object oldValue = getScaleFactor();
 		PREFERENCES.putDouble(SCALE_FACTOR_PROPERTY, scale);
@@ -2203,7 +2057,7 @@ public class ApplicationPreferences
 		propertyChangeSupport.firePropertyChange(SCALE_FACTOR_PROPERTY, oldValue, newValue);
 	}
 
-	public double getScaleFactor()
+	double getScaleFactor()
 	{
 		return PREFERENCES.getDouble(SCALE_FACTOR_PROPERTY, 1.0d);
 	}
@@ -2245,7 +2099,7 @@ public class ApplicationPreferences
 	{
 		if(applicationPath.mkdirs())
 		{
-			if(logger.isInfoEnabled()) logger.info("Created directory {}.", applicationPath.getAbsolutePath());
+			if(logger.isInfoEnabled()) logger.info("Created directory {}.", applicationPath.getAbsolutePath()); // NOPMD
 		}
 		if(!applicationPath.isDirectory())
 		{
@@ -2257,13 +2111,13 @@ public class ApplicationPreferences
 		propertyChangeSupport.firePropertyChange(APPLICATION_PATH_PROPERTY, oldValue, newValue);
 	}
 
-	public File getApplicationPath()
+	public final File getApplicationPath()
 	{
 		String appPath = PREFERENCES.get(APPLICATION_PATH_PROPERTY, DEFAULT_APPLICATION_PATH);
 		File result = new File(appPath);
 		if(result.mkdirs())
 		{
-			if(logger.isInfoEnabled()) logger.info("Created directory {}.", result.getAbsolutePath());
+			if(logger.isInfoEnabled()) logger.info("Created directory {}.", result.getAbsolutePath()); // NOPMD
 		}
 		return result;
 	}
@@ -2363,23 +2217,17 @@ public class ApplicationPreferences
 		File appPath = getStartupApplicationPath();
 		File sourceNamesFile = new File(appPath, SOURCE_NAMES_XML_FILENAME);
 
-		if(sourceNamesFile.isFile())
+		if(sourceNamesFile.isFile() && loadSourceNamesXml(sourceNamesFile))
 		{
-			if(loadSourceNamesXml(sourceNamesFile))
-			{
-				return new HashMap<String, String>(sourceNames);
-			}
+			return new HashMap<>(sourceNames);
 		}
 
 		sourceNamesFile = new File(appPath, SOURCE_NAMES_PROPERTIES_FILENAME);
-		if(sourceNamesFile.isFile())
+		if(sourceNamesFile.isFile() && loadSourceNamesProperties(sourceNamesFile))
 		{
-			if(loadSourceNamesProperties(sourceNamesFile))
-			{
-				return new HashMap<String, String>(sourceNames);
-			}
+			return new HashMap<>(sourceNames);
 		}
-		return new HashMap<String, String>(DEFAULT_SOURCE_NAMES);
+		return new HashMap<>(DEFAULT_SOURCE_NAMES);
 	}
 
 
@@ -2388,15 +2236,12 @@ public class ApplicationPreferences
 		File appPath = getStartupApplicationPath();
 		File file = new File(appPath, SOUND_LOCATIONS_XML_FILENAME);
 
-		if(file.isFile())
+		if(file.isFile() && loadSoundLocationsXml(file))
 		{
-			if(loadSoundLocationsXml(file))
-			{
-				return new HashMap<String, String>(soundLocations);
-			}
+			return new HashMap<>(soundLocations);
 		}
 
-		return new HashMap<String, String>(DEFAULT_SOUND_LOCATIONS);
+		return new HashMap<>(DEFAULT_SOUND_LOCATIONS);
 	}
 
 	public void setSoundLocations(Map<String, String> soundLocations)
@@ -2407,7 +2252,7 @@ public class ApplicationPreferences
 		propertyChangeSupport.firePropertyChange(SOUND_LOCATIONS_PROPERTY, oldValue, newValue);
 	}
 
-	public void resetSoundLocations()
+	private void resetSoundLocations()
 	{
 		if(logger.isInfoEnabled()) logger.info("Initializing preferences with default sound locations.");
 		setSoundLocations(DEFAULT_SOUND_LOCATIONS);
@@ -2418,10 +2263,12 @@ public class ApplicationPreferences
 		propertyChangeSupport.addPropertyChangeListener(listener);
 	}
 
+	/*
 	public void removePropertyChangeListener(PropertyChangeListener listener)
 	{
 		propertyChangeSupport.removePropertyChangeListener(listener);
 	}
+	*/
 
 	public void reset()
 	{
@@ -2467,13 +2314,10 @@ public class ApplicationPreferences
 		{
 			lastSoundLocationsModified = lastModified;
 			// correct values, i.e. add missing keys
-			for(Map.Entry<String, String> current : DEFAULT_SOUND_LOCATIONS.entrySet())
-			{
-				if(!props.containsKey(current.getKey()))
-				{
-					props.put(current.getKey(), "");
-				}
-			}
+			DEFAULT_SOUND_LOCATIONS.entrySet().stream()
+					.filter(current -> !props.containsKey(current.getKey()))
+					.forEach(current -> props.put(current.getKey(), ""));
+
 			soundLocations = props;
 			return true;
 		}
@@ -2535,25 +2379,7 @@ public class ApplicationPreferences
 	{
 		File appPath = getStartupApplicationPath();
 		File file = new File(appPath, SOURCE_LISTS_XML_FILENAME);
-		XMLEncoder e = null;
-		Throwable error = null;
-		try
-		{
-			BufferedOutputStream bos = new BufferedOutputStream(new FileOutputStream(file));
-			e = new XMLEncoder(bos);
-			e.writeObject(sourceLists);
-		}
-		catch(FileNotFoundException ex)
-		{
-			error = ex;
-		}
-		finally
-		{
-			if(e != null)
-			{
-				e.close();
-			}
-		}
+		Throwable error = writeXml(file, sourceLists);
 		if(error != null)
 		{
 			if(logger.isWarnEnabled()) logger.warn("Exception while writing source lists!", error);
@@ -2570,12 +2396,12 @@ public class ApplicationPreferences
 		Throwable error = null;
 		try
 		{
-			BufferedOutputStream bos = new BufferedOutputStream(new FileOutputStream(file));
+			BufferedOutputStream bos = new BufferedOutputStream(Files.newOutputStream(file.toPath()));
 			e = new XMLEncoder(bos);
 			e.writeObject(conditions);
 			if(logger.isInfoEnabled()) logger.info("Wrote conditions {}.", conditions);
 		}
-		catch(FileNotFoundException ex)
+		catch(IOException ex)
 		{
 			error = ex;
 		}
@@ -2601,33 +2427,36 @@ public class ApplicationPreferences
 	 */
 	private Map<String, String> loadPropertiesXml(File file)
 	{
-		InputStream is = null;
-		try
+		try(InputStream is = new BufferedInputStream(Files.newInputStream(file.toPath())))
 		{
-			is = new BufferedInputStream(new FileInputStream(file));
 			Properties props = new Properties();
 			props.loadFromXML(is);
-			Map<String, String> result = new HashMap<String, String>();
-			for(Object keyObj : props.keySet())
-			{
-				String key = (String) keyObj;
-				String value = (String) props.get(key);
-				if(value != null)
-				{
-					result.put(key, value);
-				}
-			}
-			return result;
+			return convert(props);
 		}
 		catch(IOException e)
 		{
-			if(logger.isWarnEnabled()) logger.warn("Couldn't load properties from '" + file.getAbsolutePath() + "'!", e);
-		}
-		finally
-		{
-			IOUtilities.closeQuietly(is);
+			if(logger.isWarnEnabled()) logger.warn("Couldn't load properties from '{}'!", file.getAbsolutePath(), e);
 		}
 		return null;
+	}
+
+	private static Map<String, String> convert(Properties props)
+	{
+		if(props == null)
+		{
+			return null;
+		}
+		Map<String, String> result = new HashMap<>();
+		for(Object keyObj : props.keySet())
+		{
+			String key = (String) keyObj;
+			String value = (String) props.get(key);
+			if(value != null)
+			{
+				result.put(key, value);
+			}
+		}
+		return result;
 	}
 
 	/**
@@ -2649,66 +2478,36 @@ public class ApplicationPreferences
 				output.put(key, value);
 			}
 		}
-		OutputStream os = null;
-		Throwable error = null;
-		try
+
+		try(OutputStream os = new BufferedOutputStream(Files.newOutputStream(file.toPath())))
 		{
-			os = new BufferedOutputStream(new FileOutputStream(file));
-			output.storeToXML(os, comment, "UTF-8");
-		}
-		catch(FileNotFoundException e)
-		{
-			error = e;
+			output.storeToXML(os, comment, StandardCharsets.UTF_8.toString());
+			return true;
 		}
 		catch(IOException e)
 		{
-			error = e;
-		}
-		finally
-		{
-			IOUtilities.closeQuietly(os);
-		}
-		if(error != null)
-		{
-			if(logger.isWarnEnabled()) logger.warn("Exception while writing source names!", error);
+			if(logger.isWarnEnabled()) logger.warn("Exception while writing source names!", e);
 			return false;
 		}
-		return true;
 	}
 
 
 	private Map<String, String> loadProperties(File file)
 	{
-		InputStream is = null;
-		try
+		try(InputStream is = new BufferedInputStream(Files.newInputStream(file.toPath())))
 		{
-			is = new BufferedInputStream(new FileInputStream(file));
 			Properties props = new Properties();
 			props.load(is);
-			Map<String, String> result = new HashMap<String, String>();
-			for(Object keyObj : props.keySet())
-			{
-				String key = (String) keyObj;
-				String value = (String) props.get(key);
-				if(value != null)
-				{
-					result.put(key, value);
-				}
-			}
-			return result;
+			return convert(props);
 		}
 		catch(IOException e)
 		{
 			if(logger.isWarnEnabled()) logger.warn("Couldn't load properties from '" + file.getAbsolutePath() + "'!", e);
 		}
-		finally
-		{
-			IOUtilities.closeQuietly(is);
-		}
 		return null;
 	}
 
-	public void writeLoggingColumnLayout(boolean global, List<PersistentTableColumnModel.TableColumnLayoutInfo> layoutInfos)
+	public void writeLoggingColumnLayout(boolean global, List<PersistentTableColumnModel.TableColumnLayoutInfo> layoutInfo)
 	{
 		File appPath = getStartupApplicationPath();
 		File file;
@@ -2720,10 +2519,10 @@ public class ApplicationPreferences
 		{
 			file = new File(appPath, LOGGING_LAYOUT_XML_FILENAME);
 		}
-		writeColumnLayout(file, layoutInfos);
+		writeColumnLayout(file, layoutInfo);
 	}
 
-	public void writeAccessColumnLayout(boolean global, List<PersistentTableColumnModel.TableColumnLayoutInfo> layoutInfos)
+	public void writeAccessColumnLayout(boolean global, List<PersistentTableColumnModel.TableColumnLayoutInfo> layoutInfo)
 	{
 		File appPath = getStartupApplicationPath();
 		File file;
@@ -2735,7 +2534,7 @@ public class ApplicationPreferences
 		{
 			file = new File(appPath, ACCESS_LAYOUT_XML_FILENAME);
 		}
-		writeColumnLayout(file, layoutInfos);
+		writeColumnLayout(file, layoutInfo);
 	}
 
 	public List<PersistentTableColumnModel.TableColumnLayoutInfo> readLoggingColumnLayout(boolean global)
@@ -2768,18 +2567,18 @@ public class ApplicationPreferences
 		return readColumnLayout(file);
 	}
 
-	private boolean writeColumnLayout(File file, List<PersistentTableColumnModel.TableColumnLayoutInfo> layoutInfos)
+	private boolean writeColumnLayout(File file, List<PersistentTableColumnModel.TableColumnLayoutInfo> layoutInfo)
 	{
 		XMLEncoder e = null;
 		Throwable error = null;
 		try
 		{
-			BufferedOutputStream bos = new BufferedOutputStream(new FileOutputStream(file));
+			BufferedOutputStream bos = new BufferedOutputStream(Files.newOutputStream(file.toPath()));
 			e = new XMLEncoder(bos);
-			e.writeObject(layoutInfos);
-			if(logger.isInfoEnabled()) logger.info("Wrote layouts {} to file '{}'.", layoutInfos, file.getAbsolutePath());
+			e.writeObject(layoutInfo);
+			if(logger.isInfoEnabled()) logger.info("Wrote layouts {} to file '{}'.", layoutInfo, file.getAbsolutePath());
 		}
-		catch(FileNotFoundException ex)
+		catch(IOException ex)
 		{
 			error = ex;
 		}
@@ -2800,28 +2599,16 @@ public class ApplicationPreferences
 
 	private List<PersistentTableColumnModel.TableColumnLayoutInfo> readColumnLayout(File file)
 	{
-		XMLDecoder d = null;
-		List<PersistentTableColumnModel.TableColumnLayoutInfo> result;
-		try
+		try(XMLDecoder d = new XMLDecoder(new BufferedInputStream(Files.newInputStream(file.toPath()))))
 		{
-			d = new XMLDecoder(new BufferedInputStream(new FileInputStream(file)));
-
-			result = transformToList(PersistentTableColumnModel.TableColumnLayoutInfo.class, d.readObject());
+			return transformToList(logger, PersistentTableColumnModel.TableColumnLayoutInfo.class, d.readObject());
 		}
 		catch(Throwable ex)
 		{
 			if(logger.isInfoEnabled()) logger.info("Exception while loading layouts from file '{}'':", file.getAbsolutePath(), ex.getMessage());
-			result = null;
-			IOUtilities.interruptIfNecessary(ex);
 		}
-		finally
-		{
-			if(d != null)
-			{
-				d.close();
-			}
-		}
-		return result;
+
+		return null;
 	}
 
 	/**
@@ -2831,6 +2618,7 @@ public class ApplicationPreferences
 	 * @param input the input
 	 * @return the checksum
 	 */
+	@SuppressWarnings("PMD.ReturnEmptyArrayRatherThanNull")
 	public static byte[] getMD5(InputStream input)
 	{
 		if(input == null)
@@ -2842,7 +2630,7 @@ public class ApplicationPreferences
 		{
 			messageDigest = MessageDigest.getInstance("MD5");
 			byte[] buffer = new byte[1024];
-			for(; ;)
+			for(;;)
 			{
 				int read = input.read(buffer);
 				if(read < 0)
@@ -2857,7 +2645,6 @@ public class ApplicationPreferences
 		{
 			final Logger logger = LoggerFactory.getLogger(ApplicationPreferences.class);
 			if(logger.isWarnEnabled()) logger.warn("Exception while calculating checksum!", ex);
-			IOUtilities.interruptIfNecessary(ex);
 		}
 		finally
 		{
@@ -2885,7 +2672,7 @@ public class ApplicationPreferences
 		}
 	}
 
-	public boolean isReplacingOnApply(ActionEvent event)
+	boolean isReplacingOnApply(ActionEvent event)
 	{
 		// TODO make default behavior configurable.
 		boolean result = false;
@@ -2896,21 +2683,13 @@ public class ApplicationPreferences
 		return result;
 	}
 
-	/**
-	 * As described in http://weblogs.java.net/blog/malenkov/archive/2006/08/how_to_encode_e.html
-	 */
-	static class EnumPersistenceDelegate
-		extends PersistenceDelegate
+	public void setUsingScreenMenuBar(boolean usingScreenMenuBar)
 	{
-		protected boolean mutatesTo(Object oldInstance, Object newInstance)
-		{
-			return oldInstance == newInstance;
-		}
+		this.usingScreenMenuBar = usingScreenMenuBar;
+	}
 
-		protected Expression instantiate(Object oldInstance, Encoder out)
-		{
-			Enum e = (Enum) oldInstance;
-			return new Expression(e, e.getClass(), "valueOf", new Object[]{e.name()});
-		}
+	boolean isUsingScreenMenuBar()
+	{
+		return usingScreenMenuBar;
 	}
 }

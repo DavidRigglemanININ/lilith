@@ -1,23 +1,23 @@
 /*
  * Lilith - a log event viewer.
- * Copyright (C) 2007-2011 Joern Huxhorn
- * 
+ * Copyright (C) 2007-2018 Joern Huxhorn
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 /*
- * Copyright 2007-2011 Joern Huxhorn
+ * Copyright 2007-2018 Joern Huxhorn
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,24 +34,23 @@
 
 package de.huxhorn.lilith.data.logging.xml;
 
+import de.huxhorn.lilith.data.eventsource.LoggerContext;
 import de.huxhorn.lilith.data.logging.ExtendedStackTraceElement;
 import de.huxhorn.lilith.data.logging.LoggingEvent;
 import de.huxhorn.lilith.data.logging.Marker;
 import de.huxhorn.lilith.data.logging.Message;
 import de.huxhorn.lilith.data.logging.ThreadInfo;
 import de.huxhorn.lilith.data.logging.ThrowableInfo;
-import de.huxhorn.lilith.data.eventsource.LoggerContext;
 import de.huxhorn.sulky.stax.DateTimeFormatter;
 import de.huxhorn.sulky.stax.GenericStreamWriter;
 import de.huxhorn.sulky.stax.StaxUtilities;
 import de.huxhorn.sulky.stax.WhiteSpaceHandling;
-
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
-
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamWriter;
 
@@ -59,9 +58,8 @@ public class LoggingEventWriter
 	implements GenericStreamWriter<LoggingEvent>, LoggingEventSchemaConstants
 {
 	private String preferredPrefix;
-	private String prefix;
 	private boolean sortingMaps;
-	private DateTimeFormatter dateTimeFormatter;
+	private final DateTimeFormatter dateTimeFormatter;
 	private boolean writingSchemaLocation;
 	private TimeStampType timeStampType;
 
@@ -71,7 +69,6 @@ public class LoggingEventWriter
 		ONLY_MILLIS,
 		BOTH
 	}
-
 
 	public LoggingEventWriter()
 	{
@@ -119,17 +116,18 @@ public class LoggingEventWriter
 		this.preferredPrefix = prefix;
 	}
 
+	@Override
 	public void write(XMLStreamWriter writer, LoggingEvent event, boolean isRoot)
 		throws XMLStreamException
 	{
 		if(isRoot)
 		{
-			writer.writeStartDocument("utf-8", "1.0");
+			writer.writeStartDocument(StandardCharsets.UTF_8.toString(), "1.0");
 		}
 
 		StaxUtilities.NamespaceInfo ni = StaxUtilities
 			.setNamespace(writer, preferredPrefix, NAMESPACE_URI, DEFAULT_NAMESPACE_PREFIX);
-		prefix = ni.getPrefix();
+		String prefix = ni.getPrefix();
 		StaxUtilities.writeStartElement(writer, prefix, NAMESPACE_URI, LOGGING_EVENT_NODE);
 		if(ni.isCreated())
 		{
@@ -152,7 +150,7 @@ public class LoggingEventWriter
 				NAMESPACE_URI + " " + NAMESPACE_LOCATION);
 		}
 		StaxUtilities.writeAttribute(writer, false, prefix, NAMESPACE_URI, LOGGER_ATTRIBUTE, event.getLogger());
-		StaxUtilities.writeAttribute(writer, false, prefix, NAMESPACE_URI, LEVEL_ATTRIBUTE, "" + event.getLevel());
+		StaxUtilities.writeAttribute(writer, false, prefix, NAMESPACE_URI, LEVEL_ATTRIBUTE, String.valueOf(event.getLevel()));
 		Long sequence = event.getSequenceNumber();
 		if(sequence != null)
 		{
@@ -165,6 +163,7 @@ public class LoggingEventWriter
 			String name = threadInfo.getName();
 			Long groupId = threadInfo.getGroupId();
 			String groupName = threadInfo.getGroupName();
+			Integer priority = threadInfo.getPriority();
 			if(name != null)
 			{
 				StaxUtilities
@@ -173,7 +172,7 @@ public class LoggingEventWriter
 			if(id != null)
 			{
 				StaxUtilities
-					.writeAttributeIfNotNull(writer, false, prefix, NAMESPACE_URI, THREAD_ID_ATTRIBUTE, "" + id);
+					.writeAttributeIfNotNull(writer, false, prefix, NAMESPACE_URI, THREAD_ID_ATTRIBUTE, Long.toString(id));
 			}
 			if(groupName != null)
 			{
@@ -183,7 +182,12 @@ public class LoggingEventWriter
 			if(groupId != null)
 			{
 				StaxUtilities
-					.writeAttributeIfNotNull(writer, false, prefix, NAMESPACE_URI, THREAD_GROUP_ID_ATTRIBUTE, "" + groupId);
+					.writeAttributeIfNotNull(writer, false, prefix, NAMESPACE_URI, THREAD_GROUP_ID_ATTRIBUTE, Long.toString(groupId));
+			}
+			if(priority != null)
+			{
+				StaxUtilities
+						.writeAttributeIfNotNull(writer, false, prefix, NAMESPACE_URI, THREAD_PRIORITY_ATTRIBUTE, Integer.toString(priority));
 			}
 		}
 
@@ -198,7 +202,7 @@ public class LoggingEventWriter
 			if(timeStampType == TimeStampType.ONLY_MILLIS || timeStampType == TimeStampType.BOTH)
 			{
 				StaxUtilities
-					.writeAttribute(writer, false, prefix, NAMESPACE_URI, TIMESTAMP_MILLIS_ATTRIBUTE, "" + timeStamp);
+					.writeAttribute(writer, false, prefix, NAMESPACE_URI, TIMESTAMP_MILLIS_ATTRIBUTE, Long.toString(timeStamp));
 			}
 		}
 		Message message = event.getMessage();
@@ -209,14 +213,14 @@ public class LoggingEventWriter
 			{
 				StaxUtilities.writeSimpleTextNode(writer, prefix, NAMESPACE_URI, MESSAGE_NODE, messagePattern);
 			}
-			writeArguments(writer, message.getArguments());
+			writeArguments(writer, prefix, message.getArguments());
 		}
-		writeThrowable(writer, event);
-		writeStringMap(writer, event.getMdc(), MDC_NODE);
-		writeNdc(writer, event);
-		writeMarker(writer, event);
-		writeCallStack(writer, event);
-		writeLoggerContext(writer, event);
+		writeThrowable(writer, prefix, event);
+		writeStringMap(writer, prefix, event.getMdc(), MDC_NODE);
+		writeNdc(writer, prefix, event);
+		writeMarker(writer, prefix, event);
+		writeCallStack(writer, prefix, event);
+		writeLoggerContext(writer, prefix, event);
 		writer.writeEndElement();
 		if(isRoot)
 		{
@@ -224,7 +228,7 @@ public class LoggingEventWriter
 		}
 	}
 
-	private void writeLoggerContext(XMLStreamWriter writer, LoggingEvent event)
+	private void writeLoggerContext(XMLStreamWriter writer, String prefix, LoggingEvent event)
 		throws XMLStreamException
 	{
 		LoggerContext context = event.getLoggerContext();
@@ -249,31 +253,31 @@ public class LoggingEventWriter
 			if(timeStampType == TimeStampType.ONLY_MILLIS || timeStampType == TimeStampType.BOTH)
 			{
 				StaxUtilities
-					.writeAttribute(writer, false, prefix, NAMESPACE_URI, LOGGER_CONTEXT_BIRTH_TIME_MILLIS_ATTRIBUTE, "" + timeStamp);
+					.writeAttribute(writer, false, prefix, NAMESPACE_URI, LOGGER_CONTEXT_BIRTH_TIME_MILLIS_ATTRIBUTE, Long.toString(timeStamp));
 			}
 		}
-		writeStringMap(writer, context.getProperties(), LOGGER_CONTEXT_PROPERTIES_NODE);
+		writeStringMap(writer, prefix, context.getProperties(), LOGGER_CONTEXT_PROPERTIES_NODE);
 		writer.writeEndElement();
 	}
 
-	private void writeCallStack(XMLStreamWriter writer, LoggingEvent event)
+	private void writeCallStack(XMLStreamWriter writer, String prefix, LoggingEvent event)
 		throws XMLStreamException
 	{
-		writeStackTraceNode(writer, event.getCallStack(), CALLSTACK_NODE);
+		writeStackTraceNode(writer, prefix, event.getCallStack(), CALLSTACK_NODE);
 	}
 
-	private void writeMarker(XMLStreamWriter writer, LoggingEvent event)
+	private void writeMarker(XMLStreamWriter writer, String prefix, LoggingEvent event)
 		throws XMLStreamException
 	{
 		Marker marker = event.getMarker();
 		if(marker != null)
 		{
-			List<String> handledMarkers = new ArrayList<String>();
-			writeMarkerNode(writer, marker, handledMarkers);
+			List<String> handledMarkers = new ArrayList<>();
+			writeMarkerNode(writer, prefix, marker, handledMarkers);
 		}
 	}
 
-	private void writeMarkerNode(XMLStreamWriter writer, Marker marker, List<String> handledMarkers)
+	private void writeMarkerNode(XMLStreamWriter writer, String prefix, Marker marker, List<String> handledMarkers)
 		throws XMLStreamException
 	{
 		String markerName = marker.getName();
@@ -300,7 +304,7 @@ public class LoggingEventWriter
 				Map<String, Marker> children = marker.getReferences();
 				for(Map.Entry<String, Marker> current : children.entrySet())
 				{
-					writeMarkerNode(writer, current.getValue(), handledMarkers);
+					writeMarkerNode(writer, prefix, current.getValue(), handledMarkers);
 				}
 				writer.writeEndElement();
 			}
@@ -308,14 +312,14 @@ public class LoggingEventWriter
 
 	}
 
-	private void writeStringMap(XMLStreamWriter writer, Map<String, String> map, String nodeName)
+	private void writeStringMap(XMLStreamWriter writer, String prefix, Map<String, String> map, String nodeName)
 		throws XMLStreamException
 	{
 		if(map != null)
 		{
 			if(sortingMaps)
 			{
-				map = new TreeMap<String, String>(map);
+				map = new TreeMap<>(map);
 			}
 
 			StaxUtilities.writeStartElement(writer, prefix, NAMESPACE_URI, nodeName);
@@ -332,7 +336,7 @@ public class LoggingEventWriter
 		}
 	}
 
-	private void writeNdc(XMLStreamWriter writer, LoggingEvent event)
+	private void writeNdc(XMLStreamWriter writer, String prefix, LoggingEvent event)
 		throws XMLStreamException
 	{
 		Message[] ndc = event.getNdc();
@@ -345,14 +349,14 @@ public class LoggingEventWriter
 				StaxUtilities.writeStartElement(writer, prefix, NAMESPACE_URI, NDC_ENTRY_NODE);
 				StaxUtilities
 					.writeSimpleTextNode(writer, prefix, NAMESPACE_URI, MESSAGE_NODE, entry.getMessagePattern());
-				writeArguments(writer, entry.getArguments());
+				writeArguments(writer, prefix, entry.getArguments());
 				writer.writeEndElement();
 			}
 			writer.writeEndElement();
 		}
 	}
 
-	private void writeArguments(XMLStreamWriter writer, String[] arguments)
+	private void writeArguments(XMLStreamWriter writer, String prefix, String[] arguments)
 		throws XMLStreamException
 	{
 		if(arguments != null)
@@ -373,14 +377,14 @@ public class LoggingEventWriter
 		}
 	}
 
-	private void writeThrowable(XMLStreamWriter writer, LoggingEvent event)
+	private void writeThrowable(XMLStreamWriter writer, String prefix, LoggingEvent event)
 		throws XMLStreamException
 	{
 		ThrowableInfo throwable = event.getThrowable();
-		writeThrowableNode(writer, throwable, THROWABLE_NODE);
+		writeThrowableNode(writer, prefix, throwable, THROWABLE_NODE);
 	}
 
-	private void writeThrowableNode(XMLStreamWriter writer, ThrowableInfo throwable, String nodeName)
+	private void writeThrowableNode(XMLStreamWriter writer, String prefix, ThrowableInfo throwable, String nodeName)
 		throws XMLStreamException
 	{
 		if(throwable != null)
@@ -392,13 +396,12 @@ public class LoggingEventWriter
 			if(omitted != 0)
 			{
 				StaxUtilities
-					.writeAttribute(writer, false, prefix, NAMESPACE_URI, OMITTED_ELEMENTS_ATTRIBUTE, "" + throwable
-						.getOmittedElements());
+					.writeAttribute(writer, false, prefix, NAMESPACE_URI, OMITTED_ELEMENTS_ATTRIBUTE, Integer.toString(throwable.getOmittedElements()));
 			}
 			// TODO: can message be null?
 			StaxUtilities
 				.writeSimpleTextNode(writer, prefix, NAMESPACE_URI, THROWABLE_MESSAGE_NODE, throwable.getMessage());
-			writeStackTraceNode(writer, throwable.getStackTrace(), STACK_TRACE_NODE);
+			writeStackTraceNode(writer, prefix, throwable.getStackTrace(), STACK_TRACE_NODE);
 
 			ThrowableInfo[] suppressed = throwable.getSuppressed();
 			if(suppressed != null)
@@ -406,17 +409,17 @@ public class LoggingEventWriter
 				StaxUtilities.writeStartElement(writer, prefix, NAMESPACE_URI, SUPPRESSED_NODE);
 				for(ThrowableInfo current : suppressed)
 				{
-					writeThrowableNode(writer, current, THROWABLE_NODE);
+					writeThrowableNode(writer, prefix, current, THROWABLE_NODE);
 				}
 				writer.writeEndElement();
 			}
 
-			writeThrowableNode(writer, throwable.getCause(), CAUSE_NODE);
+			writeThrowableNode(writer, prefix, throwable.getCause(), CAUSE_NODE);
 			writer.writeEndElement();
 		}
 	}
 
-	private void writeStackTraceNode(XMLStreamWriter writer, ExtendedStackTraceElement[] ste, String nodeName)
+	private void writeStackTraceNode(XMLStreamWriter writer, String prefix, ExtendedStackTraceElement[] ste, String nodeName)
 		throws XMLStreamException
 	{
 		if(ste != null)

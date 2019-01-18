@@ -1,6 +1,6 @@
 /*
  * Lilith - a log event viewer.
- * Copyright (C) 2007-2013 Joern Huxhorn
+ * Copyright (C) 2007-2016 Joern Huxhorn
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,75 +17,50 @@
  */
 package de.huxhorn.lilith.swing.menu;
 
-import de.huxhorn.lilith.data.eventsource.EventWrapper;
-import de.huxhorn.lilith.data.logging.LoggingEvent;
 import de.huxhorn.lilith.data.logging.Message;
-import de.huxhorn.lilith.swing.ViewContainer;
-import de.huxhorn.lilith.swing.actions.AbstractLoggingFilterAction;
-import de.huxhorn.lilith.swing.actions.EventWrapperRelated;
-import de.huxhorn.lilith.swing.actions.FilterAction;
+import de.huxhorn.lilith.swing.actions.BasicFilterAction;
 import de.huxhorn.lilith.swing.actions.FocusNDCAction;
 import de.huxhorn.lilith.swing.actions.FocusNDCPatternAction;
-import de.huxhorn.lilith.swing.actions.ViewContainerRelated;
 
-import javax.swing.*;
-
-public class FocusNDCMenu
-	extends JMenu
-	implements ViewContainerRelated, EventWrapperRelated
+class FocusNDCMenu
+	extends AbstractLoggingFilterMenu
 {
-	private static final long serialVersionUID = 2934068317229029302L;
+	private static final long serialVersionUID = 7925987112162466999L;
+	protected final boolean htmlTooltip;
 
-	private ViewContainer viewContainer;
-	private Message[] ndc;
-
-	public FocusNDCMenu()
+	FocusNDCMenu(boolean htmlTooltip)
 	{
 		super("NDC");
+
+		this.htmlTooltip = htmlTooltip;
 		setToolTipText("Nested Diagnostic Context");
-		setViewContainer(null);
-		setEventWrapper(null);
+		viewContainerUpdated();
 	}
 
-	public void setViewContainer(ViewContainer viewContainer)
+	@Override
+	protected void updateState()
 	{
-		this.viewContainer = viewContainer;
-		updateState();
-	}
+		removeAll();
 
-	public ViewContainer getViewContainer()
-	{
-		return viewContainer;
-	}
-
-	public void setEventWrapper(EventWrapper eventWrapper)
-	{
 		Message[] ndc = null;
-		LoggingEvent loggingEvent = AbstractLoggingFilterAction.resolveLoggingEvent(eventWrapper);
 		if (loggingEvent != null)
 		{
 			ndc = loggingEvent.getNdc();
 		}
-		setNdc(ndc);
-	}
 
-	public void setNdc(Message[] ndc)
-	{
-		this.ndc = ndc;
-		updateState();
-	}
-
-	private void updateState()
-	{
-		removeAll();
-		if(viewContainer == null || ndc == null || ndc.length == 0)
+		if(ndc == null || ndc.length == 0)
 		{
 			setEnabled(false);
 			return;
 		}
+
 		boolean first = true;
 		for (Message current : ndc)
 		{
+			if(current == null)
+			{
+				continue;
+			}
 			String message = current.getMessage();
 			String messagePattern = current.getMessagePattern();
 			if(message == null)
@@ -100,22 +75,26 @@ public class FocusNDCMenu
 			{
 				addSeparator();
 			}
-			add(createMessageAction(viewContainer, message));
+			BasicFilterAction filterAction = createMessageAction(message);
+			filterAction.setViewContainer(viewContainer);
+			add(filterAction);
 			if(!message.equals(messagePattern))
 			{
-				add(createMessagePatternAction(viewContainer, messagePattern));
+				BasicFilterAction patternFilterAction = createMessagePatternAction(messagePattern);
+				patternFilterAction.setViewContainer(viewContainer);
+				add(patternFilterAction);
 			}
 		}
-		setEnabled(true);
+		setEnabled(!first);
 	}
 
-	protected FilterAction createMessageAction(ViewContainer viewContainer, String message)
+	protected BasicFilterAction createMessageAction(String message)
 	{
-		return new FocusNDCAction(viewContainer, message);
+		return new FocusNDCAction(message, htmlTooltip);
 	}
 
-	protected FilterAction createMessagePatternAction(ViewContainer viewContainer, String pattern)
+	protected BasicFilterAction createMessagePatternAction(String pattern)
 	{
-		return new FocusNDCPatternAction(viewContainer, pattern);
+		return new FocusNDCPatternAction(pattern, htmlTooltip);
 	}
 }

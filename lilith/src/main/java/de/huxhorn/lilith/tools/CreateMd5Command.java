@@ -1,6 +1,6 @@
 /*
  * Lilith - a log event viewer.
- * Copyright (C) 2007-2011 Joern Huxhorn
+ * Copyright (C) 2007-2018 Joern Huxhorn
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,22 +15,34 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package de.huxhorn.lilith.tools;
 
 import de.huxhorn.lilith.swing.ApplicationPreferences;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.nio.file.Files;
+import org.apache.commons.codec.binary.Hex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-
-public class CreateMd5Command
+@SuppressWarnings("PMD.ClassNamingConventions")
+public final class CreateMd5Command
 {
-	public static boolean createMd5(File input)
+	static
+	{
+		new CreateMd5Command(); // stfu
+	}
+
+	private CreateMd5Command() {}
+
+	public static boolean createMd5(String inputFileString)
 	{
 		final Logger logger = LoggerFactory.getLogger(CreateMd5Command.class);
+
+		File input = new File(inputFileString);
 
 		if(!input.isFile())
 		{
@@ -42,22 +54,20 @@ public class CreateMd5Command
 		try
 		{
 
-			FileInputStream fis = new FileInputStream(input);
+			InputStream fis = Files.newInputStream(input.toPath());
 			byte[] md5 = ApplicationPreferences.getMD5(fis);
 			if(md5 == null)
 			{
-				if(logger.isWarnEnabled())
-				{
-					logger.warn("Couldn't calculate checksum for {}!", input.getAbsolutePath());
-				}
+				if(logger.isWarnEnabled()) logger.warn("Couldn't calculate checksum for {}!", input.getAbsolutePath());
 				return false;
 			}
-			FileOutputStream fos = new FileOutputStream(output);
+			OutputStream fos = Files.newOutputStream(output.toPath());
 			fos.write(md5);
 			fos.close();
 			if(logger.isInfoEnabled())
 			{
 				logger.info("Wrote checksum of {} to {}.", input.getAbsolutePath(), output.getAbsolutePath());
+				logger.info("MD5: {}", Hex.encodeHexString(md5));
 			}
 		}
 		catch(IOException e)

@@ -1,6 +1,6 @@
 /*
  * Lilith - a log event viewer.
- * Copyright (C) 2007-2014 Joern Huxhorn
+ * Copyright (C) 2007-2018 Joern Huxhorn
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -17,7 +17,7 @@
  */
 
 /*
- * Copyright 2007-2014 Joern Huxhorn
+ * Copyright 2007-2018 Joern Huxhorn
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,13 +34,11 @@
 
 package de.huxhorn.lilith.data.access.protobuf;
 
+import com.google.protobuf.InvalidProtocolBufferException;
 import de.huxhorn.lilith.data.access.AccessEvent;
 import de.huxhorn.lilith.data.access.protobuf.generated.AccessProto;
 import de.huxhorn.lilith.data.eventsource.LoggerContext;
 import de.huxhorn.sulky.codec.Decoder;
-
-import com.google.protobuf.InvalidProtocolBufferException;
-
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -52,7 +50,8 @@ import java.util.zip.GZIPInputStream;
 public class AccessEventProtobufDecoder
 	implements Decoder<AccessEvent>
 {
-	private boolean compressing;
+	private static final String[] EMPTY_STRING_ARRAY = new String[0];
+	private final boolean compressing;
 
 	public AccessEventProtobufDecoder(boolean compressing)
 	{
@@ -64,11 +63,7 @@ public class AccessEventProtobufDecoder
 		return compressing;
 	}
 
-	public void setCompressing(boolean compressing)
-	{
-		this.compressing = compressing;
-	}
-
+	@Override
 	public AccessEvent decode(byte[] bytes)
 	{
 		if(bytes == null)
@@ -239,7 +234,7 @@ public class AccessEventProtobufDecoder
 		{
 			return null;
 		}
-		Map<String, String> result = new HashMap<String, String>();
+		Map<String, String> result = new HashMap<>();
 		List<AccessProto.StringMapEntry> entries = data.getEntryList();
 		for(AccessProto.StringMapEntry current : entries)
 		{
@@ -267,7 +262,7 @@ public class AccessEventProtobufDecoder
 		{
 			return null;
 		}
-		Map<String, String[]> result = new HashMap<String, String[]>();
+		Map<String, String[]> result = new HashMap<>();
 		List<AccessProto.StringArrayMapEntry> entries = data.getEntryList();
 		for(AccessProto.StringArrayMapEntry current : entries)
 		{
@@ -280,7 +275,7 @@ public class AccessEventProtobufDecoder
 			int count = current.getValueCount();
 			if(count > 0)
 			{
-				List<String> valueList = new ArrayList<String>(count);
+				List<String> valueList = new ArrayList<>(count); // NOPMD - AvoidInstantiatingObjectsInLoops
 				for(AccessProto.StringArrayValue curVal : current.getValueList())
 				{
 					if(curVal.hasValue())
@@ -293,7 +288,7 @@ public class AccessEventProtobufDecoder
 					}
 				}
 
-				values = valueList.toArray(new String[count]);
+				values = valueList.toArray(EMPTY_STRING_ARRAY);
 			}
 			if(key != null)
 			{

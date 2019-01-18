@@ -1,43 +1,45 @@
 /*
  * Lilith - a log event viewer.
- * Copyright (C) 2007-2011 Joern Huxhorn
- * 
+ * Copyright (C) 2007-2017 Joern Huxhorn
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package de.huxhorn.lilith.swing.preferences;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
-
-import javax.swing.*;
+import javax.swing.AbstractListModel;
 
 public class GenericSortedListModel<T extends Comparable<? super T>>
-	extends AbstractListModel
+	extends AbstractListModel<T>
 {
+	private static final long serialVersionUID = 7811612633556606661L;
+
 	private final List<T> data;
 	private final Comparator<T> comparator;
 
-	public GenericSortedListModel()
+	GenericSortedListModel()
 	{
 		this(null);
 	}
 
-	public GenericSortedListModel(Comparator<T> comparator)
+	private GenericSortedListModel(Comparator<T> comparator)
 	{
-		this.data = new ArrayList<T>();
+		this.data = new ArrayList<>();
 		this.comparator = comparator;
 	}
 
@@ -57,7 +59,7 @@ public class GenericSortedListModel<T extends Comparable<? super T>>
 				this.data.addAll(data);
 				if(comparator != null)
 				{
-					Collections.sort(this.data, comparator);
+					this.data.sort(comparator);
 				}
 				else
 				{
@@ -70,7 +72,7 @@ public class GenericSortedListModel<T extends Comparable<? super T>>
 
 	public List<T> getData()
 	{
-		return new ArrayList<T>(data);
+		return new ArrayList<>(data);
 	}
 
 	public void add(T element)
@@ -80,7 +82,7 @@ public class GenericSortedListModel<T extends Comparable<? super T>>
 			data.add(element);
 			if(comparator != null)
 			{
-				Collections.sort(this.data, comparator);
+				this.data.sort(comparator);
 			}
 			else
 			{
@@ -106,6 +108,7 @@ public class GenericSortedListModel<T extends Comparable<? super T>>
 	 *
 	 * @return the length of the list
 	 */
+	@Override
 	public int getSize()
 	{
 		return data.size();
@@ -117,6 +120,7 @@ public class GenericSortedListModel<T extends Comparable<? super T>>
 	 * @param index the requested index
 	 * @return the value at <code>index</code>
 	 */
+	@Override
 	public T getElementAt(int index)
 	{
 		return data.get(index);

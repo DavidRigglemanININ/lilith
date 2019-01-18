@@ -1,6 +1,6 @@
 /*
  * Lilith - a log event viewer.
- * Copyright (C) 2007-2011 Joern Huxhorn
+ * Copyright (C) 2007-2017 Joern Huxhorn
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,6 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package de.huxhorn.lilith.swing.callables;
 
 import de.huxhorn.lilith.data.eventsource.EventWrapper;
@@ -22,26 +23,24 @@ import de.huxhorn.lilith.swing.EventWrapperViewPanel;
 import de.huxhorn.lilith.swing.table.model.EventWrapperTableModel;
 import de.huxhorn.sulky.conditions.Condition;
 import de.huxhorn.sulky.tasks.AbstractProgressingCallable;
-
+import java.io.Serializable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.Serializable;
 
 public class FindNextCallable<T extends Serializable>
 	extends AbstractProgressingCallable<Long>
 {
 	private final Logger logger = LoggerFactory.getLogger(FindNextCallable.class);
 
-	private int currentRow;
-	private Condition condition;
-	private EventWrapperTableModel<T> tableModel;
-	private EventWrapperViewPanel<T> viewPanel;
+	private final EventWrapperViewPanel<T> viewPanel;
+	private final EventWrapperTableModel<T> tableModel;
+	private final int currentRow;
+	private final Condition condition;
 
 	public FindNextCallable(EventWrapperViewPanel<T> viewPanel, int currentRow, Condition condition)
 	{
 		super(200, 1000);
-		this.viewPanel=viewPanel;
+		this.viewPanel = viewPanel;
 		this.tableModel = viewPanel.getTableModel();
 		this.currentRow = currentRow;
 		this.condition = condition;
@@ -52,6 +51,7 @@ public class FindNextCallable<T extends Serializable>
 		return viewPanel;
 	}
 
+	@Override
 	public Long call()
 		throws Exception
 	{

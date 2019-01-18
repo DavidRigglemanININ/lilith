@@ -1,17 +1,17 @@
 /*
  * Lilith - a log event viewer.
- * Copyright (C) 2007-2014 Joern Huxhorn
- * 
+ * Copyright (C) 2007-2017 Joern Huxhorn
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
@@ -33,26 +33,25 @@ import de.huxhorn.sulky.tasks.ProgressingCallable;
 import de.huxhorn.sulky.tasks.Task;
 import de.huxhorn.sulky.tasks.TaskListener;
 import de.huxhorn.sulky.tasks.TaskManager;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.awt.*;
+import java.awt.Component;
+import java.awt.Container;
 import java.awt.event.ActionEvent;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
-
-import javax.swing.*;
+import javax.swing.JFrame;
+import javax.swing.JInternalFrame;
+import javax.swing.JPanel;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public abstract class ViewContainer<T extends Serializable>
 		extends JPanel
@@ -61,43 +60,35 @@ public abstract class ViewContainer<T extends Serializable>
 	private static final long serialVersionUID = 4834209079953596930L;
 
 	// TODO: property change instead of change?
-	public static final String SELECTED_EVENT_PROPERTY_NAME = "selectedEvent";
+	static final String SELECTED_EVENT_PROPERTY_NAME = "selectedEvent";
 
 
-	private final List<ChangeListener> changeListeners = new LinkedList<ChangeListener>();
-	private EventWrapperViewPanel<T> defaultView;
+	private final List<ChangeListener> changeListeners = new LinkedList<>();
 	private final MainFrame mainFrame;
-	private TaskManager<Long> taskManager;
-	private Map<Callable<Long>, EventWrapperViewPanel<T>> filterMapping;
-	private FilterTaskListener filterTaskListener;
-	private EventSource<T> eventSource;
-	private ProgressGlassPane progressPanel;
+	private final EventSource<T> eventSource;
+	private final EventWrapperViewPanel<T> defaultView;
+	private final TaskManager<Long> taskManager;
+	private final Map<Callable<Long>, EventWrapperViewPanel<T>> filterMapping;
+	private final FilterTaskListener filterTaskListener;
+	private final ProgressGlassPane progressPanel;
 	private Component prevGlassPane;
 	private boolean searching;
 	private ProgressingCallable<Long> updateCallable;
 
 	public ViewContainer(MainFrame mainFrame, EventSource<T> eventSource)
 	{
-		if(mainFrame == null)
-		{
-			throw new IllegalArgumentException("mainFrame must not be null!");
-		}
-		this.mainFrame = mainFrame;
-		this.eventSource = eventSource;
+		this.mainFrame = Objects.requireNonNull(mainFrame, "mainFrame must not be null!");
+		this.eventSource = Objects.requireNonNull(eventSource, "eventSource must not be null!");
 		taskManager = mainFrame.getLongWorkManager();
 		progressPanel = new ProgressGlassPane();
-		filterMapping = new HashMap<Callable<Long>, EventWrapperViewPanel<T>>();
+		filterMapping = new HashMap<>();
 		filterTaskListener = new FilterTaskListener();
 		taskManager.addTaskListener(filterTaskListener);
 		this.defaultView = createViewPanel(eventSource);
-		defaultView.addPropertyChangeListener(new PropertyChangeListener()
-		{
-			public void propertyChange(PropertyChangeEvent evt)
+		defaultView.addPropertyChangeListener(evt -> {
+			if (EventWrapperViewPanel.STATE_PROPERTY.equals(evt.getPropertyName()))
 			{
-				if (EventWrapperViewPanel.STATE_PROPERTY.equals(evt.getPropertyName()))
-				{
-					updateContainerIcon();
-				}
+				updateContainerIcon();
 			}
 		});
 
@@ -127,12 +118,21 @@ public abstract class ViewContainer<T extends Serializable>
 
 	public abstract Class getWrappedClass();
 
-	public EventWrapperViewPanel<T> getDefaultView()
+	EventWrapperViewPanel<T> getDefaultView()
 	{
 		return defaultView;
 	}
 
-	public LoggingViewState getState()
+	void setScrollingSmoothly(boolean scrollingSmoothly)
+	{
+		defaultView.setScrollingSmoothly(scrollingSmoothly);
+		for (EventWrapperViewPanel<T> viewPanel : filterMapping.values())
+		{
+			viewPanel.setScrollingSmoothly(scrollingSmoothly);
+		}
+	}
+
+	LoggingViewState getState()
 	{
 		if(defaultView != null)
 		{
@@ -141,12 +141,14 @@ public abstract class ViewContainer<T extends Serializable>
 		return null;
 	}
 
+	@Override
 	public void dispose()
 	{
 		taskManager.removeTaskListener(filterTaskListener);
 		cancelUpdateTask();
 	}
 
+	@Override
 	public void flush()
 	{
 		for(int i=0;i<getViewCount();i++)
@@ -188,22 +190,22 @@ public abstract class ViewContainer<T extends Serializable>
 		}
 	}
 
-	public void addFilteredView(EventWrapperViewPanel<T> original, Condition filter)
+	void addFilteredView(EventWrapperViewPanel<T> original, Condition filter)
 	{
 		Buffer<EventWrapper<T>> originalBuffer = original.getSourceBuffer();
-		FilteringBuffer<EventWrapper<T>> filteredBuffer = new FilteringBuffer<EventWrapper<T>>(originalBuffer, filter);
-		FilteringCallable<EventWrapper<T>> callable = new FilteringCallable<EventWrapper<T>>(filteredBuffer, 500);
+		FilteringBuffer<EventWrapper<T>> filteredBuffer = new FilteringBuffer<>(originalBuffer, filter);
+		FilteringCallable<EventWrapper<T>> callable = new FilteringCallable<>(filteredBuffer, 500);
 		EventSource<T> originalEventSource = original.getEventSource();
 		Map<String, String> metaData = CallableMetaData.createFilteringMetaData(filter, originalEventSource);
 
-		EventSourceImpl<T> newEventSource = new EventSourceImpl<T>(originalEventSource.getSourceIdentifier(), filteredBuffer, filter, originalEventSource.isGlobal());
+		EventSourceImpl<T> newEventSource = new EventSourceImpl<>(originalEventSource.getSourceIdentifier(), filteredBuffer, filter, originalEventSource.isGlobal());
 		EventWrapperViewPanel<T> newViewPanel = createViewPanel(newEventSource);
 		filterMapping.put(callable, newViewPanel);
 		addView(newViewPanel);
 		taskManager.startTask(callable, "Filtering", createFilteringMessage(metaData), metaData);
 	}
 
-	public void replaceFilteredView(EventWrapperViewPanel<T> original, Condition filter)
+	void replaceFilteredView(EventWrapperViewPanel<T> original, Condition filter)
 	{
 		EventSource<T> eventSource = original.getEventSource();
 
@@ -232,17 +234,17 @@ public abstract class ViewContainer<T extends Serializable>
 				}
 				// create new EventSource
 				Buffer<EventWrapper<T>> originalBuffer = original.getSourceBuffer();
-				FilteringBuffer<EventWrapper<T>> filteredBuffer = new FilteringBuffer<EventWrapper<T>>(originalBuffer, filter);
-				FilteringCallable<EventWrapper<T>> callable = new FilteringCallable<EventWrapper<T>>(filteredBuffer, 500);
+				FilteringBuffer<EventWrapper<T>> filteredBuffer = new FilteringBuffer<>(originalBuffer, filter);
+				FilteringCallable<EventWrapper<T>> callable = new FilteringCallable<>(filteredBuffer, 500);
 				EventSource<T> originalEventSource = original.getEventSource();
 				Map<String, String> metaData = CallableMetaData.createFilteringMetaData(filter, originalEventSource);
 
-				EventSourceImpl<T> newEventSource = new EventSourceImpl<T>(originalEventSource.getSourceIdentifier(), filteredBuffer, filter, originalEventSource.isGlobal());
+				EventSourceImpl<T> newEventSource = new EventSourceImpl<>(originalEventSource.getSourceIdentifier(), filteredBuffer, filter, originalEventSource.isGlobal());
 				original.setEventSource(newEventSource);
 				// restore mapping of original view, this time with the new callable
 				filterMapping.put(callable, original);
 				// start the new task.
-				taskManager.startTask(callable, "Filtering", createFilteringMessage(metaData) , metaData);
+				taskManager.startTask(callable, "Filtering", createFilteringMessage(metaData), metaData);
 			}
 		}
 		else
@@ -286,32 +288,23 @@ public abstract class ViewContainer<T extends Serializable>
 
 	private void updateFrameIcon(JFrame frame)
 	{
-		ImageIcon frameImageIcon = LoggingViewStateIcons.resolveIconForState(defaultView.getState());
-
-		if (frameImageIcon != null)
-		{
-			frame.setIconImage(frameImageIcon.getImage());
-		}
+		frame.setIconImages(Icons.resolveFrameIconImages(defaultView.getState(), false));
 	}
 
-	private void updateInternalFrameIcon(JInternalFrame iframe)
+	private void updateInternalFrameIcon(JInternalFrame internalFrame)
 	{
-		ImageIcon frameImageIcon = LoggingViewStateIcons.resolveIconForState(defaultView.getState());
-
-		if (frameImageIcon != null)
-		{
-			iframe.setFrameIcon(frameImageIcon);
-			iframe.repaint(); // Apple L&F Bug workaround
-		}
+		internalFrame.setFrameIcon(Icons.resolveFrameIcon(defaultView.getState(), false));
+		internalFrame.repaint(); // Apple L&F Bug workaround
 	}
 
+	@Override
 	public void addNotify()
 	{
 		super.addNotify();
 		updateContainerIcon();
 	}
 
-	public void addChangeListener(ChangeListener listener)
+	void addChangeListener(ChangeListener listener)
 	{
 		boolean changed = false;
 		synchronized (changeListeners)
@@ -328,7 +321,7 @@ public abstract class ViewContainer<T extends Serializable>
 		}
 	}
 
-	public void removeChangeListener(ChangeListener listener)
+	void removeChangeListener(ChangeListener listener)
 	{
 		boolean changed = false;
 		synchronized (changeListeners)
@@ -350,7 +343,7 @@ public abstract class ViewContainer<T extends Serializable>
 		ArrayList<ChangeListener> clone;
 		synchronized (changeListeners)
 		{
-			clone = new ArrayList<ChangeListener>(changeListeners);
+			clone = new ArrayList<>(changeListeners);
 		}
 		ChangeEvent event = new ChangeEvent(this);
 		for (ChangeListener listener : clone)
@@ -379,9 +372,9 @@ public abstract class ViewContainer<T extends Serializable>
 
 	public abstract void updateViewScale(double scale);
 
-	public abstract void setShowingStatusbar(boolean showingStatusbar);
+	public abstract void setShowingStatusBar(boolean showingStatusBar);
 
-	public void setUpdateCallable(ProgressingCallable<Long> updateCallable)
+	void setUpdateCallable(ProgressingCallable<Long> updateCallable)
 	{
 		cancelUpdateTask();
 		this.updateCallable=updateCallable;
@@ -411,11 +404,13 @@ public abstract class ViewContainer<T extends Serializable>
 	{
 		private final Logger logger = LoggerFactory.getLogger(FilterTaskListener.class);
 
+		@Override
 		public void taskCreated(Task<Long> longTask)
 		{
-
+			// no-op
 		}
 
+		@Override
 		public void executionFailed(Task<Long> task, ExecutionException exception)
 		{
 			EventWrapperViewPanel<T> view = filterMapping.get(task.getCallable());
@@ -430,6 +425,7 @@ public abstract class ViewContainer<T extends Serializable>
 			}
 		}
 
+		@Override
 		public void executionFinished(Task<Long> task, Long result)
 		{
 			EventWrapperViewPanel<T> view = filterMapping.get(task.getCallable());
@@ -444,6 +440,7 @@ public abstract class ViewContainer<T extends Serializable>
 			}
 		}
 
+		@Override
 		public void executionCanceled(Task<Long> task)
 		{
 			EventWrapperViewPanel<T> view = filterMapping.get(task.getCallable());
@@ -458,8 +455,10 @@ public abstract class ViewContainer<T extends Serializable>
 			}
 		}
 
+		@Override
 		public void progressUpdated(Task<Long> task, int progress)
 		{
+			// no-op
 		}
 
 		private void finished(EventWrapperViewPanel<T> view)
@@ -482,18 +481,18 @@ public abstract class ViewContainer<T extends Serializable>
 
 	public abstract int getViewIndex();
 
-	public boolean isSearching()
+	boolean isSearching()
 	{
 		return searching;
 	}
 
-	public void cancelSearching()
+	void cancelSearching()
 	{
 		progressPanel.getFindCancelAction().actionPerformed(null);
 
 	}
 
-	public void hideSearchPanel()
+	void hideSearchPanel()
 	{
 		if(searching)
 		{
@@ -508,7 +507,7 @@ public abstract class ViewContainer<T extends Serializable>
 		}
 	}
 
-	public void showSearchPanel(Task<Long> task)
+	void showSearchPanel(Task<Long> task)
 	{
 		if(task != null)
 		{
@@ -528,7 +527,7 @@ public abstract class ViewContainer<T extends Serializable>
 		}
 	}
 
-	public ProgressGlassPane getProgressPanel()
+	ProgressGlassPane getProgressPanel()
 	{
 		return progressPanel;
 	}

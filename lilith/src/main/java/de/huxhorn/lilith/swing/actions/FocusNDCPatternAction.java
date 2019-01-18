@@ -1,6 +1,6 @@
 /*
  * Lilith - a log event viewer.
- * Copyright (C) 2007-2013 Joern Huxhorn
+ * Copyright (C) 2007-2016 Joern Huxhorn
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,49 +18,29 @@
 package de.huxhorn.lilith.swing.actions;
 
 import de.huxhorn.lilith.conditions.NDCContainsPatternCondition;
-import de.huxhorn.lilith.data.eventsource.EventWrapper;
 import de.huxhorn.lilith.swing.TextPreprocessor;
-import de.huxhorn.lilith.swing.ViewContainer;
 import de.huxhorn.sulky.conditions.Condition;
-
-import javax.swing.*;
+import java.awt.event.ActionEvent;
 
 public class FocusNDCPatternAction
-		extends AbstractFilterAction
+		extends AbstractBasicFilterAction
 {
 	private static final long serialVersionUID = -4802481730349145765L;
 
 	private final String pattern;
 
-	public FocusNDCPatternAction(ViewContainer viewContainer, String pattern)
+	public FocusNDCPatternAction(String pattern, boolean htmlTooltip)
 	{
-		super(TextPreprocessor.cropToSingleLine(pattern));
+		super(TextPreprocessor.cropToSingleLine(pattern), htmlTooltip);
 		this.pattern = pattern;
-		putValue(Action.SHORT_DESCRIPTION, TextPreprocessor.preformattedTooltip(TextPreprocessor.cropTextBlock(pattern)));
-		setViewContainer(viewContainer);
+		initializeCroppedTooltip(pattern);
+		viewContainerUpdated();
 	}
 
 	@Override
-	protected void updateState()
+	public Condition resolveCondition(ActionEvent e)
 	{
-		if(viewContainer == null)
-		{
-			setEnabled(false);
-			return;
-		}
-		setEnabled(true);
-	}
-
-	@Override
-	public void setEventWrapper(EventWrapper eventWrapper)
-	{
-		// ignore
-	}
-
-	@Override
-	public Condition resolveCondition()
-	{
-		if(pattern == null)
+		if(!isEnabled())
 		{
 			return null;
 		}

@@ -1,20 +1,21 @@
 /*
  * Lilith - a log event viewer.
- * Copyright (C) 2007-2011 Joern Huxhorn
- * 
+ * Copyright (C) 2007-2017 Joern Huxhorn
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package de.huxhorn.lilith.engine;
 
 import de.huxhorn.lilith.api.FileConstants;
@@ -25,35 +26,34 @@ import de.huxhorn.sulky.codec.Codec;
 import de.huxhorn.sulky.codec.filebuffer.CodecFileBuffer;
 import de.huxhorn.sulky.codec.filebuffer.FileHeader;
 import de.huxhorn.sulky.codec.filebuffer.MetaData;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public abstract class FileBufferFactory<T extends Serializable>
 {
 	private final Logger logger = LoggerFactory.getLogger(FileBufferFactory.class);
 
-	private LogFileFactory logFileFactory;
-	private int magicValue;
-	private Map<String, String> metaData;
+	private final LogFileFactory logFileFactory;
+	private final int magicValue;
+	private final Map<String, String> metaData;
 
 	public FileBufferFactory(LogFileFactory logFileFactory, Map<String, String> metaData)
 	{
-		this.logFileFactory = logFileFactory;
+		this.logFileFactory = Objects.requireNonNull(logFileFactory, "logFileFactory must not be null!");
 		this.magicValue = FileConstants.MAGIC_VALUE;
 		if(metaData == null)
 		{
-			metaData = new HashMap<String, String>();
+			metaData = new HashMap<>();
 		}
 		else
 		{
-			metaData = new HashMap<String, String>(metaData);
+			metaData = new HashMap<>(metaData);
 		}
 
 		this.metaData = metaData;
@@ -71,7 +71,7 @@ public abstract class FileBufferFactory<T extends Serializable>
 		File dataFile = logFileFactory.getDataFile(si);
 		File indexFile = logFileFactory.getIndexFile(si);
 
-		Map<String, String> usedMetaData = new HashMap<String, String>(metaData);
+		Map<String, String> usedMetaData = new HashMap<>(metaData);
 		usedMetaData.put(FileConstants.IDENTIFIER_KEY, si.getIdentifier());
 		if(si.getSecondaryIdentifier() != null)
 		{
@@ -85,7 +85,7 @@ public abstract class FileBufferFactory<T extends Serializable>
 	{
 		if(logger.isInfoEnabled()) logger.info("Creating buffer for dataFile '{}'.", dataFile.getAbsolutePath());
 
-		CodecFileBuffer<EventWrapper<T>> result = new CodecFileBuffer<EventWrapper<T>>(magicValue, false, usedMetaData, null, dataFile, indexFile);
+		CodecFileBuffer<EventWrapper<T>> result = new CodecFileBuffer<>(magicValue, false, usedMetaData, null, dataFile, indexFile);
 
 		FileHeader fileHeader = result.getFileHeader();
 		MetaData actualMetaData = fileHeader.getMetaData();

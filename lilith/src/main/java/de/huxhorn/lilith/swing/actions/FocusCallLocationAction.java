@@ -1,6 +1,6 @@
 /*
  * Lilith - a log event viewer.
- * Copyright (C) 2007-2013 Joern Huxhorn
+ * Copyright (C) 2007-2016 Joern Huxhorn
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,8 +20,8 @@ package de.huxhorn.lilith.swing.actions;
 import de.huxhorn.lilith.conditions.CallLocationCondition;
 import de.huxhorn.lilith.data.logging.ExtendedStackTraceElement;
 import de.huxhorn.sulky.conditions.Condition;
-
-import javax.swing.*;
+import java.awt.event.ActionEvent;
+import javax.swing.Action;
 
 public class FocusCallLocationAction
 		extends AbstractLoggingFilterAction
@@ -31,7 +31,7 @@ public class FocusCallLocationAction
 
 	public FocusCallLocationAction()
 	{
-		super("Call location");
+		super("Call location", false);
 	}
 
 	protected void setCallLocationString(String callLocationString)
@@ -46,12 +46,6 @@ public class FocusCallLocationAction
 	@Override
 	protected void updateState()
 	{
-		if(viewContainer == null)
-		{
-			setCallLocationString(null);
-			return;
-		}
-
 		String callLocationString = null;
 		if(loggingEvent != null)
 		{
@@ -69,9 +63,9 @@ public class FocusCallLocationAction
 	}
 
 	@Override
-	public Condition resolveCondition()
+	public Condition resolveCondition(ActionEvent e)
 	{
-		if(callLocationString == null)
+		if(!isEnabled())
 		{
 			return null;
 		}

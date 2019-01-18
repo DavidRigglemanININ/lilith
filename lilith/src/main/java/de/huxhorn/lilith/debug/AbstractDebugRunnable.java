@@ -1,6 +1,6 @@
 /*
  * Lilith - a log event viewer.
- * Copyright (C) 2007-2011 Joern Huxhorn
+ * Copyright (C) 2007-2018 Joern Huxhorn
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,6 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package de.huxhorn.lilith.debug;
 
 import org.slf4j.Logger;
@@ -25,7 +26,7 @@ public abstract class AbstractDebugRunnable
 {
 	private final Logger logger = LoggerFactory.getLogger(AbstractDebugRunnable.class);
 
-	private int delay;
+	private final int delay;
 
 	public AbstractDebugRunnable(int delay)
 	{
@@ -41,6 +42,7 @@ public abstract class AbstractDebugRunnable
 		}
 	}
 
+	@Override
 	public final void run()
 	{
 		try

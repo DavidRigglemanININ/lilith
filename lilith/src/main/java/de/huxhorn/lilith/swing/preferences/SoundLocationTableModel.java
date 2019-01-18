@@ -1,38 +1,36 @@
 /*
  * Lilith - a log event viewer.
- * Copyright (C) 2007-2011 Joern Huxhorn
- * 
+ * Copyright (C) 2007-2018 Joern Huxhorn
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package de.huxhorn.lilith.swing.preferences;
 
-import de.huxhorn.sulky.io.IOUtilities;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
+import java.awt.EventQueue;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-
-import javax.swing.*;
 import javax.swing.event.EventListenerList;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.TableModel;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-public class SoundLocationTableModel
+public final class SoundLocationTableModel
 	implements TableModel
 {
 	private final Logger logger = LoggerFactory.getLogger(SoundLocationTableModel.class);
@@ -43,7 +41,7 @@ public class SoundLocationTableModel
 	private List<String> keys;
 	private final EventListenerList eventListenerList;
 
-	public SoundLocationTableModel(Map<String, String> data)
+	SoundLocationTableModel(Map<String, String> data)
 	{
 		eventListenerList = new EventListenerList();
 		setData(data);
@@ -54,7 +52,7 @@ public class SoundLocationTableModel
 		this.data = data;
 		if(data != null)
 		{
-			this.keys = new ArrayList<String>(data.keySet());
+			this.keys = new ArrayList<>(data.keySet());
 			Collections.sort(this.keys);
 		}
 		else
@@ -69,6 +67,7 @@ public class SoundLocationTableModel
 		return data;
 	}
 
+	@Override
 	public int getRowCount()
 	{
 		if(data == null)
@@ -78,11 +77,13 @@ public class SoundLocationTableModel
 		return data.size();
 	}
 
+	@Override
 	public int getColumnCount()
 	{
 		return 2;
 	}
 
+	@Override
 	public String getColumnName(int columnIndex)
 	{
 		switch(columnIndex)
@@ -91,15 +92,18 @@ public class SoundLocationTableModel
 				return "Event";
 			case SoundLocationTableModel.SOUND_LOCATION_COLUMN:
 				return "Location";
+			default:
+				return null;
 		}
-		return null;
 	}
 
+	@Override
 	public Class<?> getColumnClass(int columnIndex)
 	{
 		return String.class;
 	}
 
+	@Override
 	public boolean isCellEditable(int rowIndex, int columnIndex)
 	{
 		if(keys == null || rowIndex < 0 || rowIndex >= keys.size())
@@ -109,6 +113,7 @@ public class SoundLocationTableModel
 		return columnIndex == SOUND_LOCATION_COLUMN;
 	}
 
+	@Override
 	public Object getValueAt(int rowIndex, int columnIndex)
 	{
 		if(keys == null || rowIndex < 0 || rowIndex >= keys.size())
@@ -122,17 +127,20 @@ public class SoundLocationTableModel
 				return key;
 			case SoundLocationTableModel.SOUND_LOCATION_COLUMN:
 				return data.get(key);
+			default:
+				return null;
 		}
-		return null;
 	}
 
+	@Override
 	public void setValueAt(Object aValue, int rowIndex, int columnIndex)
 	{
-		String newValue = (String) aValue;
 		if(keys == null || rowIndex < 0 || rowIndex >= keys.size())
 		{
 			return;
 		}
+
+		String newValue = (String) aValue;
 		switch(columnIndex)
 		{
 			case SoundLocationTableModel.EVENT_NAME_COLUMN:
@@ -151,6 +159,9 @@ public class SoundLocationTableModel
 				data.put(key, newValue);
 				fireTableChange();
 			}
+			break;
+			default: // nothing
+			break;
 		}
 	}
 
@@ -163,26 +174,27 @@ public class SoundLocationTableModel
 	private void fireTableChange(TableModelEvent evt)
 	{
 		Runnable r = new SoundLocationTableModel.FireTableChangeRunnable(evt);
-		if(SwingUtilities.isEventDispatchThread())
+		if(EventQueue.isDispatchThread())
 		{
 			r.run();
 		}
 		else
 		{
-			SwingUtilities.invokeLater(r);
+			EventQueue.invokeLater(r);
 		}
 	}
 
 	private class FireTableChangeRunnable
 		implements Runnable
 	{
-		private TableModelEvent event;
+		private final TableModelEvent event;
 
-		public FireTableChangeRunnable(TableModelEvent event)
+		FireTableChangeRunnable(TableModelEvent event)
 		{
 			this.event = event;
 		}
 
+		@Override
 		public void run()
 		{
 			Object[] listeners;
@@ -208,7 +220,6 @@ public class SoundLocationTableModel
 					catch(Throwable ex)
 					{
 						if(logger.isWarnEnabled()) logger.warn("Exception while firing change!", ex);
-						IOUtilities.interruptIfNecessary(ex);
 					}
 				}
 			}
@@ -216,6 +227,7 @@ public class SoundLocationTableModel
 
 	}
 
+	@Override
 	public void addTableModelListener(TableModelListener l)
 	{
 		synchronized(eventListenerList)
@@ -224,6 +236,7 @@ public class SoundLocationTableModel
 		}
 	}
 
+	@Override
 	public void removeTableModelListener(TableModelListener l)
 	{
 		synchronized(eventListenerList)

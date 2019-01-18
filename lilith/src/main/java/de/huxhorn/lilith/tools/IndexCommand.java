@@ -1,6 +1,6 @@
 /*
  * Lilith - a log event viewer.
- * Copyright (C) 2007-2011 Joern Huxhorn
+ * Copyright (C) 2007-2018 Joern Huxhorn
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,20 +15,32 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package de.huxhorn.lilith.tools;
 
 import de.huxhorn.lilith.swing.callables.IndexingCallable;
 import de.huxhorn.sulky.tasks.ProgressingCallable;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class IndexCommand
 {
-	public static boolean indexLogFile(File inputFile)
+	static
+	{
+		new IndexCommand(); // stfu
+	}
+
+	private IndexCommand() {}
+
+	public static boolean indexLogFile(String inputFileString)
+	{
+		return indexLogFile(new File(inputFileString));
+	}
+
+	static boolean indexLogFile(File inputFile)
 	{
 		final Logger logger = LoggerFactory.getLogger(IndexCommand.class);
 
@@ -48,25 +60,17 @@ public class IndexCommand
 
 		File inputIndexFile = FileHelper.resolveIndexFile(inputFile);
 
-		String inputIndexFileStr = inputIndexFile.getAbsolutePath();
-
 		IndexingCallable callable = new IndexingCallable(inputDataFile, inputIndexFile);
 		callable.addPropertyChangeListener(new IndexingChangeListener());
 		try
 		{
 			long count = callable.call();
-			if(logger.isInfoEnabled())
-			{
-				logger.info("Finished indexing {}. Number of events: {}", inputDataFileStr, count);
-			}
+			if(logger.isInfoEnabled()) logger.info("Finished indexing {}. Number of events: {}", inputDataFileStr, count);
 			return true;
 		}
 		catch(Exception e)
 		{
-			if(logger.isErrorEnabled())
-			{
-				logger.error("Exception while indexing '" + inputDataFileStr + "'!", e);
-			}
+			if(logger.isErrorEnabled()) logger.error("Exception while indexing '{}'!", inputDataFileStr, e);
 		}
 		return false;
 	}
@@ -83,13 +87,13 @@ public class IndexCommand
 		 *            and the property that has changed.
 		 */
 
+		@Override
 		public void propertyChange(PropertyChangeEvent evt)
 		{
 			if(ProgressingCallable.PROGRESS_PROPERTY_NAME.equals(evt.getPropertyName()))
 			{
-				if(logger.isInfoEnabled()) logger.info("Progress: {}%", evt.getNewValue());
+				if(logger.isInfoEnabled()) logger.info("Progress: {}%", evt.getNewValue()); // NOPMD
 			}
 		}
 	}
-
 }

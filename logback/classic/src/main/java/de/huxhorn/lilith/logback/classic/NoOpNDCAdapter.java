@@ -1,6 +1,6 @@
 /*
  * Lilith - a log event viewer.
- * Copyright (C) 2007-2011 Joern Huxhorn
+ * Copyright (C) 2007-2017 Joern Huxhorn
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -17,7 +17,7 @@
  */
 
 /*
- * Copyright 2007-2011 Joern Huxhorn
+ * Copyright 2007-2017 Joern Huxhorn
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,32 +39,43 @@ import de.huxhorn.lilith.data.logging.Message;
 public class NoOpNDCAdapter
 	implements NDCAdapter
 {
+	@Override
 	public void push(String messagePattern, Object... arguments)
 	{
+		// no-op
 	}
 
+	@Override
 	public void pop()
 	{
+		// no-op
 	}
 
+	@Override
 	public int getDepth()
 	{
 		return 0;
 	}
 
+	@Override
 	public void setMaximumDepth(int maximumDepth)
 	{
+		// no-op
 	}
 
+	@Override
 	public boolean isEmpty()
 	{
 		return true;
 	}
 
+	@Override
 	public void clear()
 	{
+		// no-op
 	}
 
+	@Override
 	public Message[] getContextStack()
 	{
 		return NO_MESSAGES;

@@ -1,6 +1,6 @@
 /*
  * Lilith - a log event viewer.
- * Copyright (C) 2007-2013 Joern Huxhorn
+ * Copyright (C) 2007-2018 Joern Huxhorn
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,92 +15,61 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package de.huxhorn.lilith.swing.menu;
 
-import de.huxhorn.lilith.data.eventsource.EventWrapper;
-import de.huxhorn.lilith.data.logging.LoggingEvent;
-import de.huxhorn.lilith.swing.ViewContainer;
-import de.huxhorn.lilith.swing.actions.AbstractLoggingFilterAction;
-import de.huxhorn.lilith.swing.actions.EventWrapperRelated;
-import de.huxhorn.lilith.swing.actions.FilterAction;
+import de.huxhorn.lilith.swing.actions.BasicFilterAction;
 import de.huxhorn.lilith.swing.actions.FocusLoggerAction;
-import de.huxhorn.lilith.swing.actions.ViewContainerRelated;
-
-import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.StringTokenizer;
 
-public class FocusLoggerMenu
-	extends JMenu
-	implements ViewContainerRelated, EventWrapperRelated
+class FocusLoggerMenu
+	extends AbstractLoggingFilterMenu
 {
-	private static final long serialVersionUID = -1383728062587884548L;
+	private static final long serialVersionUID = 7734936686237835484L;
 
-	private ViewContainer viewContainer;
-	private String loggerName;
-
-	public FocusLoggerMenu()
+	FocusLoggerMenu()
 	{
 		super("Logger");
+
 		setViewContainer(null);
-		setEventWrapper(null);
 	}
 
-	public void setViewContainer(ViewContainer viewContainer)
+	@Override
+	protected void updateState()
 	{
-		this.viewContainer = viewContainer;
-		updateState();
-	}
-
-	public ViewContainer getViewContainer()
-	{
-		return viewContainer;
-	}
-
-	public void setEventWrapper(EventWrapper eventWrapper) {
+		removeAll();
 		String loggerName = null;
-		LoggingEvent loggingEvent = AbstractLoggingFilterAction.resolveLoggingEvent(eventWrapper);
 		if (loggingEvent != null) {
 			loggerName = loggingEvent.getLogger();
 		}
-		setLoggerName(loggerName);
-	}
 
-	public void setLoggerName(String loggerName)
-	{
-		this.loggerName = loggerName;
-		updateState();
-	}
-
-	private void updateState()
-	{
-		removeAll();
-		if(viewContainer == null || loggerName == null)
+		if(loggerName == null)
 		{
 			setEnabled(false);
 			return;
 		}
 
+		boolean added = false;
 		for (String current : prepareLoggerNames(loggerName))
 		{
-			add(createAction(viewContainer, current));
+			BasicFilterAction filterAction = createAction(current);
+			filterAction.setViewContainer(viewContainer);
+			add(filterAction);
+			added = true;
 		}
-		setEnabled(true);
+		setEnabled(added);
 	}
 
-	protected FilterAction createAction(ViewContainer viewContainer, String loggerName)
+	protected BasicFilterAction createAction(String loggerName)
 	{
-		return new FocusLoggerAction(viewContainer, loggerName);
+		return new FocusLoggerAction(loggerName);
 	}
 
-	public static List<String> prepareLoggerNames(String loggerName)
+	static List<String> prepareLoggerNames(String loggerName)
 	{
-		if(loggerName == null)
-		{
-			return new ArrayList<String>();
-		}
-		List<String> tokens = new ArrayList<String>();
+		List<String> tokens = new ArrayList<>();
 		loggerName = loggerName.replace('$', '.'); // better handling of inner classes
 		StringTokenizer tok = new StringTokenizer(loggerName, ".", false);
 		while(tok.hasMoreTokens())
@@ -109,10 +78,10 @@ public class FocusLoggerMenu
 			tokens.add(current);
 		}
 
-		List<String> result=new ArrayList<String>(tokens.size());
+		List<String> result=new ArrayList<>(tokens.size());
 		for(int i=tokens.size();i>0;i--)
 		{
-			StringBuilder builder=new StringBuilder();
+			StringBuilder builder=new StringBuilder(); // NOPMD - AvoidInstantiatingObjectsInLoops
 			boolean first=true;
 			for(int j=0;j<i;j++)
 			{
@@ -122,7 +91,7 @@ public class FocusLoggerMenu
 				}
 				else
 				{
-					builder.append(".");
+					builder.append('.');
 				}
 				builder.append(tokens.get(j));
 			}

@@ -1,9 +1,8 @@
 package de.huxhorn.lilith.slf4j;
 
+import java.io.IOException;
 import org.junit.After;
 import org.junit.Test;
-
-import java.io.IOException;
 
 
 public class ConceptTest
@@ -19,6 +18,7 @@ public class ConceptTest
 	}
 
 	@Test
+	@SuppressWarnings("PMD.AvoidThrowingRawExceptionTypes")
 	public void log()
 	{
 		logger.log(Logger.Level.DEBUG, "Foobar");

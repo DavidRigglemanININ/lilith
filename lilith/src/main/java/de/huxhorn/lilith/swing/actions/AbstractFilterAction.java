@@ -1,6 +1,6 @@
 /*
  * Lilith - a log event viewer.
- * Copyright (C) 2007-2013 Joern Huxhorn
+ * Copyright (C) 2007-2016 Joern Huxhorn
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,64 +18,40 @@
 package de.huxhorn.lilith.swing.actions;
 
 import de.huxhorn.lilith.data.eventsource.EventWrapper;
-import de.huxhorn.lilith.swing.ViewContainer;
 import de.huxhorn.sulky.conditions.Condition;
-
-import javax.swing.*;
 import java.awt.event.ActionEvent;
 
 public abstract class AbstractFilterAction
-	extends AbstractAction
+	extends AbstractBasicFilterAction
 	implements FilterAction
 {
-	private static final long serialVersionUID = -8702163293653882073L;
+	private static final long serialVersionUID = -8402480035772204416L;
 
-	protected transient ViewContainer viewContainer;
-
-	protected AbstractFilterAction()
+	protected AbstractFilterAction(String name, boolean htmlTooltip)
 	{
-	}
-
-	protected AbstractFilterAction(String name)
-	{
-		super(name);
-	}
-
-	protected AbstractFilterAction(String name, Icon icon)
-	{
-		super(name, icon);
+		super(name, htmlTooltip);
 	}
 
 	@Override
-	public void setViewContainer(ViewContainer viewContainer) {
-		if(this.viewContainer != viewContainer)
+	protected void viewContainerUpdated()
+	{
+		super.viewContainerUpdated();
+		EventWrapper eventWrapper = null;
+		if(viewContainer != null)
 		{
-			this.viewContainer = viewContainer;
-			updateState();
+			eventWrapper = viewContainer.getSelectedEvent();
 		}
+		setEventWrapper(eventWrapper);
 	}
 
-	@Override
-	public ViewContainer getViewContainer()
-	{
-		return viewContainer;
-	}
-
-	@Override
-	public void actionPerformed(ActionEvent e)
-	{
-		if(this.viewContainer == null)
-		{
-			return;
-		}
-		viewContainer.applyCondition(resolveCondition(), e);
-	}
-
-
+	/**
+	 * To be called after setEventWrapper.
+	 */
 	protected abstract void updateState();
 
+	@Override
 	public abstract void setEventWrapper(EventWrapper eventWrapper);
 
-	public abstract Condition resolveCondition();
-
+	@Override
+	public abstract Condition resolveCondition(ActionEvent e);
 }

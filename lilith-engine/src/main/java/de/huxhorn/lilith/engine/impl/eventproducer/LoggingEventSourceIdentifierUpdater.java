@@ -20,12 +20,12 @@ package de.huxhorn.lilith.engine.impl.eventproducer;
 import de.huxhorn.lilith.data.eventsource.LoggerContext;
 import de.huxhorn.lilith.data.eventsource.SourceIdentifier;
 import de.huxhorn.lilith.data.logging.LoggingEvent;
-
 import java.util.Map;
 
 public class LoggingEventSourceIdentifierUpdater
 		implements SourceIdentifierUpdater<LoggingEvent>
 {
+	@Override
 	public void updateIdentifier(SourceIdentifier baseIdentifier, LoggingEvent event)
 	{
 		if(baseIdentifier == null)

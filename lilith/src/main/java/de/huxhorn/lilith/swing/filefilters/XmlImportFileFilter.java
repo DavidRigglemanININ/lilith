@@ -1,6 +1,6 @@
 /*
  * Lilith - a log event viewer.
- * Copyright (C) 2007-2011 Joern Huxhorn
+ * Copyright (C) 2007-2016 Joern Huxhorn
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,13 +18,14 @@
 package de.huxhorn.lilith.swing.filefilters;
 
 import java.io.File;
-
+import java.util.Locale;
 import javax.swing.filechooser.FileFilter;
 
 public class XmlImportFileFilter
 	extends FileFilter
 {
 
+	@Override
 	public boolean accept(File file)
 	{
 		if(file.isDirectory())
@@ -34,7 +35,7 @@ public class XmlImportFileFilter
 
 		if(file.isFile())
 		{
-			String fileName = file.getName().toLowerCase();
+			String fileName = file.getName().toLowerCase(Locale.US);
 			if(fileName.endsWith(".xml") || fileName.endsWith(".xml.gz"))
 			{
 				return true;
@@ -43,6 +44,7 @@ public class XmlImportFileFilter
 		return false;
 	}
 
+	@Override
 	public String getDescription()
 	{
 		return "XML files";

@@ -1,6 +1,6 @@
 /*
  * Lilith - a log event viewer.
- * Copyright (C) 2007-2014 Joern Huxhorn
+ * Copyright (C) 2007-2018 Joern Huxhorn
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -17,7 +17,7 @@
  */
 
 /*
- * Copyright 2007-2014 Joern Huxhorn
+ * Copyright 2007-2018 Joern Huxhorn
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,7 +40,7 @@ import java.util.StringTokenizer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class ThrowableInfoParser
+public final class ThrowableInfoParser
 {
 	private static final String NEWLINE = "\n";
 	private static final String CARRIAGE_RETURN = "\r";
@@ -50,6 +50,13 @@ public class ThrowableInfoParser
 	private static final Pattern OMITTED_PATTERN = Pattern.compile("^(\t+)\\.\\.\\. (\\d+) more");
 	private static final Pattern AT_PATTERN = Pattern.compile("^(\t+)at (.+)");
 	private static final Pattern MESSAGE_MATCHER = Pattern.compile("^(\t*)?("+ThrowableInfo.CAUSED_BY_PREFIX+"|"+ThrowableInfo.SUPPRESSED_PREFIX+")?(.*)");
+
+	static
+	{
+		new ThrowableInfoParser(); // stfu
+	}
+
+	private ThrowableInfoParser() {}
 
 	public static ThrowableInfo parse(String throwableInfoString)
 	{
@@ -72,15 +79,15 @@ public class ThrowableInfoParser
 			return null;
 		}
 
-		return parse(throwableInfoLines, /*startIndex=*/0 , /*indent=*/0).throwableInfo;
+		return parse(throwableInfoLines, /*startIndex=*/0, /*indent=*/0).throwableInfo;
 	}
 
 	private static class ThrowableInfoParseResult
 	{
-		public ThrowableInfo throwableInfo;
-		public int endIndex;
+		ThrowableInfo throwableInfo;
+		int endIndex;
 
-		private ThrowableInfoParseResult(ThrowableInfo throwableInfo, int endIndex)
+		ThrowableInfoParseResult(ThrowableInfo throwableInfo, int endIndex)
 		{
 			this.throwableInfo = throwableInfo;
 			this.endIndex = endIndex;
@@ -100,7 +107,7 @@ public class ThrowableInfoParser
 		List<ThrowableInfo> suppressedInfos = null;
 
 		int index = startIndex;
-		for(; index<lineCount ; index++)
+		for(; index<lineCount; index++)
 		{
 			String currentLine = throwableInfoLines.get(index);
 			Matcher atMatcher = atMatcher(currentLine);
@@ -118,7 +125,7 @@ public class ThrowableInfoParser
 				{
 					if(stackTraceElements == null)
 					{
-						stackTraceElements = new ArrayList<ExtendedStackTraceElement>();
+						stackTraceElements = new ArrayList<>(); // NOPMD - AvoidInstantiatingObjectsInLoops
 					}
 					stackTraceElements.add(este);
 				}
@@ -161,27 +168,25 @@ public class ThrowableInfoParser
 						continue;
 					}
 				}
-				else if(ThrowableInfo.SUPPRESSED_PREFIX.equals(type))
+				else if(ThrowableInfo.SUPPRESSED_PREFIX.equals(type)
+						&& index != startIndex)
 				{
-					if(index != startIndex)
+					if(indentString.length() != indent + 1)
 					{
-						if(indentString.length() != indent + 1)
-						{
-							// we reached wrong nesting...
-							break;
-						}
-						ThrowableInfoParseResult parsed = parse(throwableInfoLines, index, indent + 1);
-						index = parsed.endIndex - 1;
-						if(parsed.throwableInfo != null)
-						{
-							if(suppressedInfos == null)
-							{
-								suppressedInfos = new ArrayList<ThrowableInfo>();
-							}
-							suppressedInfos.add(parsed.throwableInfo);
-						}
-						continue;
+						// we reached wrong nesting...
+						break;
 					}
+					ThrowableInfoParseResult parsed = parse(throwableInfoLines, index, indent + 1);
+					index = parsed.endIndex - 1;
+					if(parsed.throwableInfo != null)
+					{
+						if(suppressedInfos == null)
+						{
+							suppressedInfos = new ArrayList<>(); // NOPMD - AvoidInstantiatingObjectsInLoops
+						}
+						suppressedInfos.add(parsed.throwableInfo);
+					}
+					continue;
 				}
 				if(message == null)
 				{
@@ -190,7 +195,7 @@ public class ThrowableInfoParser
 					if(colonIndex > -1)
 					{
 						name = remainder.substring(0, colonIndex);
-						message = new StringBuilder();
+						message = new StringBuilder(); // NOPMD - AvoidInstantiatingObjectsInLoops
 						message.append(remainder.substring(colonIndex + CLASS_MESSAGE_SEPARATOR.length()));
 					}
 					else
@@ -211,7 +216,7 @@ public class ThrowableInfoParser
 			}
 			else
 			{
-				System.out.println("What? "+currentLine);
+				System.err.println("What? "+currentLine); // NOPMD
 			}
 		}
 
@@ -236,13 +241,13 @@ public class ThrowableInfoParser
 			}
 			if(stackTraceElements != null)
 			{
-				throwableInfo.setStackTrace(stackTraceElements.toArray(new ExtendedStackTraceElement[stackTraceElements.size()]));
+				throwableInfo.setStackTrace(stackTraceElements.toArray(ExtendedStackTraceElement.ARRAY_PROTOTYPE));
 			}
 			throwableInfo.setOmittedElements(omittedElements);
 			throwableInfo.setCause(cause);
 			if(suppressedInfos != null)
 			{
-				throwableInfo.setSuppressed(suppressedInfos.toArray(new ThrowableInfo[suppressedInfos.size()]));
+				throwableInfo.setSuppressed(suppressedInfos.toArray(ThrowableInfo.ARRAY_PROTOTYPE));
 			}
 		}
 
@@ -257,7 +262,7 @@ public class ThrowableInfoParser
 		}
 
 		StringTokenizer tok = new StringTokenizer(input, NEWLINE+CARRIAGE_RETURN, true);
-		List<String> lines = new ArrayList<String>();
+		List<String> lines = new ArrayList<>();
 		boolean foundAnything=false;
 		boolean hadContent=false;
 		while(tok.hasMoreTokens())

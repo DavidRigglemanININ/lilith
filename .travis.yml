@@ -1,25 +1,30 @@
+sudo: false
 language: java
 
 jdk:
   - oraclejdk8
-  - oraclejdk7
-  - openjdk7
-  - openjdk6
+  - oraclejdk9
+
+env:
+  - TERM=dumb
 
 cache:
   directories:
   - $HOME/.gradle
 
-before_install: 
-  - git clone https://github.com/huxi/sulky.git ~/builds/sulky 
-  - pushd ~/builds/sulky 
-  - ./gradlew install 
-  - popd 
+before_install:
+#  - rm -r ~/.gradle/caches
+  - git clone https://github.com/huxi/sulky.git ~/builds/sulky
+  - pushd ~/builds/sulky
+  - git checkout $TRAVIS_BRANCH
+  - ./gradlew --stacktrace install
+  - popd
 
-env:
-- TERM=dumb
+script:
+  - ./gradlew --stacktrace
 
 after_success:
-- ./gradlew cleanTest
-- ./gradlew jacocoRootReport
-- ./gradlew coveralls
+  - ./gradlew --stacktrace cleanTest
+  - ./gradlew --stacktrace jacocoRootReport
+  - ./gradlew --stacktrace coveralls
+  - bash <(curl -s https://codecov.io/bash)

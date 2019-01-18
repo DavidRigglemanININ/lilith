@@ -1,6 +1,6 @@
 /*
  * Lilith - a log event viewer.
- * Copyright (C) 2014 Joern Huxhorn
+ * Copyright (C) 2014-2017 Joern Huxhorn
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,11 +15,11 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package de.huxhorn.lilith.services.details;
 
 import de.huxhorn.lilith.services.BasicFormatter;
 import de.huxhorn.sulky.formatting.SimpleXml;
-
 import java.io.PrintWriter;
 import java.io.StringWriter;
 
@@ -36,34 +36,33 @@ public abstract class AbstractHtmlFormatter
 	public static final String SHOW_STACK_TRACE_OPTION_VARIABLE = "showStackTrace";
 	public static final String WRAPPED_EXCEPTION_STYLE_OPTION_VARIABLE = "wrappedExceptionStyle";
 
+	public static final String DOCUMENT_ROOT_VARIABLE = "documentRoot";
+	public static final String DATETIME_FORMATTER_VARIABLE = "dateTimeFormatter";
+
 
 	public static String createErrorHtml(String message, String additionalInfo, Throwable throwable)
 	{
-		StringBuilder msg = new StringBuilder();
-		msg.append("<html><body>");
-		msg.append(message);
+		StringBuilder msg = new StringBuilder(1000);
+		msg.append("<html><head><title></title><style type=\"text/css\">body {color: black; background-color: white; border-style: solid; border-width: 5px; border-color: red; padding: 5px; margin: 5px; font-family: Arial, Helvetica, sans-serif;}</style></head><body><h1>")
+				.append(SimpleXml.escape(message))
+				.append("</h1><p>You can <a href=\"prefs://Troubleshooting#reinitializeDetailsViewFiles\">initialize the detailsView</a> to a safe state using \"Reinitialize details view files.\" in <a href=\"prefs://Troubleshooting\">Troubleshooting preferences</a>.</p>");
 
-		if(additionalInfo != null)
+		if(additionalInfo != null && !additionalInfo.isEmpty())
 		{
-			msg.append("<br/>");
-			msg.append(additionalInfo);
-
+			msg.append("<p>")
+					.append(SimpleXml.escape(additionalInfo))
+					.append("</p>");
 		}
 
 		if(throwable != null)
 		{
-			msg.append("<br/>");
-			msg.append("<pre>");
-
 			StringWriter sw = new StringWriter();
 			throwable.printStackTrace(new PrintWriter(sw));
-			String exceptionStr = sw.toString();
+			String exceptionStr = SimpleXml.escape(sw.toString());
 
-
-			exceptionStr = SimpleXml.escape(exceptionStr);
-
-			msg.append(exceptionStr);
-			msg.append("</pre>");
+			msg.append("<pre>")
+					.append(exceptionStr)
+					.append("</pre>");
 		}
 		msg.append("</body></html>");
 

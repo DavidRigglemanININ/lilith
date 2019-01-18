@@ -2,40 +2,13 @@ package de.huxhorn.lilith.sandbox;
 
 import java.util.logging.*;
 import java.io.*;
-import java.lang.reflect.Method;
+import java.nio.charset.StandardCharsets;
 
 public class JulSandbox
 {
-	public static final Method ADD_SUPPRESSED_METHOD;
-
-	static
-	{
-	    Method method = null;
-		try
-		{
-			method = Throwable.class.getMethod("addSuppressed", Throwable.class);
-		}
-		catch(NoSuchMethodException e)
-		{
-			// ignore
-		}
-		ADD_SUPPRESSED_METHOD = method;
-	}
-
 	public static void addSuppressed(Throwable throwable, Throwable suppressed)
 	{
-		if(ADD_SUPPRESSED_METHOD != null)
-		{
-			try
-			{
-				ADD_SUPPRESSED_METHOD.invoke(throwable, suppressed);
-			}
-			catch(Throwable t)
-			{
-				System.err.println("Exception while invoking Throwable.addSuppressed method!");
-				t.printStackTrace();
-			}
-		}
+		throwable.addSuppressed(suppressed);
 	}
 
 	public static class InnerClass
@@ -67,16 +40,16 @@ public class JulSandbox
 		}
 		return result;
 	}
-	
+
 
 	public static void main(String args[])
-		throws IOException
+		throws IOException, InterruptedException
 	{
 		Logger rootLogger=Logger.getLogger("");
 
 		{
 			FileHandler fh = new FileHandler("log.xml");
-			fh.setEncoding("UTF-8");
+			fh.setEncoding(StandardCharsets.UTF_8.toString());
 			fh.setFormatter(new XMLFormatter());
 
 			rootLogger.addHandler(fh);
@@ -86,7 +59,7 @@ public class JulSandbox
 			try
 			{
 				SocketHandler fh = new SocketHandler("127.0.0.1", 11020);
-				fh.setEncoding("UTF-8");
+				fh.setEncoding(StandardCharsets.UTF_8.toString());
 				fh.setFormatter(new XMLFormatter());
 
 				rootLogger.addHandler(fh);
@@ -98,10 +71,15 @@ public class JulSandbox
 			}
 		}
 		rootLogger.setLevel(Level.ALL);
-		
-		final Logger logger = Logger.getLogger(JulSandbox.class.getName());
-		logger.log(Level.INFO, "Args {0}{1}", new Object[]{"Foo", "bar"});
 
-		InnerClass.execute();
+		final Logger logger = Logger.getLogger(JulSandbox.class.getName());
+		for(;;) {
+			logger.log(Level.INFO, "Args {0}{1}", new Object[]{"Foo", "bar"});
+
+			InnerClass.execute();
+			Thread.sleep(500);
+			
+			logger.log(Level.INFO, "Issue #26: Unable to read logs which contains unprintable characters:" + (char)0 + (char)0xFFFF + "...");
+		}
 	}
 }

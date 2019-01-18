@@ -1,6 +1,6 @@
 /*
  * Lilith - a log event viewer.
- * Copyright (C) 2007-2011 Joern Huxhorn
+ * Copyright (C) 2007-2017 Joern Huxhorn
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -17,7 +17,7 @@
  */
 
 /*
- * Copyright 2007-2011 Joern Huxhorn
+ * Copyright 2007-2017 Joern Huxhorn
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,14 +55,15 @@ public class LilithPreferences
 	private boolean coloringWholeRow = false;
 	private boolean globalLoggingEnabled = true;
 	private boolean hidingOnClose = true;
-	private boolean loggingStatisticEnabled = true;
 	private boolean maximizingInternalFrames = false;
 	private boolean mute = false;
+	private boolean scrollingSmoothly = true;
 	private boolean scrollingToBottom = true;
-	private boolean showingFullCallstack = false;
+	private boolean showingFullCallStack = false;
 	private boolean showingFullRecentPath = false;
-	private boolean showingIdentifier = true;
-	private boolean showingStatusbar = true;
+	private boolean showingPrimaryIdentifier = false;
+	private boolean showingSecondaryIdentifier = false;
+	private boolean showingStatusBar = true;
 	private boolean showingStackTrace = true;
 	private boolean showingTipOfTheDay = true;
 	private boolean showingToolbar = true;
@@ -233,16 +234,6 @@ public class LilithPreferences
 		this.globalLoggingEnabled = globalLoggingEnabled;
 	}
 
-	public boolean isLoggingStatisticEnabled()
-	{
-		return loggingStatisticEnabled;
-	}
-
-	public void setLoggingStatisticEnabled(boolean loggingStatisticEnabled)
-	{
-		this.loggingStatisticEnabled = loggingStatisticEnabled;
-	}
-
 	public boolean isMaximizingInternalFrames()
 	{
 		return maximizingInternalFrames;
@@ -263,6 +254,17 @@ public class LilithPreferences
 		this.mute = mute;
 	}
 
+
+	public boolean isScrollingSmoothly()
+	{
+		return scrollingSmoothly;
+	}
+
+	public void setScrollingSmoothly(boolean scrollingSmoothly)
+	{
+		this.scrollingSmoothly = scrollingSmoothly;
+	}
+
 	public boolean isScrollingToBottom()
 	{
 		return scrollingToBottom;
@@ -273,34 +275,44 @@ public class LilithPreferences
 		this.scrollingToBottom = scrollingToBottom;
 	}
 
-	public boolean isShowingFullCallstack()
+	public boolean isShowingFullCallStack()
 	{
-		return showingFullCallstack;
+		return showingFullCallStack;
 	}
 
-	public void setShowingFullCallstack(boolean showingFullCallstack)
+	public void setShowingFullCallStack(boolean showingFullCallStack)
 	{
-		this.showingFullCallstack = showingFullCallstack;
+		this.showingFullCallStack = showingFullCallStack;
 	}
 
-	public boolean isShowingIdentifier()
+	public boolean isShowingPrimaryIdentifier()
 	{
-		return showingIdentifier;
+		return showingPrimaryIdentifier;
 	}
 
-	public void setShowingIdentifier(boolean showingIdentifier)
+	public void setShowingPrimaryIdentifier(boolean showingPrimaryIdentifier)
 	{
-		this.showingIdentifier = showingIdentifier;
+		this.showingPrimaryIdentifier = showingPrimaryIdentifier;
 	}
 
-	public boolean isShowingStatusbar()
+	public boolean isShowingSecondaryIdentifier()
 	{
-		return showingStatusbar;
+		return showingSecondaryIdentifier;
 	}
 
-	public void setShowingStatusbar(boolean showingStatusbar)
+	public void setShowingSecondaryIdentifier(boolean showingSecondaryIdentifier)
 	{
-		this.showingStatusbar = showingStatusbar;
+		this.showingSecondaryIdentifier = showingSecondaryIdentifier;
+	}
+
+	public boolean isShowingStatusBar()
+	{
+		return showingStatusBar;
+	}
+
+	public void setShowingStatusBar(boolean showingStatusBar)
+	{
+		this.showingStatusBar = showingStatusBar;
 	}
 
 	public boolean isShowingStackTrace()
@@ -413,8 +425,8 @@ public class LilithPreferences
 		this.usingWrappedExceptionStyle = usingWrappedExceptionStyle;
 	}
 
-	public static enum SourceFiltering
+	public enum SourceFiltering
 	{
 		NONE, BLACKLIST, WHITELIST
-	}	
+	}
 }

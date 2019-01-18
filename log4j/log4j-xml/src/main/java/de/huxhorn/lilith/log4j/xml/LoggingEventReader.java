@@ -1,23 +1,23 @@
 /*
  * Lilith - a log event viewer.
- * Copyright (C) 2007-2014 Joern Huxhorn
- * 
+ * Copyright (C) 2007-2018 Joern Huxhorn
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 /*
- * Copyright 2007-2014 Joern Huxhorn
+ * Copyright 2007-2018 Joern Huxhorn
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,13 +42,11 @@ import de.huxhorn.lilith.data.logging.ThrowableInfo;
 import de.huxhorn.lilith.data.logging.ThrowableInfoParser;
 import de.huxhorn.sulky.stax.GenericStreamReader;
 import de.huxhorn.sulky.stax.StaxUtilities;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.StringTokenizer;
-
 import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
@@ -58,15 +56,11 @@ public class LoggingEventReader
 {
 	private static final String NEWLINE = "\n";
 
-	public LoggingEventReader()
-	{
-	}
-
+	@Override
 	public LoggingEvent read(XMLStreamReader reader)
 		throws XMLStreamException
 	{
-		LoggingEvent result = null;
-		String rootNamespace = NAMESPACE_URI;
+
 		int type = reader.getEventType();
 		if(XMLStreamConstants.START_DOCUMENT == type)
 		{
@@ -76,11 +70,10 @@ public class LoggingEventReader
 				type = reader.getEventType();
 			}
 			while(type != XMLStreamConstants.START_ELEMENT);
-			rootNamespace = null;
 		}
 		if(XMLStreamConstants.START_ELEMENT == type && LOGGING_EVENT_NODE.equals(reader.getLocalName()))
 		{
-			result = new LoggingEvent();
+			LoggingEvent result = new LoggingEvent();
 			result.setLogger(StaxUtilities.readAttributeValue(reader, NAMESPACE_URI, LOGGER_ATTRIBUTE));
 
 			String levelStr = StaxUtilities.readAttributeValue(reader, NAMESPACE_URI, LEVEL_ATTRIBUTE);
@@ -154,7 +147,7 @@ public class LoggingEventReader
 			result.setMdc(readMdc(reader));
 			return result;
 		}
-		return result;
+		return null;
 	}
 
 	private Map<String, String> readMdc(XMLStreamReader reader)
@@ -163,9 +156,9 @@ public class LoggingEventReader
 		int type = reader.getEventType();
 		if(XMLStreamConstants.START_ELEMENT == type && PROPERTIES_NODE.equals(reader.getLocalName()))
 		{
-			Map<String, String> mdc = new HashMap<String, String>();
+			Map<String, String> mdc = new HashMap<>();
 			reader.nextTag();
-			for(; ;)
+			for(;;)
 			{
 				MdcEntry entry = readMdcEntry(reader);
 				if(entry == null)
@@ -198,6 +191,7 @@ public class LoggingEventReader
 		return null;
 	}
 
+	@SuppressWarnings("PMD.ReturnEmptyArrayRatherThanNull")
 	private ExtendedStackTraceElement[] readLocationInfo(XMLStreamReader reader)
 		throws XMLStreamException
 	{
@@ -237,7 +231,7 @@ public class LoggingEventReader
 		if(throwableString != null)
 		{
 			StringTokenizer tok = new StringTokenizer(throwableString, NEWLINE, true);
-			List<String> lines = new ArrayList<String>();
+			List<String> lines = new ArrayList<>();
 			boolean wasNewline=false;
 			while(tok.hasMoreTokens())
 			{
@@ -274,13 +268,13 @@ public class LoggingEventReader
 		{
 			return null;
 		}
-		ArrayList<Message> ndcs = new ArrayList<Message>();
+		ArrayList<Message> ndcs = new ArrayList<>();
 		StringTokenizer tok = new StringTokenizer(ndcString, " ", false); // *sigh*
 		while(tok.hasMoreTokens())
 		{
-			ndcs.add(new Message(tok.nextToken()));
+			ndcs.add(new Message(tok.nextToken())); // NOPMD - AvoidInstantiatingObjectsInLoops
 		}
-		return ndcs.toArray(new Message[ndcs.size()]);
+		return ndcs.toArray(Message.ARRAY_PROTOTYPE);
 	}
 
 	private static class MdcEntry

@@ -1,6 +1,6 @@
 /*
  * Lilith - a log event viewer.
- * Copyright (C) 2007-2013 Joern Huxhorn
+ * Copyright (C) 2007-2017 Joern Huxhorn
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,50 +15,42 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package de.huxhorn.lilith.swing.menu;
 
+import de.huxhorn.lilith.data.eventsource.EventWrapper;
 import de.huxhorn.lilith.swing.ApplicationPreferences;
-import de.huxhorn.lilith.swing.ViewContainer;
-import de.huxhorn.lilith.swing.actions.FilterAction;
+import de.huxhorn.lilith.swing.actions.BasicFilterAction;
 import de.huxhorn.lilith.swing.actions.FocusSavedConditionAction;
-import de.huxhorn.lilith.swing.actions.ViewContainerRelated;
 import de.huxhorn.lilith.swing.preferences.SavedCondition;
-
-import javax.swing.*;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
-public class FocusSavedConditionsMenu
-	extends JMenu
-	implements ViewContainerRelated
+class FocusSavedConditionsMenu
+	extends AbstractFilterMenu
+	implements ConditionNamesAware
 {
-	private static final long serialVersionUID = 5642118791633046024L;
+	private static final long serialVersionUID = 5145343038578903089L;
 	private final ApplicationPreferences applicationPreferences;
+	protected final boolean htmlTooltip;
 
-	private List<FilterAction> savedConditionActions;
-	private ViewContainer viewContainer;
+	private List<BasicFilterAction> savedConditionActions;
+	private EventWrapper eventWrapper;
 
-	public FocusSavedConditionsMenu(ApplicationPreferences applicationPreferences)
+	@SuppressWarnings("PMD.ConstructorCallsOverridableMethod")
+	FocusSavedConditionsMenu(ApplicationPreferences applicationPreferences, boolean htmlTooltip)
 	{
 		super("Saved conditions");
+
 		this.applicationPreferences = applicationPreferences;
-		setViewContainer(null);
+		this.htmlTooltip = htmlTooltip;
 		setConditionNames(applicationPreferences.getConditionNames());
+
+		setViewContainer(null);
 	}
 
-	public void setViewContainer(ViewContainer viewContainer)
-	{
-		this.viewContainer = viewContainer;
-		updateState();
-	}
-
-	public ViewContainer getViewContainer()
-	{
-		return viewContainer;
-	}
-
-	public void setConditionNames(List<String> conditionNames)
+	@Override
+	public final void setConditionNames(List<String> conditionNames)
 	{
 		// *only* remove if conditions changed.
 		removeAll();
@@ -68,9 +60,9 @@ public class FocusSavedConditionsMenu
 		}
 		else
 		{
-			conditionNames = new ArrayList<String>(conditionNames);
-			Collections.sort(conditionNames, String.CASE_INSENSITIVE_ORDER);
-			savedConditionActions = new ArrayList<FilterAction>(conditionNames.size());
+			conditionNames = new ArrayList<>(conditionNames);
+			conditionNames.sort(String.CASE_INSENSITIVE_ORDER);
+			savedConditionActions = new ArrayList<>(conditionNames.size());
 			for(String current : conditionNames)
 			{
 				SavedCondition savedCondition = applicationPreferences.resolveSavedCondition(current);
@@ -83,7 +75,9 @@ public class FocusSavedConditionsMenu
 					// something went wrong, ignore.
 					continue;
 				}
-				savedConditionActions.add(createAction(viewContainer, savedCondition));
+				BasicFilterAction filterAction = createAction(savedCondition);
+				filterAction.setViewContainer(viewContainer);
+				savedConditionActions.add(filterAction);
 			}
 		}
 		updateState();
@@ -91,14 +85,14 @@ public class FocusSavedConditionsMenu
 
 	private void updateState()
 	{
-		if(viewContainer == null || savedConditionActions == null || savedConditionActions.isEmpty())
+		if(eventWrapper == null || savedConditionActions == null || savedConditionActions.isEmpty())
 		{
 			setEnabled(false);
 			return;
 		}
 
 		// update viewContainer of all actions
-		for(FilterAction current : savedConditionActions)
+		for(BasicFilterAction current : savedConditionActions)
 		{
 			current.setViewContainer(viewContainer);
 		}
@@ -106,17 +100,21 @@ public class FocusSavedConditionsMenu
 		if(getMenuComponentCount() == 0)
 		{
 			// this indicates that the conditions have changed.
-			for(FilterAction current : savedConditionActions)
-			{
-				add(current);
-			}
+			savedConditionActions.forEach(this::add);
 		}
 
 		setEnabled(true);
 	}
 
-	protected FilterAction createAction(ViewContainer viewContainer, SavedCondition savedCondition)
+	protected BasicFilterAction createAction(SavedCondition savedCondition)
 	{
-		return new FocusSavedConditionAction(viewContainer, savedCondition);
+		return new FocusSavedConditionAction(savedCondition, htmlTooltip);
+	}
+
+	@Override
+	public void setEventWrapper(EventWrapper eventWrapper)
+	{
+		this.eventWrapper = eventWrapper;
+		updateState();
 	}
 }

@@ -34,17 +34,16 @@
 
 package de.huxhorn.lilith.data.logging;
 
-import static de.huxhorn.sulky.junit.JUnitTools.testSerialization;
-import static de.huxhorn.sulky.junit.JUnitTools.testXmlSerialization;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import org.junit.Before;
-import org.junit.Test;
-
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import org.junit.Before;
+import org.junit.Test;
+
+import static de.huxhorn.sulky.junit.JUnitTools.testSerialization;
+import static de.huxhorn.sulky.junit.JUnitTools.testXmlSerialization;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 
 public class MarkerTest
 {
@@ -93,7 +92,7 @@ public class MarkerTest
 	{
 		Marker instance = new Marker();
 
-		Map<String, Marker> value = new HashMap<String, Marker>();
+		Map<String, Marker> value = new HashMap<>();
 		value.put("foo", new Marker());
 		instance.setReferences(value);
 

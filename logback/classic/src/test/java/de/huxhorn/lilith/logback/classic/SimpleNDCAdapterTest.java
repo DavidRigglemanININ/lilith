@@ -35,10 +35,13 @@
 package de.huxhorn.lilith.logback.classic;
 
 import de.huxhorn.lilith.data.logging.Message;
-
-import static org.junit.Assert.*;
 import org.junit.Before;
 import org.junit.Test;
+
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 public class SimpleNDCAdapterTest
 {
@@ -103,7 +106,7 @@ public class SimpleNDCAdapterTest
 		Message[] messages = new Message[]
 			{
 				new Message("message1", new String[]{"foo", "bar"}),
-				new Message("message2", new String[]{"foo", null}),
+				new Message("message2", new String[]{"foo", "null"}),
 				new Message("message3"),
 				new Message(null),
 				new Message(null, new String[]{"foo", "bar"}),

@@ -1,6 +1,6 @@
 /*
  * Lilith - a log event viewer.
- * Copyright (C) 2007-2011 Joern Huxhorn
+ * Copyright (C) 2007-2017 Joern Huxhorn
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,23 +15,21 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package de.huxhorn.lilith.swing.taskmanager.table;
 
 import de.huxhorn.lilith.swing.TextPreprocessor;
-import de.huxhorn.sulky.swing.Tables;
 import de.huxhorn.sulky.tasks.Task;
 import de.huxhorn.sulky.tasks.TaskManager;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.awt.*;
+import java.awt.Point;
 import java.awt.event.MouseEvent;
 import java.util.Map;
-
-import javax.swing.*;
+import javax.swing.JTable;
+import javax.swing.ListSelectionModel;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class TaskTable<T>
 	extends JTable
@@ -39,19 +37,18 @@ public class TaskTable<T>
 	private static final long serialVersionUID = -7788744990458100395L;
 
 	private final Logger logger = LoggerFactory.getLogger(TaskTable.class);
-	private TaskTableModel<T> taskTableModel;
+	private final TaskTableModel<T> taskTableModel;
 
 	public TaskTable(TaskManager<T> taskManager)
 	{
 		super();
-		taskTableModel = new TaskTableModel<T>(taskManager);
+		taskTableModel = new TaskTableModel<>(taskManager);
 		// must be added before setting model to table
 		taskTableModel.addTableModelListener(new SelectFirstListener());
 		setModel(taskTableModel);
 		setColumnModel(new TaskTableColumnModel());
 		setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-		Tables.setAutoCreateRowSorter(this, true);
-
+		setAutoCreateRowSorter(true);
 	}
 
 	public void setPaused(boolean paused)
@@ -74,11 +71,6 @@ public class TaskTable<T>
 		}
 	}
 
-	public boolean isPaused()
-	{
-		return taskTableModel.isPaused();
-	}
-
 	public TaskTableModel<T> getTaskTableModel()
 	{
 		return taskTableModel;
@@ -89,7 +81,7 @@ public class TaskTable<T>
 		int row = rowAtPoint(p);
 		if(row > -1)
 		{
-			row = Tables.convertRowIndexToModel(this, row);
+			row = convertRowIndexToModel(row);
 
 			Task<T> result = taskTableModel.getValueAt(row);
 			if(result != null && select)
@@ -101,7 +93,7 @@ public class TaskTable<T>
 		return null;
 	}
 
-	public void selectRow(int row)
+	private void selectRow(int row)
 	{
 		if(row >= 0 && row < getRowCount())
 		{
@@ -112,35 +104,36 @@ public class TaskTable<T>
 		}
 	}
 
+	@SuppressWarnings("NullableProblems")
+	@Override
 	public String getToolTipText(MouseEvent event)
 	{
+		if(event == null)
+		{
+			return null;
+		}
 		Task<T> task = getTaskAt(event.getPoint(), false);
 		if(task != null)
 		{
 			StringBuilder result = new StringBuilder();
 
-			result.append("<html><body>");
-			result.append("<p>").append(task.getName()).append(" (ID=").append(task.getId()).append(")</p>");
+			result.append("<html><body><p>").append(task.getName()).append(" (ID=").append(task.getId()).append(")</p>");
 			String description = task.getDescription();
 			if(description != null)
 			{
 				result.append("<p>").append(TextPreprocessor.wrapWithPre(TextPreprocessor.cropTextBlock(description))).append("</p>");
 			}
 			Map<String, String> metaData = task.getMetaData();
-			if(metaData != null && metaData.size() > 0)
+			if(metaData != null && !metaData.isEmpty())
 			{
-				result.append("<table border=\"1\">");
-				result.append("<tr><th>Key</th><th>Value</th></tr>");
+				result.append("<table border=\"1\"><tr><th>Key</th><th>Value</th></tr>");
 				for(Map.Entry<String, String> current : metaData.entrySet())
 				{
-					result.append("<tr>");
-					result.append("<td>");
-					result.append(TextPreprocessor.cropToSingleLine(current.getKey()));
-					result.append("</td>");
-					result.append("<td>");
-					result.append(TextPreprocessor.cropToSingleLine(current.getValue()));
-					result.append("</td>");
-					result.append("</tr>");
+					result.append("<tr><td>")
+							.append(TextPreprocessor.cropToSingleLine(current.getKey()))
+							.append("</td><td>")
+							.append(TextPreprocessor.cropToSingleLine(current.getValue()))
+							.append("</td></tr>");
 				}
 				result.append("</table>");
 			}
@@ -155,6 +148,7 @@ public class TaskTable<T>
 		implements TableModelListener
 	{
 
+		@Override
 		public void tableChanged(TableModelEvent tableModelEvent)
 		{
 			selectFirstTask();

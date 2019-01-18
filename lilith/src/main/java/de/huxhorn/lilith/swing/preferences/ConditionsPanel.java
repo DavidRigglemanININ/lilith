@@ -1,45 +1,54 @@
 /*
  * Lilith - a log event viewer.
- * Copyright (C) 2007-2011 Joern Huxhorn
- * 
+ * Copyright (C) 2007-2017 Joern Huxhorn
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package de.huxhorn.lilith.swing.preferences;
 
 import de.huxhorn.lilith.swing.ApplicationPreferences;
-import de.huxhorn.lilith.swing.EventWrapperViewPanel;
+import de.huxhorn.lilith.swing.Icons;
+import de.huxhorn.lilith.swing.LilithActionId;
 import de.huxhorn.lilith.swing.TextPreprocessor;
 import de.huxhorn.lilith.swing.preferences.table.ConditionTableColumnModel;
 import de.huxhorn.lilith.swing.preferences.table.ConditionTableModel;
 import de.huxhorn.sulky.conditions.Condition;
 import de.huxhorn.sulky.swing.Windows;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.GridLayout;
+import java.awt.Point;
 import java.awt.event.ActionEvent;
+import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
-import java.net.URL;
 import java.util.List;
-
-import javax.swing.*;
+import javax.swing.AbstractAction;
+import javax.swing.Action;
+import javax.swing.JButton;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTable;
+import javax.swing.JTextArea;
+import javax.swing.JToolBar;
+import javax.swing.ListSelectionModel;
 import javax.swing.border.EtchedBorder;
 import javax.swing.border.TitledBorder;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class ConditionsPanel
 	extends JPanel
@@ -48,27 +57,24 @@ public class ConditionsPanel
 
 	private final Logger logger = LoggerFactory.getLogger(ConditionsPanel.class);
 
-	private PreferencesDialog preferencesDialog;
-	private ApplicationPreferences applicationPreferences;
-	private EditConditionDialog editConditionDialog;
-	private List<SavedCondition> conditions;
-	private JTable conditionTable;
-	private ConditionTableModel conditionTableModel;
-	private EditConditionAction editConditionAction;
-	private RemoveConditionAction removeConditionAction;
-	private JTextArea conditionTextArea;
-	private MoveUpAction moveUpAction;
-	private MoveDownAction moveDownAction;
+	private final PreferencesDialog preferencesDialog;
+	private final ApplicationPreferences applicationPreferences;
+	private final EditConditionDialog editConditionDialog;
+	private final JTable conditionTable;
+	private final ConditionTableModel conditionTableModel;
+	private final EditConditionAction editConditionAction;
+	private final RemoveConditionAction removeConditionAction;
+	private final JTextArea conditionTextArea;
+	private final MoveUpAction moveUpAction;
+	private final MoveDownAction moveDownAction;
 
-	public ConditionsPanel(PreferencesDialog preferencesDialog)
+	private List<SavedCondition> conditions;
+
+	ConditionsPanel(PreferencesDialog preferencesDialog)
 	{
 		this.preferencesDialog = preferencesDialog;
 		applicationPreferences = preferencesDialog.getApplicationPreferences();
-		createUI();
-	}
 
-	private void createUI()
-	{
 		setLayout(new BorderLayout());
 		editConditionDialog = new EditConditionDialog(preferencesDialog);
 
@@ -102,14 +108,12 @@ public class ConditionsPanel
 		moveUpAction = new MoveUpAction();
 		moveDownAction = new MoveDownAction();
 
-		//JButton addConditionButton = new JButton(addConditionAction);
 		JButton editConditionButton = new JButton(editConditionAction);
 		JButton removeConditionButton = new JButton(removeConditionAction);
 		JButton moveUpButton = new JButton(moveUpAction);
 		JButton moveDownButton = new JButton(moveDownAction);
 
 
-		//toolBar.add(addConditionButton);
 		toolBar.add(editConditionButton);
 		toolBar.add(removeConditionButton);
 		toolBar.add(moveUpButton);
@@ -127,7 +131,7 @@ public class ConditionsPanel
 		updateConditions();
 	}
 
-	public void updateConditions()
+	private void updateConditions()
 	{
 		int selectedRow = conditionTable.getSelectedRow();
 		if(logger.isDebugEnabled()) logger.debug("selectedRow={}", selectedRow);
@@ -150,13 +154,13 @@ public class ConditionsPanel
 		conditionTextArea.setText(description);
 	}
 
-	public void saveSettings()
+	void saveSettings()
 	{
 		if(logger.isInfoEnabled()) logger.info("Setting conditions to {}.", conditions);
 		applicationPreferences.setConditions(conditions);
 	}
 
-	public void editCondition(Condition condition)
+	void editCondition(Condition condition)
 	{
 		SavedCondition savedCondition = null;
 		for(SavedCondition current : conditions)
@@ -186,7 +190,7 @@ public class ConditionsPanel
 
 		editConditionDialog.setSavedCondition(savedCondition);
 		editConditionDialog.setAdding(adding);
-		for(; ;)
+		for(;;)
 		{
 			Windows.showWindow(editConditionDialog, preferencesDialog, true);
 			if(editConditionDialog.isCanceled())
@@ -217,7 +221,7 @@ public class ConditionsPanel
 			{
 				// replace?
 				String dialogTitle = "Duplicate condition name!";
-				String message = "A different confition with the same name does already exist!\nOverwrite that condition?";
+				String message = "A different condition with the same name does already exist!\nOverwrite that condition?";
 				int result = JOptionPane.showConfirmDialog(this, message, dialogTitle,
 					JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
 				if(JOptionPane.OK_OPTION == result)
@@ -262,80 +266,35 @@ public class ConditionsPanel
 	private class ConditionTableRowSelectionListener
 		implements ListSelectionListener
 	{
+		@Override
 		public void valueChanged(ListSelectionEvent e)
 		{
 			updateConditions();
 		}
 	}
 
-	/*
-	private class AddConditionAction
-		extends AbstractAction
-	{
-		public AddConditionAction()
-		{
-			super("Add");
-			Icon icon;
-			{
-				URL url= EventWrapperViewPanel.class.getResource("/tango/16x16/actions/list-add.png");
-				if(url!=null)
-				{
-					icon =new ImageIcon(url);
-				}
-				else
-				{
-					icon =null;
-				}
-			}
-			putValue(Action.SMALL_ICON, icon);
-			putValue(Action.SHORT_DESCRIPTION, "Add a new Condition. Not yet implemented!");
-			setEnabled(false);
-		}
-
-		public void actionPerformed(ActionEvent e)
-		{
-			if(logger.isDebugEnabled()) logger.debug("Add");
-			// TODO: implement
-		}
-	}
-	*/
-
 	private class EditConditionAction
 		extends AbstractAction
 	{
 		private static final long serialVersionUID = 95425194239658313L;
 
-		public EditConditionAction()
+		EditConditionAction()
 		{
 			super("Edit");
-			Icon icon;
-			{
-				URL url = EventWrapperViewPanel.class.getResource("/tango/16x16/actions/list-add.png");
-				if(url != null)
-				{
-					icon = new ImageIcon(url);
-				}
-				else
-				{
-					icon = null;
-				}
-			}
-			putValue(Action.SMALL_ICON, icon);
+			putValue(Action.SMALL_ICON, Icons.ADD_16_ICON);
 			putValue(Action.SHORT_DESCRIPTION, "Edit a Condition.");
 		}
 
+		@Override
 		public void actionPerformed(ActionEvent e)
 		{
 			if(logger.isDebugEnabled()) logger.debug("Edit");
 			int row = conditionTable.getSelectedRow();
-			if(row >= 0)
+			if(row >= 0 && row < conditions.size())
 			{
-				if(row < conditions.size())
-				{
-					SavedCondition condition = conditions.get(row);
-					editCondition(condition.getCondition());
-					updateConditions();
-				}
+				SavedCondition condition = conditions.get(row);
+				editCondition(condition.getCondition());
+				updateConditions();
 			}
 		}
 	}
@@ -345,25 +304,14 @@ public class ConditionsPanel
 	{
 		private static final long serialVersionUID = 4573645407508010450L;
 
-		public RemoveConditionAction()
+		RemoveConditionAction()
 		{
 			super("Remove");
-			Icon icon;
-			{
-				URL url = EventWrapperViewPanel.class.getResource("/tango/16x16/actions/list-remove.png");
-				if(url != null)
-				{
-					icon = new ImageIcon(url);
-				}
-				else
-				{
-					icon = null;
-				}
-			}
-			putValue(Action.SMALL_ICON, icon);
+			putValue(Action.SMALL_ICON, Icons.REMOVE_16_ICON);
 			putValue(Action.SHORT_DESCRIPTION, "Remove the selected Condition.");
 		}
 
+		@Override
 		public void actionPerformed(ActionEvent e)
 		{
 			if(logger.isDebugEnabled()) logger.debug("Remove");
@@ -398,25 +346,14 @@ public class ConditionsPanel
 	{
 		private static final long serialVersionUID = -5414336722079117405L;
 
-		public MoveUpAction()
+		MoveUpAction()
 		{
 			super("Move up");
-			Icon icon;
-			{
-				URL url = EventWrapperViewPanel.class.getResource("/tango/16x16/actions/go-up.png");
-				if(url != null)
-				{
-					icon = new ImageIcon(url);
-				}
-				else
-				{
-					icon = null;
-				}
-			}
-			putValue(Action.SMALL_ICON, icon);
+			putValue(Action.SMALL_ICON, Icons.resolveMenuIcon(LilithActionId.FIND_PREVIOUS));
 			putValue(Action.SHORT_DESCRIPTION, "Move the selected Condition up.");
 		}
 
+		@Override
 		public void actionPerformed(ActionEvent e)
 		{
 			if(logger.isDebugEnabled()) logger.debug("MoveUp");
@@ -440,25 +377,14 @@ public class ConditionsPanel
 	{
 		private static final long serialVersionUID = -1115999498183305487L;
 
-		public MoveDownAction()
+		MoveDownAction()
 		{
 			super("Move down");
-			Icon icon;
-			{
-				URL url = EventWrapperViewPanel.class.getResource("/tango/16x16/actions/go-down.png");
-				if(url != null)
-				{
-					icon = new ImageIcon(url);
-				}
-				else
-				{
-					icon = null;
-				}
-			}
-			putValue(Action.SMALL_ICON, icon);
+			putValue(Action.SMALL_ICON, Icons.resolveMenuIcon(LilithActionId.FIND_NEXT));
 			putValue(Action.SHORT_DESCRIPTION, "Move the selected Condition down.");
 		}
 
+		@Override
 		public void actionPerformed(ActionEvent e)
 		{
 			if(logger.isDebugEnabled()) logger.debug("MoveDown");
@@ -476,19 +402,12 @@ public class ConditionsPanel
 	}
 
 	private class ConditionTableMouseListener
-		implements MouseListener
+		extends MouseAdapter
 	{
-		public ConditionTableMouseListener()
-		{
-		}
-
+		@Override
 		public void mouseClicked(MouseEvent evt)
 		{
-			if(evt.isPopupTrigger())
-			{
-				showPopup(evt);
-			}
-			else if(evt.getButton() == MouseEvent.BUTTON1)
+			if(evt.getButton() == MouseEvent.BUTTON1)
 			{
 				Point p = evt.getPoint();
 				int row = conditionTable.rowAtPoint(p);
@@ -509,36 +428,5 @@ public class ConditionsPanel
 				}
 			}
 		}
-
-
-		@SuppressWarnings({"UnusedDeclaration"})
-		private void showPopup(MouseEvent evt)
-		{
-		}
-
-		public void mousePressed(MouseEvent evt)
-		{
-			if(evt.isPopupTrigger())
-			{
-				showPopup(evt);
-			}
-		}
-
-		public void mouseReleased(MouseEvent evt)
-		{
-			if(evt.isPopupTrigger())
-			{
-				showPopup(evt);
-			}
-		}
-
-		public void mouseEntered(MouseEvent e)
-		{
-		}
-
-		public void mouseExited(MouseEvent e)
-		{
-		}
-
 	}
 }

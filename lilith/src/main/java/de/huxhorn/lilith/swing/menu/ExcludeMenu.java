@@ -1,6 +1,6 @@
 /*
  * Lilith - a log event viewer.
- * Copyright (C) 2007-2013 Joern Huxhorn
+ * Copyright (C) 2007-2017 Joern Huxhorn
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,209 +15,175 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package de.huxhorn.lilith.swing.menu;
 
-import de.huxhorn.lilith.data.access.AccessEvent;
-import de.huxhorn.lilith.data.eventsource.EventWrapper;
-import de.huxhorn.lilith.data.logging.LoggingEvent;
+import de.huxhorn.lilith.swing.AbstractLilithAction;
 import de.huxhorn.lilith.swing.ApplicationPreferences;
-import de.huxhorn.lilith.swing.ViewContainer;
-import de.huxhorn.lilith.swing.actions.AbstractAccessFilterAction;
-import de.huxhorn.lilith.swing.actions.AbstractLoggingFilterAction;
-import de.huxhorn.lilith.swing.actions.EventWrapperRelated;
+import de.huxhorn.lilith.swing.LilithActionId;
 import de.huxhorn.lilith.swing.actions.FilterAction;
 import de.huxhorn.lilith.swing.actions.FocusCallLocationAction;
 import de.huxhorn.lilith.swing.actions.FocusFormattedMessageAction;
 import de.huxhorn.lilith.swing.actions.FocusHttpMethodAction;
 import de.huxhorn.lilith.swing.actions.FocusHttpRemoteUserAction;
-import de.huxhorn.lilith.swing.actions.FocusHttpRequestUriAction;
 import de.huxhorn.lilith.swing.actions.FocusHttpRequestUrlAction;
 import de.huxhorn.lilith.swing.actions.FocusHttpStatusCodeAction;
 import de.huxhorn.lilith.swing.actions.FocusMessagePatternAction;
+import de.huxhorn.lilith.swing.actions.FocusThreadGroupNameAction;
+import de.huxhorn.lilith.swing.actions.FocusThreadNameAction;
+import de.huxhorn.lilith.swing.actions.FocusThrowableAction;
+import de.huxhorn.lilith.swing.actions.FocusThrowablesAction;
 import de.huxhorn.lilith.swing.actions.NegateFilterAction;
-import de.huxhorn.lilith.swing.actions.ViewContainerRelated;
-
-import javax.swing.*;
-import java.util.List;
+import java.awt.event.ActionEvent;
+import javax.swing.Action;
+import javax.swing.JMenuItem;
 
 public class ExcludeMenu
-	extends JMenu
-	implements ViewContainerRelated, EventWrapperRelated
+	extends AbstractFilterMainMenu
 {
-	private static final long serialVersionUID = -663125573199455498L;
+	private static final long serialVersionUID = 7891868504135342449L;
 
-	private final ApplicationPreferences applicationPreferences;
+	private static final Action ACTION_INSTANCE = new MenuAction();
 
-	private EventWrapper eventWrapper;
-
-	private ExcludeSavedConditionsMenu savedMenu;
-	private FilterAction messagePatternAction;
-	private JMenuItem messagePatternItem;
-	private FilterAction formattedMessageAction;
-	private JMenuItem formattedMessageItem;
-	private FilterAction callLocationAction;
-	private JMenuItem callLocationItem;
-	private ExcludeMDCMenu mdcMenu;
-	private ExcludeMarkerMenu markerMenu;
-	private ExcludeNDCMenu ndcMenu;
-	private ExcludeLoggerMenu loggerMenu;
-	// no levelMenu since logging levels stack so excluding events with a higher level than e.g. WARN does
-	// not make sense.
-
-	private FilterAction statusCodeAction;
-	private JMenuItem statusCodeItem;
-	private ExcludeHttpStatusTypeMenu statusTypeMenu;
-	private FilterAction methodAction;
-	private JMenuItem methodItem;
-	private FilterAction requestUriAction;
-	private JMenuItem requestUriItem;
-	private FilterAction requestUrlAction;
-	private JMenuItem requestUrlItem;
-	private FilterAction remoteUserAction;
-	private JMenuItem remoteUserItem;
-	private ViewContainer viewContainer;
-
-	public ExcludeMenu(ApplicationPreferences applicationPreferences)
+	public ExcludeMenu(ApplicationPreferences applicationPreferences, boolean htmlTooltip)
 	{
-		super("Exclude");
-		this.applicationPreferences = applicationPreferences;
+		super(ACTION_INSTANCE, applicationPreferences, htmlTooltip);
 		createUI();
-		setViewContainer(null);
-		setEventWrapper(null);
+		viewContainerUpdated();
 	}
 
 	private void createUI()
 	{
-		savedMenu = new ExcludeSavedConditionsMenu(applicationPreferences);
+		FilterAction messagePatternAction = new NegateFilterAction(new FocusMessagePatternAction(htmlTooltip));
+		registerFilterAction(messagePatternAction);
 
-		messagePatternAction = new NegateFilterAction(new FocusMessagePatternAction());
-		formattedMessageAction = new NegateFilterAction(new FocusFormattedMessageAction());
-		callLocationAction = new NegateFilterAction(new FocusCallLocationAction());
-		messagePatternItem = new JMenuItem(messagePatternAction);
-		formattedMessageItem = new JMenuItem(formattedMessageAction);
-		callLocationItem = new JMenuItem(callLocationAction);
-		mdcMenu = new ExcludeMDCMenu();
-		markerMenu = new ExcludeMarkerMenu();
-		ndcMenu = new ExcludeNDCMenu();
-		loggerMenu = new ExcludeLoggerMenu();
+		FilterAction formattedMessageAction = new NegateFilterAction(new FocusFormattedMessageAction(htmlTooltip));
+		registerFilterAction(formattedMessageAction);
 
-		statusCodeAction = new NegateFilterAction(new FocusHttpStatusCodeAction());
-		statusCodeItem = new JMenuItem(statusCodeAction);
-		statusTypeMenu = new ExcludeHttpStatusTypeMenu();
-		methodAction = new NegateFilterAction(new FocusHttpMethodAction());
-		methodItem = new JMenuItem(methodAction);
-		requestUriAction = new NegateFilterAction(new FocusHttpRequestUriAction());
-		requestUriItem = new JMenuItem(requestUriAction);
-		requestUrlAction = new NegateFilterAction(new FocusHttpRequestUrlAction());
-		requestUrlItem = new JMenuItem(requestUrlAction);
-		remoteUserAction = new NegateFilterAction(new FocusHttpRemoteUserAction());
-		remoteUserItem = new JMenuItem(remoteUserAction);
+		FilterAction callLocationAction = new NegateFilterAction(new FocusCallLocationAction());
+		registerFilterAction(callLocationAction);
+
+		FilterAction throwablesAction = new NegateFilterAction(new FocusThrowablesAction());
+		registerFilterAction(throwablesAction);
+
+		FilterAction throwableAction = new NegateFilterAction(new FocusThrowableAction());
+		registerFilterAction(throwableAction);
+
+		FilterAction threadNameAction = new NegateFilterAction(new FocusThreadNameAction());
+		registerFilterAction(threadNameAction);
+
+		FilterAction threadGroupNameAction = new NegateFilterAction(new FocusThreadGroupNameAction());
+		registerFilterAction(threadGroupNameAction);
+
+		FilterAction statusCodeAction = new NegateFilterAction(new FocusHttpStatusCodeAction());
+		registerFilterAction(statusCodeAction);
+
+		FilterAction methodAction = new NegateFilterAction(new FocusHttpMethodAction());
+		registerFilterAction(methodAction);
+
+		FilterAction requestUrlAction = new NegateFilterAction(new FocusHttpRequestUrlAction());
+		registerFilterAction(requestUrlAction);
+
+		FilterAction remoteUserAction = new NegateFilterAction(new FocusHttpRemoteUserAction());
+		registerFilterAction(remoteUserAction);
+
+		AbstractFilterMenu savedMenu = new ExcludeSavedConditionsMenu(applicationPreferences, htmlTooltip);
+		registerAbstractFilterMenu(savedMenu);
+
+		AbstractFilterMenu loggerMenu = new ExcludeLoggerMenu();
+		registerAbstractFilterMenu(loggerMenu);
+
+		// no levelMenu
+
+		AbstractFilterMenu mdcMenu = new ExcludeMDCMenu();
+		registerAbstractFilterMenu(mdcMenu);
+
+		AbstractFilterMenu markerMenu = new ExcludeMarkerMenu();
+		registerAbstractFilterMenu(markerMenu);
+
+		AbstractFilterMenu ndcMenu = new ExcludeNDCMenu(htmlTooltip);
+		registerAbstractFilterMenu(ndcMenu);
+
+		AbstractFilterMenu statusTypeMenu = new ExcludeHttpStatusTypeMenu();
+		registerAbstractFilterMenu(statusTypeMenu);
+
+		AbstractFilterMenu requestUriMenu = new ExcludeHttpRequestUriMenu();
+		registerAbstractFilterMenu(requestUriMenu);
+
+		AbstractFilterMenu requestParameterMenu = new ExcludeRequestParameterMenu();
+		registerAbstractFilterMenu(requestParameterMenu);
+
+		AbstractFilterMenu requestHeaderMenu = new ExcludeRequestHeaderMenu();
+		registerAbstractFilterMenu(requestHeaderMenu);
+
+		AbstractFilterMenu responseHeaderMenu = new ExcludeResponseHeaderMenu();
+		registerAbstractFilterMenu(responseHeaderMenu);
+
+
+		JMenuItem messagePatternItem = new JMenuItem(messagePatternAction);
+		JMenuItem formattedMessageItem = new JMenuItem(formattedMessageAction);
+		JMenuItem callLocationItem = new JMenuItem(callLocationAction);
+		JMenuItem throwablesItem = new JMenuItem(throwablesAction);
+		JMenuItem throwableItem = new JMenuItem(throwableAction);
+		JMenuItem threadNameItem = new JMenuItem(threadNameAction);
+		JMenuItem threadGroupNameItem = new JMenuItem(threadGroupNameAction);
+		JMenuItem statusCodeItem = new JMenuItem(statusCodeAction);
+		JMenuItem methodItem = new JMenuItem(methodAction);
+		JMenuItem requestUrlItem = new JMenuItem(requestUrlAction);
+		JMenuItem remoteUserItem = new JMenuItem(remoteUserAction);
+
+
+		registerLoggingComponent(savedMenu);
+		registerLoggingComponent(null);
+		registerLoggingComponent(loggerMenu);
+		registerLoggingComponent(null);
+		registerLoggingComponent(messagePatternItem);
+		registerLoggingComponent(formattedMessageItem);
+		registerLoggingComponent(null);
+		registerLoggingComponent(callLocationItem);
+		registerLoggingComponent(null);
+		registerLoggingComponent(throwablesItem);
+		registerLoggingComponent(throwableItem);
+		registerLoggingComponent(null);
+		registerLoggingComponent(threadNameItem);
+		registerLoggingComponent(threadGroupNameItem);
+		registerLoggingComponent(null);
+		registerLoggingComponent(mdcMenu);
+		registerLoggingComponent(markerMenu);
+		registerLoggingComponent(ndcMenu);
+
+
+		registerAccessComponent(savedMenu);
+		registerAccessComponent(null);
+		registerAccessComponent(statusCodeItem);
+		registerAccessComponent(statusTypeMenu);
+		registerAccessComponent(null);
+		registerAccessComponent(methodItem);
+		registerAccessComponent(null);
+		registerAccessComponent(requestUriMenu);
+		registerAccessComponent(requestUrlItem);
+		registerAccessComponent(null);
+		registerAccessComponent(requestParameterMenu);
+		registerAccessComponent(requestHeaderMenu);
+		registerAccessComponent(responseHeaderMenu);
+		registerAccessComponent(null);
+		registerAccessComponent(remoteUserItem);
 	}
 
-	public void setEventWrapper(EventWrapper eventWrapper)
+	private static class MenuAction
+			extends AbstractLilithAction
 	{
-		this.eventWrapper = eventWrapper;
-		messagePatternAction.setEventWrapper(eventWrapper);
-		formattedMessageAction.setEventWrapper(eventWrapper);
-		callLocationAction.setEventWrapper(eventWrapper);
-		mdcMenu.setEventWrapper(eventWrapper);
-		markerMenu.setEventWrapper(eventWrapper);
-		ndcMenu.setEventWrapper(eventWrapper);
-		loggerMenu.setEventWrapper(eventWrapper);
+		private static final long serialVersionUID = -3921428596260398928L;
 
-		statusCodeAction.setEventWrapper(eventWrapper);
-		methodAction.setEventWrapper(eventWrapper);
-		requestUriAction.setEventWrapper(eventWrapper);
-		requestUrlAction.setEventWrapper(eventWrapper);
-		remoteUserAction.setEventWrapper(eventWrapper);
-		updateState();
-	}
-
-	public void setViewContainer(ViewContainer viewContainer)
-	{
-		this.viewContainer = viewContainer;
-		savedMenu.setViewContainer(viewContainer);
-
-		messagePatternAction.setViewContainer(viewContainer);
-		formattedMessageAction.setViewContainer(viewContainer);
-		callLocationAction.setViewContainer(viewContainer);
-		mdcMenu.setViewContainer(viewContainer);
-		markerMenu.setViewContainer(viewContainer);
-		ndcMenu.setViewContainer(viewContainer);
-		loggerMenu.setViewContainer(viewContainer);
-
-		statusCodeAction.setViewContainer(viewContainer);
-		statusTypeMenu.setViewContainer(viewContainer);
-		methodAction.setViewContainer(viewContainer);
-		requestUriAction.setViewContainer(viewContainer);
-		requestUrlAction.setViewContainer(viewContainer);
-		remoteUserAction.setViewContainer(viewContainer);
-		updateState();
-	}
-
-	public ViewContainer getViewContainer()
-	{
-		return viewContainer;
-	}
-
-	private void updateState()
-	{
-		EventWrapper wrapper = this.eventWrapper;
-		removeAll();
-
-		LoggingEvent loggingEvent = AbstractLoggingFilterAction.resolveLoggingEvent(wrapper);
-		if(loggingEvent != null)
+		MenuAction()
 		{
-			add(savedMenu);
-			addSeparator();
-			add(messagePatternItem);
-			add(formattedMessageItem);
-			addSeparator();
-			add(callLocationItem);
-			addSeparator();
-			add(mdcMenu);
-			add(markerMenu);
-			add(ndcMenu);
-			addSeparator();
-			add(loggerMenu);
-
-			setEnabled(
-					messagePatternItem.isEnabled() ||
-					formattedMessageItem.isEnabled() ||
-					callLocationItem.isEnabled() ||
-					mdcMenu.isEnabled() ||
-					markerMenu.isEnabled() ||
-					loggerMenu.isEnabled() ||
-					savedMenu.isEnabled()
-				);
-			return;
+			super(LilithActionId.EXCLUDE);
 		}
 
-		AccessEvent accessEvent = AbstractAccessFilterAction.resolveAccessEvent(eventWrapper);
-		if(accessEvent != null)
+		@Override
+		public void actionPerformed(ActionEvent e)
 		{
-			add(savedMenu);
-			addSeparator();
-			add(statusCodeItem);
-			add(statusTypeMenu);
-			addSeparator();
-			add(methodItem);
-			addSeparator();
-			add(requestUriItem);
-			add(requestUrlItem);
-			addSeparator();
-			add(remoteUserItem);
-
-			// statusTypeMenu will always be enabled if an event exists at all
-			setEnabled(true);
-			return;
+			// no-op
 		}
-
-		setEnabled(false);
-	}
-
-	public void setConditionNames(List<String> conditionNames)
-	{
-		savedMenu.setConditionNames(conditionNames);
 	}
 }

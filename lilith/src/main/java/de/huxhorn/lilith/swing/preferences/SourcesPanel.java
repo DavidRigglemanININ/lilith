@@ -1,69 +1,70 @@
 /*
  * Lilith - a log event viewer.
- * Copyright (C) 2007-2011 Joern Huxhorn
- * 
+ * Copyright (C) 2007-2017 Joern Huxhorn
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package de.huxhorn.lilith.swing.preferences;
 
-import de.huxhorn.lilith.swing.EventWrapperViewPanel;
-import de.huxhorn.sulky.swing.Tables;
+import de.huxhorn.lilith.swing.Icons;
 import de.huxhorn.sulky.swing.Windows;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.GridLayout;
+import java.awt.Point;
 import java.awt.event.ActionEvent;
+import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
-import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
-
-import javax.swing.*;
+import javax.swing.AbstractAction;
+import javax.swing.Action;
+import javax.swing.JButton;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTable;
+import javax.swing.JToolBar;
+import javax.swing.ListSelectionModel;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class SourcesPanel
 	extends JPanel
 {
+	private static final long serialVersionUID = -1430756927138063766L;
+
 	final Logger logger = LoggerFactory.getLogger(SourcesPanel.class);
 
-	private JTable sourceNameTable;
-	private SourceNameTableModel sourceNameTableModel;
-	private EditSourceNameAction editSourceNameAction;
-	private RemoveSourceNameAction removeSourceNameAction;
-	private EditSourceNameDialog editSourceNameDialog;
-	private PreferencesDialog preferencesDialog;
-	//private ApplicationPreferences applicationPreferences;
+	private final JTable sourceNameTable;
+	private final SourceNameTableModel sourceNameTableModel;
+	private final EditSourceNameAction editSourceNameAction;
+	private final RemoveSourceNameAction removeSourceNameAction;
+	private final EditSourceNameDialog editSourceNameDialog;
+	private final PreferencesDialog preferencesDialog;
 
-	public SourcesPanel(PreferencesDialog preferencesDialog)
+	SourcesPanel(PreferencesDialog preferencesDialog)
 	{
 		this.preferencesDialog = preferencesDialog;
-		//applicationPreferences=preferencesDialog.getApplicationPreferences();
-		createUI();
-	}
 
-	private void createUI()
-	{
 		setLayout(new BorderLayout());
 		editSourceNameDialog = new EditSourceNameDialog(preferencesDialog);
-		Map<String, String> sourceNames = new HashMap<String, String>();
+		Map<String, String> sourceNames = new HashMap<>();
 		sourceNameTableModel = new SourceNameTableModel(sourceNames);
 		sourceNameTable = new JTable(sourceNameTableModel);
-		Tables.setAutoCreateRowSorter(sourceNameTable, true);
+		sourceNameTable.setAutoCreateRowSorter(true);
 		sourceNameTable.addMouseListener(new SourceNameTableMouseListener());
 		JScrollPane sourceNameTableScrollPane = new JScrollPane(sourceNameTable);
 
@@ -95,19 +96,11 @@ public class SourcesPanel
 	public void initUI()
 	{
 		Map<String, String> sourceNames = preferencesDialog.getSourceNames();
-//		if(sourceNames==null)
-//		{
-//			sourceNames=new HashMap<String, String>();
-//		}
-//		else
-//		{
-//			sourceNames=new HashMap<String, String>(sourceNames);
-//		}
 		sourceNameTableModel.setData(sourceNames);
 		updateSourceNames();
 	}
 
-	public void updateSourceNames()
+	private void updateSourceNames()
 	{
 		int selectedRow = sourceNameTable.getSelectedRow();
 		if(logger.isDebugEnabled()) logger.debug("selectedRow={}", selectedRow);
@@ -116,7 +109,7 @@ public class SourcesPanel
 		removeSourceNameAction.setEnabled(selectedRow != -1);
 	}
 
-	public void editSourceName(final String sourceIdentifier)
+	void editSourceName(final String sourceIdentifier)
 	{
 		Map<String, String> data = sourceNameTableModel.getData();
 		if(data.containsKey(sourceIdentifier))
@@ -129,7 +122,7 @@ public class SourcesPanel
 		}
 	}
 
-	public void editSourceName(final String sourceIdentifier, boolean add)
+	private void editSourceName(final String sourceIdentifier, boolean add)
 	{
 		Map<String, String> data = sourceNameTableModel.getData();
 		String sourceName = data.get(sourceIdentifier);
@@ -147,35 +140,19 @@ public class SourcesPanel
 			newIdentifier = newIdentifier.trim();
 			sourceName = editSourceNameDialog.getSourceName();
 			sourceName = sourceName.trim();
-			/*
-			if(data.containsKey(sourceIdentifier))
-			{
-				data.remove(sourceIdentifier);
-			}
-
-			data.put(newIdentifier, sourceName);
-
-			sourceNameTableModel.setData(data);
-			*/
 			preferencesDialog.setSourceName(sourceIdentifier, newIdentifier, sourceName);
 		}
 	}
 
-/*
-	public void saveSettings()
-	{
-		applicationPreferences.setSourceNames(sourceNameTableModel.getData());
-	}
-*/
-
 	private int convertSourceNameRow(int row)
 	{
-		return Tables.convertRowIndexToModel(sourceNameTable, row);
+		return sourceNameTable.convertRowIndexToModel(row);
 	}
 
 	private class SourceNameTableRowSelectionListener
 		implements ListSelectionListener
 	{
+		@Override
 		public void valueChanged(ListSelectionEvent e)
 		{
 			updateSourceNames();
@@ -185,25 +162,16 @@ public class SourcesPanel
 	private class AddSourceNameAction
 		extends AbstractAction
 	{
-		public AddSourceNameAction()
+		private static final long serialVersionUID = 2159800920473132058L;
+
+		AddSourceNameAction()
 		{
 			super("Add");
-			Icon icon;
-			{
-				URL url = EventWrapperViewPanel.class.getResource("/tango/16x16/actions/list-add.png");
-				if(url != null)
-				{
-					icon = new ImageIcon(url);
-				}
-				else
-				{
-					icon = null;
-				}
-			}
-			putValue(Action.SMALL_ICON, icon);
+			putValue(Action.SMALL_ICON, Icons.ADD_16_ICON);
 			putValue(Action.SHORT_DESCRIPTION, "Add a new Source Name.");
 		}
 
+		@Override
 		public void actionPerformed(ActionEvent e)
 		{
 			if(logger.isDebugEnabled()) logger.debug("Add");
@@ -214,25 +182,16 @@ public class SourcesPanel
 	private class EditSourceNameAction
 		extends AbstractAction
 	{
-		public EditSourceNameAction()
+		private static final long serialVersionUID = -6686916429941183752L;
+
+		EditSourceNameAction()
 		{
 			super("Edit");
-			Icon icon;
-			{
-				URL url = EventWrapperViewPanel.class.getResource("/tango/16x16/actions/list-add.png");
-				if(url != null)
-				{
-					icon = new ImageIcon(url);
-				}
-				else
-				{
-					icon = null;
-				}
-			}
-			putValue(Action.SMALL_ICON, icon);
+			putValue(Action.SMALL_ICON, Icons.ADD_16_ICON);
 			putValue(Action.SHORT_DESCRIPTION, "Edit a Source Name.");
 		}
 
+		@Override
 		public void actionPerformed(ActionEvent e)
 		{
 			if(logger.isDebugEnabled()) logger.debug("Edit");
@@ -250,25 +209,16 @@ public class SourcesPanel
 	private class RemoveSourceNameAction
 		extends AbstractAction
 	{
-		public RemoveSourceNameAction()
+		private static final long serialVersionUID = -4376772972629739348L;
+
+		RemoveSourceNameAction()
 		{
 			super("Remove");
-			Icon icon;
-			{
-				URL url = EventWrapperViewPanel.class.getResource("/tango/16x16/actions/list-remove.png");
-				if(url != null)
-				{
-					icon = new ImageIcon(url);
-				}
-				else
-				{
-					icon = null;
-				}
-			}
-			putValue(Action.SMALL_ICON, icon);
+			putValue(Action.SMALL_ICON, Icons.REMOVE_16_ICON);
 			putValue(Action.SHORT_DESCRIPTION, "Remove the selected Source Name.");
 		}
 
+		@Override
 		public void actionPerformed(ActionEvent e)
 		{
 			if(logger.isDebugEnabled()) logger.debug("Remove");
@@ -283,15 +233,11 @@ public class SourcesPanel
 	}
 
 	private class SourceNameTableMouseListener
-		implements MouseListener
+		extends MouseAdapter
 	{
 		private final Logger logger = LoggerFactory.getLogger(SourceNameTableMouseListener.class);
 
-
-		public SourceNameTableMouseListener()
-		{
-		}
-
+		@Override
 		public void mouseClicked(MouseEvent evt)
 		{
 			if(evt.getClickCount() >= 2 && evt.getButton() == MouseEvent.BUTTON1)
@@ -313,45 +259,6 @@ public class SourcesPanel
 					if(logger.isInfoEnabled()) logger.info("After show...");
 				}
 			}
-			else if(evt.isPopupTrigger())
-			{
-				showPopup(evt);
-			}
 		}
-
-
-		/**
-		 * @param evt the mouse event
-		 * @noinspection UNUSED_SYMBOL,UnusedDeclaration
-		 */
-		private void showPopup(MouseEvent evt)
-		{
-		}
-
-		public void mousePressed(MouseEvent evt)
-		{
-			if(evt.isPopupTrigger())
-			{
-				showPopup(evt);
-			}
-		}
-
-		public void mouseReleased(MouseEvent evt)
-		{
-			if(evt.isPopupTrigger())
-			{
-				showPopup(evt);
-			}
-		}
-
-		public void mouseEntered(MouseEvent e)
-		{
-		}
-
-		public void mouseExited(MouseEvent e)
-		{
-		}
-
 	}
-
 }

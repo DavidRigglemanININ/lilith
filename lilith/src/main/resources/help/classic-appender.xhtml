@@ -10,7 +10,7 @@
 <body>
 <p><a href="index.xhtml">ToC</a></p>
 
-<h1><a name="top">Using the Lilith Classic Socket Appender</a></h1>
+<h1 id="top">Using the Lilith Classic Socket Appender</h1>
 
 <p>The Lilith Classic Socket Appender is a replacement for <code>ch.qos.logback.classic.net.SocketAppender</code>.<br/>
 	This appender, in contrast to logbacks, supports <code>logger.debug("{} {}", new Object[]{foo, bar, throwable)</code>, i.e.
@@ -49,13 +49,6 @@
   <scope>runtime</scope>
 </dependency>]]></code></pre>
 
-<!--
-<p>If you aren't using <a href="http://maven.apache.org">Maven</a> you can find a list of all required dependencies
-	here:<br/>
-	<a href="http://lilith.huxhorn.de/projects/de.huxhorn.lilith.logback.appender.multiplex-classic/dependencies.html">http://lilith.huxhorn.de/projects/de.huxhorn.lilith.logback.appender.multiplex-classic/dependencies.html</a>
-</p>
--->
-
 <p>Then, add the following to your <code>logback.xml</code> file:</p>
 		<pre><code><![CDATA[<appender name="multiplex" class="de.huxhorn.lilith.logback.appender.ClassicMultiplexSocketAppender">
   <Compressing>true</Compressing> <!-- will automatically use correct default port -->
@@ -75,13 +68,13 @@
 </appender>]]></code></pre>
 
 
-<p>You also have to attach the appender to some logger, e.g. the root logger...</p>
+<p>You also have to attach the appender to some logger, e.g. the root logger…</p>
 		<pre><code><![CDATA[<root level="INFO">
   <appender-ref ref="multiplex"/>
 </root>]]></code></pre>
 
 
-<p>... or a specific logger...</p>
+<p>… or a specific logger…</p>
 		<pre><code><![CDATA[<logger name="foo.Bar" level="DEBUG">
   <appender-ref ref="multiplex"/>
 </logger>]]></code></pre>
@@ -115,13 +108,6 @@
   <version>${lilithVersion}</version>
   <scope>runtime</scope>
 </dependency>]]></code></pre>
-
-<!--
-<p>If you aren't using <a href="http://maven.apache.org">Maven</a> you can find a list of all required dependencies
-	here:<br/>
-	<a href="http://lilith.huxhorn.de/projects/de.huxhorn.lilith.logback.appender.multiplex-classic-xml/dependencies.html">http://lilith.huxhorn.de/projects/de.huxhorn.lilith.logback.appender.multiplex-classic-xml/dependencies.html</a>
-</p>
--->
 
 <p>Then, add the following to your <code>logback.xml</code> file:</p>
 		<pre><code><![CDATA[<appender name="multiplex" class="de.huxhorn.lilith.logback.appender.ClassicXmlMultiplexSocketAppender">
@@ -183,13 +169,6 @@
   <scope>runtime</scope>
 </dependency>]]></code></pre>
 
-<!--
-<p>If you aren't using <a href="http://maven.apache.org">Maven</a> you can find a list of all required dependencies
-	here:<br/>
-	<a href="http://lilith.huxhorn.de/projects/de.huxhorn.lilith.logback.appender.multiplex-classic-json/dependencies.html">http://lilith.huxhorn.de/projects/de.huxhorn.lilith.logback.appender.multiplex-classic-json/dependencies.html</a>
-</p>
--->
-
 <p>Then, add the following to your <code>logback.xml</code> file:</p>
 		<pre><code><![CDATA[<appender name="multiplex" class="de.huxhorn.lilith.logback.appender.ClassicJsonMultiplexSocketAppender">
   <Compressing>true</Compressing> <!-- will automatically use correct default port -->
@@ -229,7 +208,7 @@
 <p><a href="#top">Back to top.</a></p>
 
 <h2>logback-classic SocketAppender</h2>
-Lilith listens for connections of the Logback SocketAppender on port 4560.
+Lilith listens for connections of the Logback SocketAppender on port 4445 and port 4560.
 
 <p>Add the following dependency to your applications <code>pom.xml</code> file:</p>
 		<pre><code><![CDATA[<dependency>
@@ -262,13 +241,6 @@ Lilith listens for connections of the Logback SocketAppender on port 4560.
   <version>${lilithVersion}</version>
   <scope>runtime</scope>
 </dependency>]]></code></pre>
-
-<!--
-<p>If you aren't using <a href="http://maven.apache.org">Maven</a> you can find a list of all required dependencies
-	here:<br/>
-	<a href="http://lilith.huxhorn.de/projects/de.huxhorn.lilith.logback.servlet/dependencies.html">http://lilith.huxhorn.de/projects/de.huxhorn.lilith.logback.servlet/dependencies.html</a>
-</p>
--->
 
 <p>Then add the following to your <code>web.xml</code> file.</p>
 

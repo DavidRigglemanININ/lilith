@@ -1,39 +1,41 @@
 /*
  * Lilith - a log event viewer.
- * Copyright (C) 2007-2013 Joern Huxhorn
- * 
+ * Copyright (C) 2007-2018 Joern Huxhorn
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package de.huxhorn.lilith.conditions;
 
 import de.huxhorn.lilith.data.access.AccessEvent;
 import de.huxhorn.lilith.data.eventsource.EventWrapper;
 import de.huxhorn.lilith.data.eventsource.LoggerContext;
+import de.huxhorn.lilith.data.logging.ExtendedStackTraceElement;
 import de.huxhorn.lilith.data.logging.LoggingEvent;
 import de.huxhorn.lilith.data.logging.Marker;
 import de.huxhorn.lilith.data.logging.Message;
 import de.huxhorn.lilith.data.logging.ThreadInfo;
-
+import de.huxhorn.lilith.data.logging.ThrowableInfo;
 import java.io.IOException;
 import java.io.ObjectInputStream;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashSet;
+import java.util.IdentityHashMap;
 import java.util.Map;
+import java.util.Set;
 
-
-public class EventContainsCondition
-	implements LilithCondition, SearchStringCondition
+public final class EventContainsCondition
+	implements LilithCondition, SearchStringCondition, Cloneable
 {
 	private static final long serialVersionUID = -8094852331877521764L;
 
@@ -56,6 +58,7 @@ public class EventContainsCondition
 		this.searchString = searchString;
 	}
 
+	@Override
 	public String getSearchString()
 	{
 		return searchString;
@@ -63,20 +66,10 @@ public class EventContainsCondition
 
 	private boolean checkString(String input)
 	{
-		if(searchString == null)
-		{
-			return false;
-		}
-		if(input != null)
-		{
-			if(input.contains(searchString))
-			{
-				return true;
-			}
-		}
-		return false;
+		return input != null && input.contains(searchString);
 	}
 
+	@Override
 	public boolean isTrue(Object value)
 	{
 		if(searchString == null)
@@ -102,43 +95,21 @@ public class EventContainsCondition
 					{
 						message = messageObj.getMessage();
 					}
-					if(message != null)
+					if(checkString(message))
 					{
-						if(checkString(message))
-						{
-							return true;
-						}
+						return true;
 					}
 				}
 
 				{
-					LoggerContext context = event.getLoggerContext();
-					if(context != null)
+					if (checkLoggerContext(event.getLoggerContext()))
 					{
-						if(checkString(context.getName()))
-						{
-							return true;
-						}
-						Map<String, String> props = context.getProperties();
-						if(props!= null)
-						{
-							for(Map.Entry<String, String> current:props.entrySet())
-							{
-								if(checkString(current.getKey()))
-								{
-									return true;
-								}
-								if(checkString(current.getValue()))
-								{
-									return true;
-								}
-							}
-						}
+						return true;
 					}
 				}
 
 				{
-					String level = "" + event.getLevel();
+					String level = String.valueOf(event.getLevel());
 					if(checkString(level))
 					{
 						return true;
@@ -154,21 +125,50 @@ public class EventContainsCondition
 				}
 
 				{
+					if(checkStackTraceElements(event.getCallStack()))
+					{
+						return true;
+					}
+				}
+
+				{
+					ThrowableInfo throwable = event.getThrowable();
+					if(checkThrowable(throwable, null))
+					{
+						return true;
+					}
+				}
+
+				{
 					ThreadInfo threadInfo = event.getThreadInfo();
 					if(threadInfo != null)
 					{
-						String threadName = threadInfo.getName();
-						if(checkString(threadName))
+						if(checkString(threadInfo.getName()))
 						{
 							return true;
 						}
+
 						Long threadId = threadInfo.getId();
-						if(threadId != null)
+						if(threadId != null && checkString(Long.toString(threadId)))
 						{
-							if(checkString("" + threadId))
-							{
-								return true;
-							}
+							return true;
+						}
+
+						Integer threadPriority = threadInfo.getPriority();
+						if(threadPriority != null && checkString(Integer.toString(threadPriority)))
+						{
+							return true;
+						}
+
+						if(checkString(threadInfo.getGroupName()))
+						{
+							return true;
+						}
+
+						Long groupId = threadInfo.getGroupId();
+						if(groupId != null && checkString(Long.toString(groupId)))
+						{
+							return true;
 						}
 					}
 				}
@@ -183,16 +183,33 @@ public class EventContainsCondition
 
 
 				{
-					Marker marker = event.getMarker();
-					if(marker != null)
+					if(checkMarker(event.getMarker(), null))
 					{
-						if(checkMarker(marker, null))
-						{
-							return true;
-						}
+						return true;
 					}
 				}
 
+				{
+					Message[] ndc = event.getNdc();
+					if(ndc != null)
+					{
+						for (Message current : ndc)
+						{
+							if(current == null)
+							{
+								continue;
+							}
+							if(checkString(current.getMessage()))
+							{
+								return true;
+							}
+							if(checkString(current.getMessagePattern()))
+							{
+								return true;
+							}
+						}
+					}
+				}
 			}
 			else if(eventObj instanceof AccessEvent)
 			{
@@ -207,33 +224,14 @@ public class EventContainsCondition
 				}
 
 				{
-					LoggerContext context = event.getLoggerContext();
-					if(context != null)
+					if (checkLoggerContext(event.getLoggerContext()))
 					{
-						if(checkString(context.getName()))
-						{
-							return true;
-						}
-						Map<String, String> props = context.getProperties();
-						if(props!= null)
-						{
-							for(Map.Entry<String, String> current:props.entrySet())
-							{
-								if(checkString(current.getKey()))
-								{
-									return true;
-								}
-								if(checkString(current.getValue()))
-								{
-									return true;
-								}
-							}
-						}
+						return true;
 					}
 				}
 
 				{
-					String message = "" + event.getStatusCode();
+					String message = String.valueOf(event.getStatusCode());
 					if(checkString(message))
 					{
 						return true;
@@ -271,77 +269,153 @@ public class EventContainsCondition
 		return false;
 	}
 
-	private boolean checkMarker(Marker marker, List<String> processedMarkers)
+	private boolean checkLoggerContext(LoggerContext context)
 	{
-		if(marker != null)
+		return context != null && (checkString(context.getName()) || checkMap(context.getProperties()));
+	}
+
+	private boolean checkThrowable(ThrowableInfo throwable, IdentityHashMap<ThrowableInfo, Object> dejaVu)
+	{
+		if(throwable == null)
 		{
-			if(processedMarkers == null)
+			return false;
+		}
+		if(dejaVu == null)
+		{
+			dejaVu = new IdentityHashMap<>();
+		}
+		if(dejaVu.containsKey(throwable))
+		{
+			return false;
+		}
+		dejaVu.put(throwable, null);
+		if(checkString(throwable.getName()))
+		{
+			return true;
+		}
+		if(checkString(throwable.getMessage()))
+		{
+			return true;
+		}
+		if(checkThrowable(throwable.getCause(), dejaVu))
+		{
+			return true;
+		}
+		ThrowableInfo[] suppressed = throwable.getSuppressed();
+		if(suppressed != null)
+		{
+			for (ThrowableInfo current : suppressed)
 			{
-				processedMarkers = new ArrayList<String>();
+				if(checkThrowable(current, dejaVu))
+				{
+					return true;
+				}
 			}
-			if(checkString(marker.getName()))
+		}
+
+		return checkStackTraceElements(throwable.getStackTrace());
+	}
+
+	private boolean checkStackTraceElements(ExtendedStackTraceElement[] callStack)
+	{
+		if(callStack == null)
+		{
+			return false;
+		}
+		for (ExtendedStackTraceElement current : callStack)
+		{
+			if(current == null)
+			{
+				continue;
+			}
+			if(checkString(current.toString(true)))
 			{
 				return true;
 			}
-			if(!processedMarkers.contains(marker.getName()))
-			{
-				processedMarkers.add(marker.getName());
-				if(marker.hasReferences())
-				{
-					Map<String, Marker> children = marker.getReferences();
-					for(Map.Entry<String, Marker> current : children.entrySet())
-					{
-						Marker child = current.getValue();
-						if(checkMarker(child, processedMarkers))
-						{
-							return true;
-						}
-					}
-				}
-			}
 		}
 		return false;
 	}
 
-	private boolean checkMap(Map<String, String> map)
+	private boolean checkMarker(Marker marker, Set<String> processedMarkers)
 	{
-		if(map != null)
+		if(marker == null)
 		{
-			for(Map.Entry<String, String> entry : map.entrySet())
-			{
-				if(checkString(entry.getKey()))
-				{
-					return true;
-				}
-				if(checkString(entry.getValue()))
-				{
-					return true;
-				}
-			}
+			return false;
 		}
-		return false;
-	}
-
-	private boolean checkArrayMap(Map<String, String[]> map)
-	{
-		if(map != null)
+		if(checkString(marker.getName()))
 		{
-			for(Map.Entry<String, String[]> entry : map.entrySet())
+			return true;
+		}
+
+		if(processedMarkers == null)
+		{
+			processedMarkers = new HashSet<>();
+		}
+		if(!processedMarkers.contains(marker.getName()))
+		{
+			processedMarkers.add(marker.getName());
+			if(marker.hasReferences())
 			{
-				if(checkString(entry.getKey()))
+				Map<String, Marker> children = marker.getReferences();
+				//noinspection ConstantConditions
+				for(Map.Entry<String, Marker> current : children.entrySet())
 				{
-					return true;
-				}
-				String[] array = entry.getValue();
-				for(String s : array)
-				{
-					if(checkString(s))
+					if(checkMarker(current.getValue(), processedMarkers))
 					{
 						return true;
 					}
 				}
 			}
 		}
+
+		return false;
+	}
+
+	private boolean checkMap(Map<String, String> map)
+	{
+		if(map == null)
+		{
+			return false;
+		}
+
+		for(Map.Entry<String, String> entry : map.entrySet())
+		{
+			if(checkString(entry.getKey()) || checkString(entry.getValue()))
+			{
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	private boolean checkArrayMap(Map<String, String[]> map)
+	{
+		if(map == null)
+		{
+			return false;
+		}
+
+		for(Map.Entry<String, String[]> entry : map.entrySet())
+		{
+			if(checkString(entry.getKey()))
+			{
+				return true;
+			}
+			String[] array = entry.getValue();
+			if(array == null)
+			{
+				continue;
+			}
+			for(String s : array)
+			{
+				if(checkString(s))
+				{
+					return true;
+				}
+			}
+		}
+
 		return false;
 	}
 
@@ -352,6 +426,7 @@ public class EventContainsCondition
 		setSearchString(this.searchString);
 	}
 
+	@Override
 	public boolean equals(Object o)
 	{
 		if(this == o) return true;
@@ -362,6 +437,7 @@ public class EventContainsCondition
 		return !(searchString != null ? !searchString.equals(that.searchString) : that.searchString != null);
 	}
 
+	@Override
 	public int hashCode()
 	{
 		int result;
@@ -369,30 +445,31 @@ public class EventContainsCondition
 		return result;
 	}
 
+	@Override
 	public EventContainsCondition clone()
 		throws CloneNotSupportedException
 	{
 		return (EventContainsCondition) super.clone();
 	}
 
+	@Override
 	public String toString()
 	{
 		StringBuilder result = new StringBuilder();
-		result.append(getDescription()).append("(");
+		result.append(getDescription()).append('(');
 		if(searchString != null)
 		{
-			result.append("\"");
-			result.append(searchString);
-			result.append("\"");
+			result.append('"').append(searchString).append('"');
 		}
 		else
 		{
 			result.append("null");
 		}
-		result.append(")");
+		result.append(')');
 		return result.toString();
 	}
 
+	@Override
 	public String getDescription()
 	{
 		return DESCRIPTION;

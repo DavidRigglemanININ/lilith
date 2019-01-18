@@ -1,61 +1,55 @@
 /*
  * Lilith - a log event viewer.
- * Copyright (C) 2007-2011 Joern Huxhorn
- * 
+ * Copyright (C) 2007-2017 Joern Huxhorn
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package de.huxhorn.lilith.swing.preferences;
 
 import de.huxhorn.lilith.data.access.HttpStatus;
 import de.huxhorn.lilith.swing.LilithKeyStrokes;
 import de.huxhorn.lilith.swing.table.ColorScheme;
 import de.huxhorn.sulky.swing.KeyStrokes;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import javax.swing.AbstractAction;
-import javax.swing.Action;
-import javax.swing.JButton;
-import javax.swing.JDialog;
-import javax.swing.JPanel;
-import javax.swing.KeyStroke;
 import java.awt.BorderLayout;
 import java.awt.Dialog;
 import java.awt.FlowLayout;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.event.ActionEvent;
+import javax.swing.AbstractAction;
+import javax.swing.Action;
+import javax.swing.JButton;
+import javax.swing.JDialog;
+import javax.swing.JPanel;
+import javax.swing.KeyStroke;
 
 public class EditAccessStatusTypeDialog
 	extends JDialog
 {
-	private final Logger logger = LoggerFactory.getLogger(EditAccessStatusTypeDialog.class);
+	private static final long serialVersionUID = 3514380262399736012L;
+
+	private final ColorSchemeEditorPanel colorSchemeEditorPanel;
 
 	private ColorScheme scheme;
 	private boolean canceled;
 
-	private ColorSchemeEditorPanel colorSchemeEditorPanel;
-
-	public EditAccessStatusTypeDialog(Dialog owner)
+	EditAccessStatusTypeDialog(Dialog owner)
 	{
 		super(owner);
 		setModal(true);
-		createUi();
-	}
 
-	private void createUi()
-	{
 		OkAction okAction = new OkAction();
 		Action cancelAction = new CancelAction();
 
@@ -86,6 +80,7 @@ public class EditAccessStatusTypeDialog
 		KeyStrokes.registerCommand(buttonPanel, cancelAction, "CANCEL_ACTION");
 	}
 
+	@Override
 	public void setVisible(boolean b)
 	{
 		if(b)
@@ -95,12 +90,12 @@ public class EditAccessStatusTypeDialog
 		super.setVisible(b);
 	}
 
-	public ColorScheme getScheme()
+	ColorScheme getScheme()
 	{
 		return scheme;
 	}
 
-	public void setScheme(ColorScheme scheme)
+	void setScheme(ColorScheme scheme)
 	{
 		this.scheme = scheme;
 	}
@@ -122,7 +117,7 @@ public class EditAccessStatusTypeDialog
 
 	public void setType(HttpStatus.Type type)
 	{
-		setTitle("Edit colors for "+type+"...");
+		setTitle("Edit colors for "+type+"…");
 	}
 
 	private class OkAction
@@ -130,11 +125,12 @@ public class EditAccessStatusTypeDialog
 	{
 		private static final long serialVersionUID = -7380136684827113354L;
 
-		public OkAction()
+		OkAction()
 		{
 			super("Ok");
 		}
 
+		@Override
 		public void actionPerformed(ActionEvent e)
 		{
 			canceled = false;
@@ -149,11 +145,12 @@ public class EditAccessStatusTypeDialog
 	{
 		private static final long serialVersionUID = 3523022122100092148L;
 
-		public ResetAction()
+		ResetAction()
 		{
 			super("Reset");
 		}
 
+		@Override
 		public void actionPerformed(ActionEvent e)
 		{
 			initUI();
@@ -165,13 +162,14 @@ public class EditAccessStatusTypeDialog
 	{
 		private static final long serialVersionUID = 5442950514112749763L;
 
-		public CancelAction()
+		CancelAction()
 		{
 			super("Cancel");
 			KeyStroke accelerator = LilithKeyStrokes.getKeyStroke(LilithKeyStrokes.ESCAPE);
 			putValue(Action.ACCELERATOR_KEY, accelerator);
 		}
 
+		@Override
 		public void actionPerformed(ActionEvent e)
 		{
 			canceled = true;

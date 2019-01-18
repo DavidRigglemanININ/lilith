@@ -1,5 +1,7 @@
 package de.huxhorn.lilith.benchmark;
 
+import ch.qos.logback.core.CoreConstants;
+import de.huxhorn.lilith.api.FileConstants;
 import de.huxhorn.lilith.data.eventsource.EventIdentifier;
 import de.huxhorn.lilith.data.eventsource.EventWrapper;
 import de.huxhorn.lilith.data.eventsource.SourceIdentifier;
@@ -15,7 +17,6 @@ import de.huxhorn.lilith.data.logging.protobuf.LoggingEventProtobufEncoder;
 import de.huxhorn.lilith.data.logging.protobuf.LoggingEventWrapperProtobufCodec;
 import de.huxhorn.lilith.data.logging.xml.LoggingXmlDecoder;
 import de.huxhorn.lilith.data.logging.xml.LoggingXmlEncoder;
-import de.huxhorn.lilith.api.FileConstants;
 import de.huxhorn.lilith.engine.impl.CompressingLoggingEventWrapperXmlCodec;
 import de.huxhorn.lilith.engine.impl.LoggingEventWrapperXmlCodec;
 import de.huxhorn.sulky.codec.Codec;
@@ -31,11 +32,6 @@ import de.huxhorn.sulky.codec.filebuffer.CodecFileBuffer;
 import de.huxhorn.sulky.codec.filebuffer.FileHeader;
 import de.huxhorn.sulky.codec.filebuffer.MetaData;
 import de.huxhorn.sulky.formatting.HumanReadable;
-
-import ch.qos.logback.core.CoreConstants;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -45,10 +41,11 @@ import java.io.ObjectOutputStream;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class Benchmark
 {
@@ -603,19 +600,19 @@ public class Benchmark
 		if(benchmarkXml)
 		{
 			betweenBenchmarks();
-	
+
 			lilithXmlUncompressed(loggingEvents);
-	
+
 			betweenBenchmarks();
-	
+
 			lilithXmlCompressed(loggingEvents);
-	
+
 			betweenBenchmarks();
-	
+
 			javaUtilXmlUncompressed(loggingEvents);
-	
+
 			betweenBenchmarks();
-	
+
 			javaUtilXmlCompressed(loggingEvents);
 		}
 
@@ -677,42 +674,42 @@ public class Benchmark
 		if(benchmarkXml)
 		{
 			betweenBenchmarks();
-	
+
 			setUp();
 			xmlUncompressedAdd(loggingEvents);
 			tearDown();
-	
-	
+
+
 			betweenBenchmarks();
-	
+
 			setUp();
 			xmlUncompressedAddAll(loggingEvents);
 			tearDown();
-	
-	
+
+
 			betweenBenchmarks();
-	
+
 			setUp();
 			xmlUncompressedGet(loggingEvents);
 			tearDown();
-	
-	
+
+
 			betweenBenchmarks();
-	
+
 			setUp();
 			xmlCompressedAdd(loggingEvents);
 			tearDown();
-	
-	
+
+
 			betweenBenchmarks();
-	
+
 			setUp();
 			xmlCompressedAddAll(loggingEvents);
 			tearDown();
-	
-	
+
+
 			betweenBenchmarks();
-	
+
 			setUp();
 			xmlCompressedGet(loggingEvents);
 			tearDown();
@@ -1071,7 +1068,7 @@ public class Benchmark
 		}
 		System.out.println("done!");
 		Benchmark benchmark = new Benchmark();
-		
+
 		for(int i = 0; i < 3; i++)
 		{
 			// yes, JIT, please optimize...

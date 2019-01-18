@@ -1,6 +1,6 @@
 /*
  * Lilith - a log event viewer.
- * Copyright (C) 2007-2011 Joern Huxhorn
+ * Copyright (C) 2007-2018 Joern Huxhorn
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,15 +15,18 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package de.huxhorn.lilith.swing.preferences;
 
-import de.huxhorn.lilith.swing.ApplicationPreferences;
+import de.huxhorn.lilith.swing.LilithActionId;
 import de.huxhorn.lilith.swing.MainFrame;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -31,35 +34,89 @@ import java.util.Enumeration;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Properties;
 import java.util.SortedMap;
 import java.util.TreeMap;
+import javax.swing.AbstractAction;
+import javax.swing.JButton;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.border.EmptyBorder;
+import org.apache.commons.io.IOUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import javax.swing.*;
-
+@SuppressWarnings({"PMD.MethodReturnsInternalArray", "PMD.ArrayIsStoredDirectly"})
 public class TroubleshootingPanel
 	extends JPanel
 {
 	private static final long serialVersionUID = 5589305263321629687L;
+	private static final String LILITH_LOGS_PLACEHOLDER = "##LilithLogsPlaceholder##";
+	private static final String WINDOW_MENU_PLACEHOLDER = "##WindowMenuPlaceholder##";
 
 	private final Logger logger = LoggerFactory.getLogger(TroubleshootingPanel.class);
-	private PreferencesDialog preferencesDialog;
+	private final PreferencesDialog preferencesDialog;
 
-	public TroubleshootingPanel(PreferencesDialog preferencesDialog)
+	TroubleshootingPanel(PreferencesDialog preferencesDialog)
 	{
 		this.preferencesDialog = preferencesDialog;
-		createUI();
+
+		setLayout(new GridBagLayout());
+		JPanel buttonPanel = new JPanel();
+		buttonPanel.add(new JButton(new InitDetailsViewAction()));
+		buttonPanel.add(new JButton(new InitExampleConditionScriptsAction()));
+		buttonPanel.add(new JButton(new InitExampleClipboardFormatterScriptsAction()));
+		buttonPanel.add(new JButton(new DeleteAllLogsAction()));
+		buttonPanel.add(new JButton(new CopySystemPropertiesAction()));
+		buttonPanel.add(new JButton(new CopyThreadsAction()));
+		buttonPanel.add(new JButton(new GarbageCollectionAction()));
+
+		JPanel messagePanel = new JPanel(new GridLayout(1,1));
+		JLabel messageField = new JLabel();
+		messageField.setText(resolveMessage());
+		messagePanel.add(messageField);
+
+		GridBagConstraints gbc = new GridBagConstraints();
+		gbc.gridx = 0;
+		gbc.gridy = 0;
+		gbc.weightx = 1;
+		gbc.weighty = 1;
+		gbc.fill = GridBagConstraints.BOTH;
+		gbc.anchor = GridBagConstraints.NORTH;
+
+		add(buttonPanel, gbc);
+
+		gbc.gridy = 1;
+		gbc.anchor = GridBagConstraints.SOUTH;
+		messagePanel.setBorder(new EmptyBorder(10,10,10,10));
+		add(messagePanel, gbc);
 	}
 
-	private void createUI()
+	static String resolveMessage()
 	{
-		add(new JButton(new InitDetailsViewAction()));
-		add(new JButton(new InitExampleConditionScriptsAction()));
-		add(new JButton(new InitExampleClipboardFormatterScriptsAction()));
-		add(new JButton(new DeleteAllLogsAction()));
-		add(new JButton(new CopySystemPropertiesAction()));
-		add(new JButton(new CopyThreadsAction()));
-		add(new JButton(new GarbageCollectionAction()));
+		final Logger logger = LoggerFactory.getLogger(TroubleshootingPanel.class);
+
+		try
+		{
+			InputStream messageStream = TroubleshootingPanel.class.getResourceAsStream("/dependencies.message");
+			if(messageStream == null)
+			{
+				if(logger.isErrorEnabled()) logger.error("Failed to get resource dependencies.message!");
+			}
+			else
+			{
+				String message = IOUtils.toString(messageStream, StandardCharsets.UTF_8);
+				message = message.replace(WINDOW_MENU_PLACEHOLDER, LilithActionId.WINDOW.getText());
+				message = message.replace(LILITH_LOGS_PLACEHOLDER, LilithActionId.VIEW_LILITH_LOGS.getText());
+				return message;
+			}
+		}
+		catch (IOException e)
+		{
+			if(logger.isErrorEnabled()) logger.error("Failed to load dependencies.message!", e);
+		}
+		return null;
 	}
 
 	public class InitDetailsViewAction
@@ -67,25 +124,15 @@ public class TroubleshootingPanel
 	{
 		private static final long serialVersionUID = 8374235720899930441L;
 
-		public InitDetailsViewAction()
+		InitDetailsViewAction()
 		{
 			super("Reinitialize details view files.");
 		}
 
+		@Override
 		public void actionPerformed(ActionEvent actionEvent)
 		{
-			String dialogTitle = "Reinitialize details view files?";
-			String message = "This resets all details view related files, all manual changes will be lost!\nReinitialize details view right now?";
-			int result = JOptionPane.showConfirmDialog(preferencesDialog, message, dialogTitle,
-				JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
-			// TODO: add "Show in Finder/Explorer" button if running on Mac/Windows
-			if(JOptionPane.OK_OPTION != result)
-			{
-				return;
-			}
-
-			ApplicationPreferences prefs = preferencesDialog.getApplicationPreferences();
-			prefs.initDetailsViewRoot(true);
+			preferencesDialog.reinitializeDetailsViewFiles();
 		}
 	}
 
@@ -94,25 +141,15 @@ public class TroubleshootingPanel
 	{
 		private static final long serialVersionUID = -4197531497673863904L;
 
-		public InitExampleConditionScriptsAction()
+		InitExampleConditionScriptsAction()
 		{
 			super("Reinitialize example groovy conditions.");
 		}
 
+		@Override
 		public void actionPerformed(ActionEvent actionEvent)
 		{
-			String dialogTitle = "Reinitialize example groovy conditions?";
-			String message = "This overwrites all example groovy conditions. Other conditions are not changed!\nReinitialize example groovy conditions right now?";
-			int result = JOptionPane.showConfirmDialog(preferencesDialog, message, dialogTitle,
-				JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
-			// TODO: add "Show in Finder/Explorer" button if running on Mac/Windows
-			if(JOptionPane.OK_OPTION != result)
-			{
-				return;
-			}
-
-			ApplicationPreferences prefs = preferencesDialog.getApplicationPreferences();
-			prefs.installExampleConditions();
+			preferencesDialog.reinitializeGroovyConditions();
 		}
 	}
 
@@ -121,25 +158,15 @@ public class TroubleshootingPanel
 	{
 		private static final long serialVersionUID = -4197531497673863904L;
 
-		public InitExampleClipboardFormatterScriptsAction()
+		InitExampleClipboardFormatterScriptsAction()
 		{
 			super("Reinitialize example groovy clipboard formatters.");
 		}
 
+		@Override
 		public void actionPerformed(ActionEvent actionEvent)
 		{
-			String dialogTitle = "Reinitialize example groovy clipboard formatters?";
-			String message = "This overwrites all example groovy clipboard formatters. Other clipboard formatters are not changed!\nReinitialize example groovy clipboard formatters right now?";
-			int result = JOptionPane.showConfirmDialog(preferencesDialog, message, dialogTitle,
-				JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
-			// TODO: add "Show in Finder/Explorer" button if running on Mac/Windows
-			if(JOptionPane.OK_OPTION != result)
-			{
-				return;
-			}
-
-			ApplicationPreferences prefs = preferencesDialog.getApplicationPreferences();
-			prefs.installExampleClipboardFormatters();
+			preferencesDialog.reinitializeGroovyClipboardFormatters();
 		}
 	}
 
@@ -148,25 +175,15 @@ public class TroubleshootingPanel
 	{
 		private static final long serialVersionUID = 5218712842261152334L;
 
-		public DeleteAllLogsAction()
+		DeleteAllLogsAction()
 		{
 			super("Delete *all* logs.");
 		}
 
+		@Override
 		public void actionPerformed(ActionEvent actionEvent)
 		{
-			String dialogTitle = "Delete all log files?";
-			String message = "This deletes *all* log files, even the Lilith logs and the global logs!\nDelete all log files right now?";
-			int result = JOptionPane.showConfirmDialog(preferencesDialog, message, dialogTitle,
-				JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
-			// TODO: add "Show in Finder/Explorer" button if running on Mac/Windows
-			if(JOptionPane.OK_OPTION != result)
-			{
-				return;
-			}
-
-			MainFrame mainFrame = preferencesDialog.getMainFrame();
-			mainFrame.deleteAllLogs();
+			preferencesDialog.deleteAllLogs();
 		}
 	}
 
@@ -175,16 +192,17 @@ public class TroubleshootingPanel
 	{
 		private static final long serialVersionUID = -2375370123070284280L;
 
-		public CopySystemPropertiesAction()
+		CopySystemPropertiesAction()
 		{
 			super("Copy properties");
 			putValue(SHORT_DESCRIPTION, "Copy system properties to the clipboard.");
 		}
 
+		@Override
 		public void actionPerformed(ActionEvent actionEvent)
 		{
 			Properties props = System.getProperties();
-			SortedMap<String, String> sortedProps = new TreeMap<String, String>();
+			SortedMap<String, String> sortedProps = new TreeMap<>();
 			Enumeration<?> keys = props.propertyNames();
 			while(keys.hasMoreElements())
 			{
@@ -201,7 +219,10 @@ public class TroubleshootingPanel
 			StringBuilder builder = new StringBuilder();
 			for(Map.Entry<String, String> current : sortedProps.entrySet())
 			{
-				builder.append(current.getKey()).append("=").append(current.getValue()).append("\n");
+				builder.append(current.getKey())
+						.append('=')
+						.append(current.getValue())
+						.append('\n');
 			}
 			MainFrame.copyText(builder.toString());
 		}
@@ -212,24 +233,24 @@ public class TroubleshootingPanel
 	{
 		private static final long serialVersionUID = -2375370123070284280L;
 
-		public CopyThreadsAction()
+		CopyThreadsAction()
 		{
 			super("Copy threads");
 			putValue(SHORT_DESCRIPTION, "Copy the stacktraces of all threads to the clipboard.");
 		}
 
+		@Override
 		public void actionPerformed(ActionEvent actionEvent)
 		{
 			Map<Thread, StackTraceElement[]> allStackTraces = Thread.getAllStackTraces();
 
-			StringBuilder builder = new StringBuilder();
-			Map<ThreadGroup, List<ThreadHolder>> threadGroupMapping = new Hashtable<ThreadGroup, List<ThreadHolder>>();
-			List<ThreadHolder> nullList = new ArrayList<ThreadHolder>();
+			Map<ThreadGroup, List<ThreadHolder>> threadGroupMapping = new Hashtable<>();
+			List<ThreadHolder> nullList = new ArrayList<>();
 			for(Map.Entry<Thread, StackTraceElement[]> current : allStackTraces.entrySet())
 			{
 				Thread key = current.getKey();
 				StackTraceElement[] value = current.getValue();
-				ThreadHolder holder = new ThreadHolder(key, value);
+				ThreadHolder holder = new ThreadHolder(key, value); // NOPMD - AvoidInstantiatingObjectsInLoops
 				ThreadGroup group = key.getThreadGroup();
 				if(group == null)
 				{
@@ -240,7 +261,7 @@ public class TroubleshootingPanel
 					List<ThreadHolder> list = threadGroupMapping.get(group);
 					if(list == null)
 					{
-						list = new ArrayList<ThreadHolder>();
+						list = new ArrayList<>(); // NOPMD - AvoidInstantiatingObjectsInLoops
 						threadGroupMapping.put(group, list);
 					}
 					list.add(holder);
@@ -249,7 +270,7 @@ public class TroubleshootingPanel
 			}
 
 			ThreadGroup rootGroup = null;
-			Map<ThreadGroup, List<ThreadGroup>> threadGroups = new Hashtable<ThreadGroup, List<ThreadGroup>>();
+			Map<ThreadGroup, List<ThreadGroup>> threadGroups = new Hashtable<>();
 
 			for(Map.Entry<ThreadGroup, List<ThreadHolder>> current : threadGroupMapping.entrySet())
 			{
@@ -261,21 +282,22 @@ public class TroubleshootingPanel
 				{
 					rootGroup = root;
 				}
-				else if(rootGroup != root)
+				else if(rootGroup != root) // NOPMD
 				{
-					if(logger.isErrorEnabled()) logger.error("root={}, rootGroup={}", root, rootGroup);
+					if(logger.isErrorEnabled()) logger.error("root={}, rootGroup={}", root, rootGroup); // NOPMD
 				}
 			}
 
 			if(rootGroup == null)
 			{
-				if(logger.isErrorEnabled()) logger.error("Couldn't resolve root ThreadGroup!");
+				if(logger.isErrorEnabled()) logger.error("Couldn't resolve root ThreadGroup!"); // NOPMD
 				return;
 			}
 
+			StringBuilder builder = new StringBuilder();
 			appendGroup(0, builder, rootGroup, threadGroups, threadGroupMapping);
 
-			if(nullList.size() > 0)
+			if(!nullList.isEmpty())
 			{
 				builder.append("no group:\n");
 				for(ThreadHolder current : nullList)
@@ -295,10 +317,10 @@ public class TroubleshootingPanel
 				.append(group.getMaxPriority()).append("]\n");
 
 			List<ThreadGroup> groups = threadGroups.get(group);
-			if(groups != null && groups.size() > 0)
+			if(groups != null && !groups.isEmpty())
 			{
 				builder.append(indentStr).append("groups = {\n");
-				Collections.sort(groups, new ThreadGroupComparator());
+				groups.sort(ThreadGroupComparator.INSTANCE);
 				for(ThreadGroup current : groups)
 				{
 					appendGroup(indent + 1, builder, current, threadGroups, threadGroupMapping);
@@ -308,7 +330,7 @@ public class TroubleshootingPanel
 			}
 
 			List<ThreadHolder> threads = threadGroupMapping.get(group);
-			if(threads != null && threads.size() > 0)
+			if(threads != null && !threads.isEmpty())
 			{
 				builder.append(indentStr).append("threads = {\n");
 				Collections.sort(threads);
@@ -339,7 +361,7 @@ public class TroubleshootingPanel
 
 			for(StackTraceElement current : stackTraceElements)
 			{
-				builder.append(indentStr).append("at ").append(current).append("\n");
+				builder.append(indentStr).append("at ").append(current).append('\n');
 			}
 		}
 
@@ -348,7 +370,7 @@ public class TroubleshootingPanel
 			StringBuilder result = new StringBuilder();
 			for(int i = 0; i < indent; i++)
 			{
-				result.append("\t");
+				result.append('\t');
 			}
 			return result.toString();
 		}
@@ -363,7 +385,7 @@ public class TroubleshootingPanel
 			List<ThreadGroup> list = threadGroups.get(parentGroup);
 			if(list == null)
 			{
-				list = new ArrayList<ThreadGroup>();
+				list = new ArrayList<>();
 				threadGroups.put(parentGroup, list);
 			}
 			if(!list.contains(group))
@@ -377,10 +399,12 @@ public class TroubleshootingPanel
 	private static class ThreadGroupComparator
 		implements Comparator<ThreadGroup>
 	{
+		static final Comparator<ThreadGroup> INSTANCE = new ThreadGroupComparator();
 
+		@Override
 		public int compare(ThreadGroup o1, ThreadGroup o2)
 		{
-			if(o1 == o2)
+			if(o1 == o2) // NOPMD
 			{
 				return 0;
 			}
@@ -395,7 +419,7 @@ public class TroubleshootingPanel
 			String name = o1.getName();
 			String otherName = o2.getName();
 			//noinspection StringEquality
-			if(name == otherName)
+			if(name == otherName) // NOPMD
 			{
 				return 0;
 			}
@@ -417,7 +441,7 @@ public class TroubleshootingPanel
 		private final Thread thread;
 		private final StackTraceElement[] stackTraceElements;
 
-		private ThreadHolder(Thread thread, StackTraceElement[] stackTraceElements)
+		ThreadHolder(Thread thread, StackTraceElement[] stackTraceElements)
 		{
 			this.thread = thread;
 			this.stackTraceElements = stackTraceElements;
@@ -428,11 +452,12 @@ public class TroubleshootingPanel
 			return thread;
 		}
 
-		public StackTraceElement[] getStackTraceElements()
+		StackTraceElement[] getStackTraceElements()
 		{
 			return stackTraceElements;
 		}
 
+		@Override
 		public boolean equals(Object o)
 		{
 			if(this == o) return true;
@@ -444,14 +469,18 @@ public class TroubleshootingPanel
 
 		}
 
+		@Override
 		public int hashCode()
 		{
 			return (thread != null ? thread.hashCode() : 0);
 		}
 
-		public int compareTo(ThreadHolder o)
+		@Override
+		@SuppressWarnings("NullableProblems")
+		public int compareTo(ThreadHolder other)
 		{
-			if(thread == o.thread)
+			Objects.requireNonNull(other, "other must not be null!");
+			if(thread == other.thread)
 			{
 				return 0;
 			}
@@ -459,26 +488,18 @@ public class TroubleshootingPanel
 			{
 				return -1;
 			}
-			if(o.thread == null)
+			if(other.thread == null)
 			{
 				return 1;
 			}
 			String name = thread.getName();
-			String otherName = o.thread.getName();
+			String otherName = other.thread.getName();
 			//noinspection StringEquality
-			if(name == otherName)
+			if(name == otherName) // NOPMD
 			{
 				return 0;
 			}
 			// thread name is never null
-//			if(name == null)
-//			{
-//				return -1;
-//			}
-//			if(otherName == null)
-//			{
-//				return 1;
-//			}
 			return name.compareTo(otherName);
 		}
 	}
@@ -488,12 +509,14 @@ public class TroubleshootingPanel
 	{
 		private static final long serialVersionUID = -4636919088257143096L;
 
-		public GarbageCollectionAction()
+		GarbageCollectionAction()
 		{
 			super("Execute GC");
 			putValue(SHORT_DESCRIPTION, "Execute garbage collection.");
 		}
 
+		@Override
+		@SuppressWarnings("PMD.DoNotCallGarbageCollectionExplicitly")
 		public void actionPerformed(ActionEvent actionEvent)
 		{
 			System.gc();

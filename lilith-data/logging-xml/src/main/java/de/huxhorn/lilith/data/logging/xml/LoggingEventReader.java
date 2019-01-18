@@ -1,23 +1,23 @@
 /*
  * Lilith - a log event viewer.
- * Copyright (C) 2007-2011 Joern Huxhorn
- * 
+ * Copyright (C) 2007-2018 Joern Huxhorn
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 /*
- * Copyright 2007-2011 Joern Huxhorn
+ * Copyright 2007-2018 Joern Huxhorn
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,23 +34,21 @@
 
 package de.huxhorn.lilith.data.logging.xml;
 
+import de.huxhorn.lilith.data.eventsource.LoggerContext;
 import de.huxhorn.lilith.data.logging.ExtendedStackTraceElement;
 import de.huxhorn.lilith.data.logging.LoggingEvent;
 import de.huxhorn.lilith.data.logging.Marker;
 import de.huxhorn.lilith.data.logging.Message;
 import de.huxhorn.lilith.data.logging.ThreadInfo;
 import de.huxhorn.lilith.data.logging.ThrowableInfo;
-import de.huxhorn.lilith.data.eventsource.LoggerContext;
 import de.huxhorn.sulky.stax.DateTimeFormatter;
 import de.huxhorn.sulky.stax.GenericStreamReader;
 import de.huxhorn.sulky.stax.StaxUtilities;
-
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
 import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
@@ -58,8 +56,9 @@ import javax.xml.stream.XMLStreamReader;
 public class LoggingEventReader
 	implements GenericStreamReader<LoggingEvent>, LoggingEventSchemaConstants
 {
-	private DateTimeFormatter dateTimeFormatter;
-	private StackTraceElementReader steReader;
+	private static final String[] EMPTY_STRING_ARRAY = new String[0];
+	private final DateTimeFormatter dateTimeFormatter;
+	private final StackTraceElementReader steReader;
 
 	public LoggingEventReader()
 	{
@@ -67,18 +66,17 @@ public class LoggingEventReader
 		steReader = new StackTraceElementReader();
 	}
 
+	@Override
 	public LoggingEvent read(XMLStreamReader reader)
 		throws XMLStreamException
 	{
 		LoggingEvent result = null;
-		String rootNamespace = NAMESPACE_URI;
 		int type = reader.getEventType();
 
 		if(XMLStreamConstants.START_DOCUMENT == type)
 		{
 			reader.nextTag();
 			type = reader.getEventType();
-			rootNamespace = null;
 		}
 		if(XMLStreamConstants.START_ELEMENT == type && LOGGING_EVENT_NODE.equals(reader.getLocalName()))
 		{
@@ -109,6 +107,8 @@ public class LoggingEventReader
 					.readAttributeValue(reader, NAMESPACE_URI, THREAD_GROUP_NAME_ATTRIBUTE);
 				String threadGroupIdStr = StaxUtilities
 					.readAttributeValue(reader, NAMESPACE_URI, THREAD_GROUP_ID_ATTRIBUTE);
+				String threadPriorityStr = StaxUtilities
+					.readAttributeValue(reader, NAMESPACE_URI, THREAD_PRIORITY_ATTRIBUTE);
 				Long threadId = null;
 				if(threadIdStr != null)
 				{
@@ -133,9 +133,23 @@ public class LoggingEventReader
 						// ignore
 					}
 				}
-				if(threadName != null || threadId != null || threadGroupName != null || threadGroupId != null)
+				Integer threadPriority = null;
+				if(threadPriorityStr != null)
 				{
-					result.setThreadInfo(new ThreadInfo(threadId, threadName, threadGroupId, threadGroupName));
+					try
+					{
+						threadPriority = Integer.valueOf(threadPriorityStr);
+					}
+					catch(NumberFormatException ex)
+					{
+						// ignore
+					}
+				}
+				if(threadName != null || threadId != null || threadGroupName != null || threadGroupId != null || threadPriority != null)
+				{
+					ThreadInfo threadInfo = new ThreadInfo(threadId, threadName, threadGroupId, threadGroupName);
+					threadInfo.setPriority(threadPriority);
+					result.setThreadInfo(threadInfo);
 				}
 			}
 
@@ -150,7 +164,7 @@ public class LoggingEventReader
 				{
 					if(args != null)
 					{
-						message = new Message(messagePattern, args.toArray(new String[args.size()]));
+						message = new Message(messagePattern, args.toArray(EMPTY_STRING_ARRAY));
 					}
 					else
 					{
@@ -234,9 +248,9 @@ public class LoggingEventReader
 		int type = reader.getEventType();
 		if(XMLStreamConstants.START_ELEMENT == type && LOGGER_CONTEXT_PROPERTIES_NODE.equals(reader.getLocalName()))
 		{
-			Map<String, String> map = new HashMap<String, String>();
+			Map<String, String> map = new HashMap<>();
 			reader.nextTag();
-			for(; ;)
+			for(;;)
 			{
 				StringMapEntry entry = readStringMapEntry(reader);
 				if(entry == null)
@@ -258,15 +272,16 @@ public class LoggingEventReader
 		event.setCallStack(readStackTraceNode(reader, CALLSTACK_NODE));
 	}
 
+	@SuppressWarnings("PMD.ReturnEmptyArrayRatherThanNull")
 	private ExtendedStackTraceElement[] readStackTraceNode(XMLStreamReader reader, String nodeName)
 		throws XMLStreamException
 	{
 		int type = reader.getEventType();
-		ArrayList<ExtendedStackTraceElement> ste = new ArrayList<ExtendedStackTraceElement>();
+		ArrayList<ExtendedStackTraceElement> ste = new ArrayList<>();
 		if(XMLStreamConstants.START_ELEMENT == type && nodeName.equals(reader.getLocalName()))
 		{
 			reader.nextTag();
-			for(; ;)
+			for(;;)
 			{
 				ExtendedStackTraceElement elem = steReader.read(reader);//readStackTraceElement(reader);
 				if(elem == null)
@@ -278,7 +293,7 @@ public class LoggingEventReader
 			}
 			reader.require(XMLStreamConstants.END_ELEMENT, null, nodeName);
 			reader.nextTag();
-			return ste.toArray(new ExtendedStackTraceElement[ste.size()]);
+			return ste.toArray(ExtendedStackTraceElement.ARRAY_PROTOTYPE);
 		}
 		return null;
 	}
@@ -289,7 +304,7 @@ public class LoggingEventReader
 		int type = reader.getEventType();
 		if(XMLStreamConstants.START_ELEMENT == type && MARKER_NODE.equals(reader.getLocalName()))
 		{
-			Map<String, Marker> markers = new HashMap<String, Marker>();
+			Map<String, Marker> markers = new HashMap<>();
 			Marker marker = recursiveReadMarker(reader, markers);
 			event.setMarker(marker);
 		}
@@ -306,7 +321,7 @@ public class LoggingEventReader
 			marker = new Marker(name);
 			markers.put(name, marker);
 			reader.nextTag();
-			for(; ;)
+			for(;;)
 			{
 				Marker child = recursiveReadMarker(reader, markers);
 				if(child != null)
@@ -339,9 +354,9 @@ public class LoggingEventReader
 		int type = reader.getEventType();
 		if(XMLStreamConstants.START_ELEMENT == type && MDC_NODE.equals(reader.getLocalName()))
 		{
-			Map<String, String> mdc = new HashMap<String, String>();
+			Map<String, String> mdc = new HashMap<>();
 			reader.nextTag();
-			for(; ;)
+			for(;;)
 			{
 				StringMapEntry entry = readStringMapEntry(reader);
 				if(entry == null)
@@ -357,15 +372,16 @@ public class LoggingEventReader
 		return null;
 	}
 
+	@SuppressWarnings("PMD.ReturnEmptyArrayRatherThanNull")
 	private Message[] readNdc(XMLStreamReader reader)
 		throws XMLStreamException
 	{
 		int type = reader.getEventType();
 		if(XMLStreamConstants.START_ELEMENT == type && NDC_NODE.equals(reader.getLocalName()))
 		{
-			List<Message> ndc = new ArrayList<Message>();
+			List<Message> ndc = new ArrayList<>();
 			reader.nextTag();
-			for(; ;)
+			for(;;)
 			{
 				Message entry = readNdcEntry(reader);
 				if(entry == null)
@@ -376,7 +392,7 @@ public class LoggingEventReader
 			}
 			reader.require(XMLStreamConstants.END_ELEMENT, null, NDC_NODE);
 			reader.nextTag();
-			return ndc.toArray(new Message[ndc.size()]);
+			return ndc.toArray(Message.ARRAY_PROTOTYPE);
 		}
 		return null;
 	}
@@ -411,7 +427,7 @@ public class LoggingEventReader
 			List<String> args = readArguments(reader);
 			if(args != null)
 			{
-				entry.setArguments(args.toArray(new String[args.size()]));
+				entry.setArguments(args.toArray(EMPTY_STRING_ARRAY));
 			}
 
 			reader.require(XMLStreamConstants.END_ELEMENT, null, NDC_ENTRY_NODE);
@@ -459,7 +475,7 @@ public class LoggingEventReader
 			if(XMLStreamConstants.START_ELEMENT == type && SUPPRESSED_NODE.equals(reader.getLocalName()))
 			{
 				reader.nextTag();
-				List<ThrowableInfo> suppressedList = new ArrayList<ThrowableInfo>();
+				List<ThrowableInfo> suppressedList = new ArrayList<>();
 				for(;;)
 				{
 					ThrowableInfo current = recursiveReadThrowable(reader, THROWABLE_NODE);
@@ -491,8 +507,8 @@ public class LoggingEventReader
 		if(XMLStreamConstants.START_ELEMENT == type && ARGUMENTS_NODE.equals(reader.getLocalName()))
 		{
 			reader.nextTag();
-			List<String> args = new ArrayList<String>();
-			for(; ;)
+			List<String> args = new ArrayList<>();
+			for(;;)
 			{
 				type = reader.getEventType();
 				if(XMLStreamConstants.END_ELEMENT == type && ARGUMENTS_NODE.equals(reader.getLocalName()))

@@ -1,23 +1,23 @@
 /*
  * Lilith - a log event viewer.
- * Copyright (C) 2007-2011 Joern Huxhorn
- * 
+ * Copyright (C) 2007-2017 Joern Huxhorn
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 /*
- * Copyright 2007-2011 Joern Huxhorn
+ * Copyright 2007-2017 Joern Huxhorn
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,7 +35,6 @@
 package de.huxhorn.lilith.data.logging;
 
 import de.huxhorn.lilith.data.eventsource.LoggerContext;
-
 import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Map;
@@ -52,6 +51,7 @@ import java.util.Map;
  * the events are originating from. This is extremely useful if more than one application is running on the same
  * host.</p>
  */
+@SuppressWarnings({"PMD.MethodReturnsInternalArray", "PMD.ArrayIsStoredDirectly"})
 public class LoggingEvent
 	implements Serializable
 {
@@ -78,10 +78,6 @@ public class LoggingEvent
 	private LoggerContext loggerContext;
 	private Long sequenceNumber;
 	private Long timeStamp;
-
-	public LoggingEvent()
-	{
-	}
 
 	public String getLogger()
 	{
@@ -203,36 +199,29 @@ public class LoggingEvent
 		this.callStack = callStack;
 	}
 
+	@Override
 	public boolean equals(Object o)
 	{
-		if(this == o) return true;
-		if(o == null || getClass() != o.getClass()) return false;
+		if (this == o) return true;
+		if (o == null || getClass() != o.getClass()) return false;
 
 		LoggingEvent event = (LoggingEvent) o;
 
-		if(level != event.level) return false;
-		if(sequenceNumber != null ? !sequenceNumber.equals(event.sequenceNumber) : event.sequenceNumber != null)
-		{
-			return false;
-		}
-		if(timeStamp != null ? !timeStamp.equals(event.timeStamp) : event.timeStamp != null) return false;
-		if(logger != null ? !logger.equals(event.logger) : event.logger != null) return false;
-		if(loggerContext != null ? !loggerContext
-			.equals(event.loggerContext) : event.loggerContext != null)
-		{
-			return false;
-		}
-		if(message != null ? !message.equals(event.message) : event.message != null) return false;
-		if(threadInfo != null ? !threadInfo.equals(event.threadInfo) : event.threadInfo != null) return false;
-		if(!Arrays.equals(callStack, event.callStack)) return false;
-		if(marker != null ? !marker.equals(event.marker) : event.marker != null) return false;
-		if(mdc != null ? !mdc.equals(event.mdc) : event.mdc != null) return false;
-		if(!Arrays.equals(ndc, event.ndc)) return false;
-		if(throwable != null ? !throwable.equals(event.throwable) : event.throwable != null) return false;
-
-		return true;
+		return level == event.level
+				&& (sequenceNumber != null ? sequenceNumber.equals(event.sequenceNumber) : event.sequenceNumber == null)
+				&& (timeStamp != null ? timeStamp.equals(event.timeStamp) : event.timeStamp == null)
+				&& (logger != null ? logger.equals(event.logger) : event.logger == null)
+				&& (loggerContext != null ? loggerContext.equals(event.loggerContext) : event.loggerContext == null)
+				&& (message != null ? message.equals(event.message) : event.message == null)
+				&& (threadInfo != null ? threadInfo.equals(event.threadInfo) : event.threadInfo == null)
+				&& Arrays.equals(callStack, event.callStack)
+				&& (marker != null ? marker.equals(event.marker) : event.marker == null)
+				&& (mdc != null ? mdc.equals(event.mdc) : event.mdc == null)
+				&& Arrays.equals(ndc, event.ndc)
+				&& (throwable != null ? throwable.equals(event.throwable) : event.throwable == null);
 	}
 
+	@Override
 	public int hashCode()
 	{
 		int result;
@@ -248,17 +237,19 @@ public class LoggingEvent
 	@Override
 	public String toString()
 	{
-		StringBuilder result = new StringBuilder();
-		result.append("LoggingEvent[");
-		result.append("logger=").append(logger).append(", ");
-		result.append("level=").append(level).append(", ");
-		result.append("message=").append(message).append(", ");
-		result.append("threadInfo=").append(threadInfo).append(", ");
-		result.append("loggerContext=").append(loggerContext).append(", ");
-		result.append("sequenceNumber=").append(sequenceNumber).append(", ");
-		result.append("timeStamp=").append(timeStamp);
-
-		result.append("]");
-		return result.toString();
+		return "LoggingEvent{" +
+				"logger='" + logger + '\'' +
+				", level=" + level +
+				", message=" + message +
+				", throwable=" + throwable +
+				", callStack=" + Arrays.toString(callStack) +
+				", mdc=" + mdc +
+				", ndc=" + Arrays.toString(ndc) +
+				", marker=" + marker +
+				", threadInfo=" + threadInfo +
+				", loggerContext=" + loggerContext +
+				", sequenceNumber=" + sequenceNumber +
+				", timeStamp=" + timeStamp +
+				'}';
 	}
 }

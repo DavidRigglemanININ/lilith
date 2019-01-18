@@ -1,6 +1,6 @@
 /*
  * Lilith - a log event viewer.
- * Copyright (C) 2007-2011 Joern Huxhorn
+ * Copyright (C) 2007-2017 Joern Huxhorn
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,11 +15,31 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package de.huxhorn.lilith.swing;
 
 import de.huxhorn.lilith.swing.linklistener.OpenUrlLinkListener;
 import de.huxhorn.sulky.swing.KeyStrokes;
-
+import java.awt.Container;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.GridLayout;
+import java.awt.event.ActionEvent;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
+import java.awt.event.KeyEvent;
+import java.net.URL;
+import java.util.List;
+import javax.swing.AbstractAction;
+import javax.swing.Action;
+import javax.swing.JButton;
+import javax.swing.JCheckBox;
+import javax.swing.JDialog;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.KeyStroke;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xhtmlrenderer.context.AWTFontResolver;
@@ -32,57 +52,31 @@ import org.xhtmlrenderer.simple.extend.XhtmlNamespaceHandler;
 import org.xhtmlrenderer.swing.LinkListener;
 import org.xhtmlrenderer.swing.SelectionHighlighter;
 
-import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
-import java.awt.event.KeyEvent;
-import java.net.URL;
-import java.util.List;
-
-import javax.swing.*;
-
 public class CheckForUpdateDialog
 	extends JDialog
 {
-	private final Logger logger = LoggerFactory.getLogger(CheckForUpdateDialog.class);
-	private XHTMLPanel helpPane;
-	private SelectionHighlighter.CopyAction copyAction;
-	private JLabel messageLabel;
-	private XhtmlNamespaceHandler xhtmlNamespaceHandler;
+	private static final long serialVersionUID = 7361745831253216248L;
+
+	private final XHTMLPanel helpPane;
+	private final JLabel messageLabel;
+	private final XhtmlNamespaceHandler xhtmlNamespaceHandler;
+	private final ApplicationPreferences applicationPreferences;
+	private final JCheckBox checkForUpdateCheckbox;
+
 	private String docRoot;
-	private ApplicationPreferences applicationPreferences;
-	private JCheckBox checkForUpdateCheckbox;
 	private static final int INSET = 10;
 
-	private static final Icon UPDATE_ICON;
-
-	static
-	{
-		Icon icon;
-		{
-			URL url = ViewActions.class.getResource("/tango/32x32/status/software-update-available.png");
-			if(url != null)
-			{
-				icon = new ImageIcon(url);
-			}
-			else
-			{
-				icon = null;
-			}
-		}
-		UPDATE_ICON = icon;
-	}
-
-	public CheckForUpdateDialog(MainFrame mainFrame)
+	CheckForUpdateDialog(MainFrame mainFrame)
 	{
 		super(mainFrame);
 		this.applicationPreferences = mainFrame.getApplicationPreferences();
-		setTitle("Check for update...");
+		setTitle("Check for Update…");
 		setModal(false);
 		setDefaultCloseOperation(JDialog.HIDE_ON_CLOSE);
 
 		helpPane = new XHTMLPanel();
+
+		final Logger logger = LoggerFactory.getLogger(CheckForUpdateDialog.class);
 
 		{
 			SharedContext sharedContext = helpPane.getSharedContext();
@@ -118,7 +112,7 @@ public class CheckForUpdateDialog
 		SelectionHighlighter helpPaneCaret = new SelectionHighlighter();
 		helpPaneCaret.install(helpPane);
 
-		copyAction = new SelectionHighlighter.CopyAction();
+		SelectionHighlighter.CopyAction copyAction = new SelectionHighlighter.CopyAction();
 		copyAction.install(helpPaneCaret);
 
 		checkForUpdateCheckbox = new JCheckBox("Check for updates on startup.");
@@ -182,7 +176,7 @@ public class CheckForUpdateDialog
 		{
 			docRoot = docRootUrl.toString() + "/";
 		}
-		if(logger.isDebugEnabled()) logger.debug("Changes docroot: {}", docRoot);
+		if(logger.isDebugEnabled()) logger.debug("docRoot: {}", docRoot);
 		xhtmlNamespaceHandler = new XhtmlNamespaceHandler();
 	}
 
@@ -196,11 +190,11 @@ public class CheckForUpdateDialog
 		else
 		{
 			messageLabel.setText(message);
-			messageLabel.setIcon(UPDATE_ICON);
+			messageLabel.setIcon(Icons.UPDATE_AVAILABLE_32_ICON);
 		}
 	}
 
-	public void setChanges(String changes)
+	void setChanges(String changes)
 	{
 		if(changes == null)
 		{
@@ -219,25 +213,19 @@ public class CheckForUpdateDialog
 				"</html>";
 		}
 		helpPane.setDocumentFromString(changes, docRoot, xhtmlNamespaceHandler);
-
 	}
 
-	public void setCheckingForUpdate(boolean checkingForUpdate)
+	void setCheckingForUpdate(boolean checkingForUpdate)
 	{
 		checkForUpdateCheckbox.setSelected(checkingForUpdate);
 	}
 
-//	public void setCheckingForSnapshot(boolean checkingForSnapshot)
-//	{
-//		checkForSnapshotCheckbox.setSelected(checkingForUpdate);
-//	}
-	
 	private class OkAction
 		extends AbstractAction
 	{
 		private static final long serialVersionUID = -7050362653241782872L;
 
-		public OkAction()
+		OkAction()
 		{
 			super("Ok");
 			KeyStroke accelerator = LilithKeyStrokes.getKeyStroke(LilithKeyStrokes.ENTER);
@@ -245,6 +233,7 @@ public class CheckForUpdateDialog
 			putValue(Action.MNEMONIC_KEY, KeyEvent.VK_O);
 		}
 
+		@Override
 		public void actionPerformed(ActionEvent e)
 		{
 			setVisible(false);
@@ -263,7 +252,7 @@ public class CheckForUpdateDialog
 	{
 		private static final long serialVersionUID = -7356773009949031885L;
 
-		public CancelAction()
+		CancelAction()
 		{
 			super("Cancel");
 			KeyStroke accelerator = LilithKeyStrokes.getKeyStroke(LilithKeyStrokes.ESCAPE);
@@ -271,6 +260,7 @@ public class CheckForUpdateDialog
 			putValue(Action.MNEMONIC_KEY, KeyEvent.VK_C);
 		}
 
+		@Override
 		public void actionPerformed(ActionEvent e)
 		{
 			setVisible(false);
@@ -281,11 +271,12 @@ public class CheckForUpdateDialog
 		implements ItemListener
 	{
 
+		@Override
 		public void itemStateChanged(ItemEvent e)
 		{
 			Object source = e.getItemSelectable();
 
-			if(source == checkForUpdateCheckbox)
+			if(source == checkForUpdateCheckbox) // NOPMD
 			{
 				applicationPreferences.setCheckingForUpdate(checkForUpdateCheckbox.isSelected());
 			}

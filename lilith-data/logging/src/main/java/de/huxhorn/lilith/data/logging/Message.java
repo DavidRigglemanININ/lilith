@@ -1,6 +1,6 @@
 /*
  * Lilith - a log event viewer.
- * Copyright (C) 2007-2011 Joern Huxhorn
+ * Copyright (C) 2007-2018 Joern Huxhorn
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -17,7 +17,7 @@
  */
 
 /*
- * Copyright 2007-2011 Joern Huxhorn
+ * Copyright 2007-2018 Joern Huxhorn
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,10 +42,13 @@ import java.util.Arrays;
  *
  * The message is formatted lazily the first time it is actually retrieved using getMessage().
  */
+@SuppressWarnings({"PMD.MethodReturnsInternalArray", "PMD.ArrayIsStoredDirectly"})
 public final class Message
 	implements Serializable, Cloneable
 {
 	private static final long serialVersionUID = 5086167676879398378L;
+
+	public static final Message[] ARRAY_PROTOTYPE = new Message[0];
 
 	private String messagePattern;
 	private String[] arguments;
@@ -53,6 +56,7 @@ public final class Message
 
 	public Message()
 	{
+		// for XML serialization
 	}
 
 	public Message(String messagePattern)
@@ -101,19 +105,13 @@ public final class Message
 	@Override
 	public boolean equals(Object o)
 	{
-		if(this == o) return true;
-		if(o == null || getClass() != o.getClass()) return false;
+		if (this == o) return true;
+		if (o == null || getClass() != o.getClass()) return false;
 
 		Message message = (Message) o;
 
-		if(messagePattern != null ? !messagePattern.equals(message.messagePattern) : message.messagePattern != null)
-		{
-			return false;
-		}
-
-		if(!Arrays.equals(arguments, message.arguments)) return false;
-
-		return true;
+		return (messagePattern != null ? messagePattern.equals(message.messagePattern) : message.messagePattern == null)
+				&& Arrays.equals(arguments, message.arguments);
 	}
 
 	@Override
@@ -124,6 +122,7 @@ public final class Message
 		return result;
 	}
 
+	@Override
 	public Message clone()
 		throws CloneNotSupportedException
 	{
@@ -140,6 +139,48 @@ public final class Message
 	@Override
 	public String toString()
 	{
-		return "Message[messagePattern=" + messagePattern + ", arguments=" + Arrays.toString(arguments) + "]";
+		final StringBuilder sb = new StringBuilder(200);
+		sb.append("Message{messagePattern=");
+		if(messagePattern == null)
+		{
+			sb.append((String)null);
+		}
+		else
+		{
+			sb.append('"').append(messagePattern).append('"');
+		}
+
+		sb.append(", arguments=");
+		if(arguments == null)
+		{
+			sb.append((String)null);
+		}
+		else
+		{
+			sb.append('[');
+			boolean first = true;
+			for (String current : arguments)
+			{
+				if(first)
+				{
+					first = false;
+				}
+				else
+				{
+					sb.append(", ");
+				}
+				if(current == null)
+				{
+					sb.append("null");
+				}
+				else
+				{
+					sb.append('"').append(current).append('"');
+				}
+			}
+			sb.append(']');
+		}
+		sb.append('}');
+		return sb.toString();
 	}
 }

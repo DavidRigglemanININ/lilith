@@ -6,7 +6,13 @@ package de.huxhorn.lilith.prefs.protobuf.generated;
 public final class PrefsProto {
   private PrefsProto() {}
   public static void registerAllExtensions(
+      com.google.protobuf.ExtensionRegistryLite registry) {
+  }
+
+  public static void registerAllExtensions(
       com.google.protobuf.ExtensionRegistry registry) {
+    registerAllExtensions(
+        (com.google.protobuf.ExtensionRegistryLite) registry);
   }
   /**
    * Protobuf enum {@code de.huxhorn.lilith.prefs.SourceFiltering}
@@ -16,15 +22,15 @@ public final class PrefsProto {
     /**
      * <code>NONE = 0;</code>
      */
-    NONE(0, 0),
+    NONE(0),
     /**
      * <code>BLACKLIST = 1;</code>
      */
-    BLACKLIST(1, 1),
+    BLACKLIST(1),
     /**
      * <code>WHITELIST = 2;</code>
      */
-    WHITELIST(2, 2),
+    WHITELIST(2),
     ;
 
     /**
@@ -41,9 +47,19 @@ public final class PrefsProto {
     public static final int WHITELIST_VALUE = 2;
 
 
-    public final int getNumber() { return value; }
+    public final int getNumber() {
+      return value;
+    }
 
+    /**
+     * @deprecated Use {@link #forNumber(int)} instead.
+     */
+    @java.lang.Deprecated
     public static SourceFiltering valueOf(int value) {
+      return forNumber(value);
+    }
+
+    public static SourceFiltering forNumber(int value) {
       switch (value) {
         case 0: return NONE;
         case 1: return BLACKLIST;
@@ -56,17 +72,17 @@ public final class PrefsProto {
         internalGetValueMap() {
       return internalValueMap;
     }
-    private static com.google.protobuf.Internal.EnumLiteMap<SourceFiltering>
-        internalValueMap =
+    private static final com.google.protobuf.Internal.EnumLiteMap<
+        SourceFiltering> internalValueMap =
           new com.google.protobuf.Internal.EnumLiteMap<SourceFiltering>() {
             public SourceFiltering findValueByNumber(int number) {
-              return SourceFiltering.valueOf(number);
+              return SourceFiltering.forNumber(number);
             }
           };
 
     public final com.google.protobuf.Descriptors.EnumValueDescriptor
         getValueDescriptor() {
-      return getDescriptor().getValues().get(index);
+      return getDescriptor().getValues().get(ordinal());
     }
     public final com.google.protobuf.Descriptors.EnumDescriptor
         getDescriptorForType() {
@@ -88,11 +104,9 @@ public final class PrefsProto {
       return VALUES[desc.getIndex()];
     }
 
-    private final int index;
     private final int value;
 
-    private SourceFiltering(int index, int value) {
-      this.index = index;
+    private SourceFiltering(int value) {
       this.value = value;
     }
 
@@ -257,23 +271,6 @@ public final class PrefsProto {
     boolean getGlobalLoggingEnabled();
 
     /**
-     * <code>optional bool logging_statistic_enabled = 16;</code>
-     *
-     * <pre>
-     *	optional bool              licensed                      = 15;
-     * </pre>
-     */
-    boolean hasLoggingStatisticEnabled();
-    /**
-     * <code>optional bool logging_statistic_enabled = 16;</code>
-     *
-     * <pre>
-     *	optional bool              licensed                      = 15;
-     * </pre>
-     */
-    boolean getLoggingStatisticEnabled();
-
-    /**
      * <code>optional bool maximizing_internal_frames = 17;</code>
      */
     boolean hasMaximizingInternalFrames();
@@ -301,31 +298,22 @@ public final class PrefsProto {
     boolean getScrollingToBottom();
 
     /**
-     * <code>optional bool showing_full_callstack = 20;</code>
+     * <code>optional bool showing_full_call_stack = 20;</code>
      */
-    boolean hasShowingFullCallstack();
+    boolean hasShowingFullCallStack();
     /**
-     * <code>optional bool showing_full_callstack = 20;</code>
+     * <code>optional bool showing_full_call_stack = 20;</code>
      */
-    boolean getShowingFullCallstack();
+    boolean getShowingFullCallStack();
 
     /**
-     * <code>optional bool showing_identifier = 21;</code>
+     * <code>optional bool showing_status_bar = 22;</code>
      */
-    boolean hasShowingIdentifier();
+    boolean hasShowingStatusBar();
     /**
-     * <code>optional bool showing_identifier = 21;</code>
+     * <code>optional bool showing_status_bar = 22;</code>
      */
-    boolean getShowingIdentifier();
-
-    /**
-     * <code>optional bool showing_statusbar = 22;</code>
-     */
-    boolean hasShowingStatusbar();
-    /**
-     * <code>optional bool showing_statusbar = 22;</code>
-     */
-    boolean getShowingStatusbar();
+    boolean getShowingStatusBar();
 
     /**
      * <code>optional bool showing_stacktrace = 23;</code>
@@ -452,41 +440,93 @@ public final class PrefsProto {
      * <code>optional bool using_wrapped_exception_style = 35;</code>
      */
     boolean getUsingWrappedExceptionStyle();
+
+    /**
+     * <code>optional bool showing_primary_identifier = 36;</code>
+     */
+    boolean hasShowingPrimaryIdentifier();
+    /**
+     * <code>optional bool showing_primary_identifier = 36;</code>
+     */
+    boolean getShowingPrimaryIdentifier();
+
+    /**
+     * <code>optional bool showing_secondary_identifier = 37;</code>
+     */
+    boolean hasShowingSecondaryIdentifier();
+    /**
+     * <code>optional bool showing_secondary_identifier = 37;</code>
+     */
+    boolean getShowingSecondaryIdentifier();
+
+    /**
+     * <code>optional bool scrolling_smoothly = 38;</code>
+     */
+    boolean hasScrollingSmoothly();
+    /**
+     * <code>optional bool scrolling_smoothly = 38;</code>
+     */
+    boolean getScrollingSmoothly();
   }
   /**
    * Protobuf type {@code de.huxhorn.lilith.prefs.LilithPreferences}
    */
-  public static final class LilithPreferences extends
-      com.google.protobuf.GeneratedMessage implements
+  public  static final class LilithPreferences extends
+      com.google.protobuf.GeneratedMessageV3 implements
       // @@protoc_insertion_point(message_implements:de.huxhorn.lilith.prefs.LilithPreferences)
       LilithPreferencesOrBuilder {
+  private static final long serialVersionUID = 0L;
     // Use LilithPreferences.newBuilder() to construct.
-    private LilithPreferences(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
+    private LilithPreferences(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
       super(builder);
-      this.unknownFields = builder.getUnknownFields();
     }
-    private LilithPreferences(boolean noInit) { this.unknownFields = com.google.protobuf.UnknownFieldSet.getDefaultInstance(); }
-
-    private static final LilithPreferences defaultInstance;
-    public static LilithPreferences getDefaultInstance() {
-      return defaultInstance;
+    private LilithPreferences() {
+      blacklistName_ = "";
+      whitelistName_ = "";
+      lookAndFeel_ = "";
+      askingBeforeQuit_ = false;
+      autoClosing_ = false;
+      autoFocusingWindow_ = false;
+      autoOpening_ = false;
+      checkingForUpdate_ = false;
+      cleaningLogsOnExit_ = false;
+      coloringWholeRow_ = false;
+      globalLoggingEnabled_ = false;
+      maximizingInternalFrames_ = false;
+      mute_ = false;
+      scrollingToBottom_ = false;
+      showingFullCallStack_ = false;
+      showingStatusBar_ = false;
+      showingStacktrace_ = false;
+      showingTipOfTheDay_ = false;
+      showingToolbar_ = false;
+      splashScreenDisabled_ = false;
+      usingInternalFrames_ = false;
+      sourceFiltering_ = 0;
+      defaultConditionName_ = "";
+      checkingForSnapshot_ = false;
+      trayActive_ = false;
+      showingFullRecentPath_ = false;
+      hidingOnClose_ = false;
+      usingWrappedExceptionStyle_ = false;
+      showingPrimaryIdentifier_ = false;
+      showingSecondaryIdentifier_ = false;
+      scrollingSmoothly_ = false;
     }
 
-    public LilithPreferences getDefaultInstanceForType() {
-      return defaultInstance;
-    }
-
-    private final com.google.protobuf.UnknownFieldSet unknownFields;
     @java.lang.Override
     public final com.google.protobuf.UnknownFieldSet
-        getUnknownFields() {
+    getUnknownFields() {
       return this.unknownFields;
     }
     private LilithPreferences(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
-      initFields();
+      this();
+      if (extensionRegistry == null) {
+        throw new java.lang.NullPointerException();
+      }
       int mutable_bitField0_ = 0;
       int mutable_bitField1_ = 0;
       com.google.protobuf.UnknownFieldSet.Builder unknownFields =
@@ -499,13 +539,6 @@ public final class PrefsProto {
             case 0:
               done = true;
               break;
-            default: {
-              if (!parseUnknownField(input, unknownFields,
-                                     extensionRegistry, tag)) {
-                done = true;
-              }
-              break;
-            }
             case 10: {
               de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContent.Builder subBuilder = null;
               if (((bitField0_ & 0x00000001) == 0x00000001)) {
@@ -603,91 +636,82 @@ public final class PrefsProto {
               globalLoggingEnabled_ = input.readBool();
               break;
             }
-            case 128: {
-              bitField0_ |= 0x00004000;
-              loggingStatisticEnabled_ = input.readBool();
-              break;
-            }
             case 136: {
-              bitField0_ |= 0x00008000;
+              bitField0_ |= 0x00004000;
               maximizingInternalFrames_ = input.readBool();
               break;
             }
             case 144: {
-              bitField0_ |= 0x00010000;
+              bitField0_ |= 0x00008000;
               mute_ = input.readBool();
               break;
             }
             case 152: {
-              bitField0_ |= 0x00020000;
+              bitField0_ |= 0x00010000;
               scrollingToBottom_ = input.readBool();
               break;
             }
             case 160: {
-              bitField0_ |= 0x00040000;
-              showingFullCallstack_ = input.readBool();
-              break;
-            }
-            case 168: {
-              bitField0_ |= 0x00080000;
-              showingIdentifier_ = input.readBool();
+              bitField0_ |= 0x00020000;
+              showingFullCallStack_ = input.readBool();
               break;
             }
             case 176: {
-              bitField0_ |= 0x00100000;
-              showingStatusbar_ = input.readBool();
+              bitField0_ |= 0x00040000;
+              showingStatusBar_ = input.readBool();
               break;
             }
             case 184: {
-              bitField0_ |= 0x00200000;
+              bitField0_ |= 0x00080000;
               showingStacktrace_ = input.readBool();
               break;
             }
             case 192: {
-              bitField0_ |= 0x00400000;
+              bitField0_ |= 0x00100000;
               showingTipOfTheDay_ = input.readBool();
               break;
             }
             case 200: {
-              bitField0_ |= 0x00800000;
+              bitField0_ |= 0x00200000;
               showingToolbar_ = input.readBool();
               break;
             }
             case 208: {
-              bitField0_ |= 0x01000000;
+              bitField0_ |= 0x00400000;
               splashScreenDisabled_ = input.readBool();
               break;
             }
             case 216: {
-              bitField0_ |= 0x02000000;
+              bitField0_ |= 0x00800000;
               usingInternalFrames_ = input.readBool();
               break;
             }
             case 224: {
               int rawValue = input.readEnum();
+                @SuppressWarnings("deprecation")
               de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.SourceFiltering value = de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.SourceFiltering.valueOf(rawValue);
               if (value == null) {
                 unknownFields.mergeVarintField(28, rawValue);
               } else {
-                bitField0_ |= 0x04000000;
-                sourceFiltering_ = value;
+                bitField0_ |= 0x01000000;
+                sourceFiltering_ = rawValue;
               }
               break;
             }
             case 234: {
               com.google.protobuf.ByteString bs = input.readBytes();
-              bitField0_ |= 0x08000000;
+              bitField0_ |= 0x02000000;
               defaultConditionName_ = bs;
               break;
             }
             case 240: {
-              bitField0_ |= 0x10000000;
+              bitField0_ |= 0x04000000;
               checkingForSnapshot_ = input.readBool();
               break;
             }
             case 250: {
               de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContent.Builder subBuilder = null;
-              if (((bitField0_ & 0x20000000) == 0x20000000)) {
+              if (((bitField0_ & 0x08000000) == 0x08000000)) {
                 subBuilder = groovyClipboardFormatters_.toBuilder();
               }
               groovyClipboardFormatters_ = input.readMessage(de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContent.PARSER, extensionRegistry);
@@ -695,27 +719,49 @@ public final class PrefsProto {
                 subBuilder.mergeFrom(groovyClipboardFormatters_);
                 groovyClipboardFormatters_ = subBuilder.buildPartial();
               }
-              bitField0_ |= 0x20000000;
+              bitField0_ |= 0x08000000;
               break;
             }
             case 256: {
-              bitField0_ |= 0x40000000;
+              bitField0_ |= 0x10000000;
               trayActive_ = input.readBool();
               break;
             }
             case 264: {
-              bitField0_ |= 0x80000000;
+              bitField0_ |= 0x20000000;
               showingFullRecentPath_ = input.readBool();
               break;
             }
             case 272: {
-              bitField1_ |= 0x00000001;
+              bitField0_ |= 0x40000000;
               hidingOnClose_ = input.readBool();
               break;
             }
             case 280: {
-              bitField1_ |= 0x00000002;
+              bitField0_ |= 0x80000000;
               usingWrappedExceptionStyle_ = input.readBool();
+              break;
+            }
+            case 288: {
+              bitField1_ |= 0x00000001;
+              showingPrimaryIdentifier_ = input.readBool();
+              break;
+            }
+            case 296: {
+              bitField1_ |= 0x00000002;
+              showingSecondaryIdentifier_ = input.readBool();
+              break;
+            }
+            case 304: {
+              bitField1_ |= 0x00000004;
+              scrollingSmoothly_ = input.readBool();
+              break;
+            }
+            default: {
+              if (!parseUnknownField(
+                  input, unknownFields, extensionRegistry, tag)) {
+                done = true;
+              }
               break;
             }
           }
@@ -724,7 +770,7 @@ public final class PrefsProto {
         throw e.setUnfinishedMessage(this);
       } catch (java.io.IOException e) {
         throw new com.google.protobuf.InvalidProtocolBufferException(
-            e.getMessage()).setUnfinishedMessage(this);
+            e).setUnfinishedMessage(this);
       } finally {
         this.unknownFields = unknownFields.build();
         makeExtensionsImmutable();
@@ -735,26 +781,12 @@ public final class PrefsProto {
       return de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.internal_static_de_huxhorn_lilith_prefs_LilithPreferences_descriptor;
     }
 
-    protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+    @java.lang.Override
+    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
         internalGetFieldAccessorTable() {
       return de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.internal_static_de_huxhorn_lilith_prefs_LilithPreferences_fieldAccessorTable
           .ensureFieldAccessorsInitialized(
               de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.LilithPreferences.class, de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.LilithPreferences.Builder.class);
-    }
-
-    public static com.google.protobuf.Parser<LilithPreferences> PARSER =
-        new com.google.protobuf.AbstractParser<LilithPreferences>() {
-      public LilithPreferences parsePartialFrom(
-          com.google.protobuf.CodedInputStream input,
-          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-          throws com.google.protobuf.InvalidProtocolBufferException {
-        return new LilithPreferences(input, extensionRegistry);
-      }
-    };
-
-    @java.lang.Override
-    public com.google.protobuf.Parser<LilithPreferences> getParserForType() {
-      return PARSER;
     }
 
     private int bitField0_;
@@ -771,13 +803,13 @@ public final class PrefsProto {
      * <code>optional .de.huxhorn.lilith.prefs.DirectoryContent groovy_conditions = 1;</code>
      */
     public de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContent getGroovyConditions() {
-      return groovyConditions_;
+      return groovyConditions_ == null ? de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContent.getDefaultInstance() : groovyConditions_;
     }
     /**
      * <code>optional .de.huxhorn.lilith.prefs.DirectoryContent groovy_conditions = 1;</code>
      */
     public de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContentOrBuilder getGroovyConditionsOrBuilder() {
-      return groovyConditions_;
+      return groovyConditions_ == null ? de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContent.getDefaultInstance() : groovyConditions_;
     }
 
     public static final int DETAILS_VIEW_FIELD_NUMBER = 2;
@@ -792,13 +824,13 @@ public final class PrefsProto {
      * <code>optional .de.huxhorn.lilith.prefs.DirectoryContent details_view = 2;</code>
      */
     public de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContent getDetailsView() {
-      return detailsView_;
+      return detailsView_ == null ? de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContent.getDefaultInstance() : detailsView_;
     }
     /**
      * <code>optional .de.huxhorn.lilith.prefs.DirectoryContent details_view = 2;</code>
      */
     public de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContentOrBuilder getDetailsViewOrBuilder() {
-      return detailsView_;
+      return detailsView_ == null ? de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContent.getDefaultInstance() : detailsView_;
     }
 
     public static final int ROOT_FILES_FIELD_NUMBER = 3;
@@ -813,17 +845,17 @@ public final class PrefsProto {
      * <code>optional .de.huxhorn.lilith.prefs.DirectoryContent root_files = 3;</code>
      */
     public de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContent getRootFiles() {
-      return rootFiles_;
+      return rootFiles_ == null ? de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContent.getDefaultInstance() : rootFiles_;
     }
     /**
      * <code>optional .de.huxhorn.lilith.prefs.DirectoryContent root_files = 3;</code>
      */
     public de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContentOrBuilder getRootFilesOrBuilder() {
-      return rootFiles_;
+      return rootFiles_ == null ? de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContent.getDefaultInstance() : rootFiles_;
     }
 
     public static final int BLACKLIST_NAME_FIELD_NUMBER = 4;
-    private java.lang.Object blacklistName_;
+    private volatile java.lang.Object blacklistName_;
     /**
      * <code>optional string blacklist_name = 4;</code>
      */
@@ -865,7 +897,7 @@ public final class PrefsProto {
     }
 
     public static final int WHITELIST_NAME_FIELD_NUMBER = 5;
-    private java.lang.Object whitelistName_;
+    private volatile java.lang.Object whitelistName_;
     /**
      * <code>optional string whitelist_name = 5;</code>
      */
@@ -907,7 +939,7 @@ public final class PrefsProto {
     }
 
     public static final int LOOK_AND_FEEL_FIELD_NUMBER = 6;
-    private java.lang.Object lookAndFeel_;
+    private volatile java.lang.Object lookAndFeel_;
     /**
      * <code>optional string look_and_feel = 6;</code>
      */
@@ -1068,36 +1100,13 @@ public final class PrefsProto {
       return globalLoggingEnabled_;
     }
 
-    public static final int LOGGING_STATISTIC_ENABLED_FIELD_NUMBER = 16;
-    private boolean loggingStatisticEnabled_;
-    /**
-     * <code>optional bool logging_statistic_enabled = 16;</code>
-     *
-     * <pre>
-     *	optional bool              licensed                      = 15;
-     * </pre>
-     */
-    public boolean hasLoggingStatisticEnabled() {
-      return ((bitField0_ & 0x00004000) == 0x00004000);
-    }
-    /**
-     * <code>optional bool logging_statistic_enabled = 16;</code>
-     *
-     * <pre>
-     *	optional bool              licensed                      = 15;
-     * </pre>
-     */
-    public boolean getLoggingStatisticEnabled() {
-      return loggingStatisticEnabled_;
-    }
-
     public static final int MAXIMIZING_INTERNAL_FRAMES_FIELD_NUMBER = 17;
     private boolean maximizingInternalFrames_;
     /**
      * <code>optional bool maximizing_internal_frames = 17;</code>
      */
     public boolean hasMaximizingInternalFrames() {
-      return ((bitField0_ & 0x00008000) == 0x00008000);
+      return ((bitField0_ & 0x00004000) == 0x00004000);
     }
     /**
      * <code>optional bool maximizing_internal_frames = 17;</code>
@@ -1112,7 +1121,7 @@ public final class PrefsProto {
      * <code>optional bool mute = 18;</code>
      */
     public boolean hasMute() {
-      return ((bitField0_ & 0x00010000) == 0x00010000);
+      return ((bitField0_ & 0x00008000) == 0x00008000);
     }
     /**
      * <code>optional bool mute = 18;</code>
@@ -1127,7 +1136,7 @@ public final class PrefsProto {
      * <code>optional bool scrolling_to_bottom = 19;</code>
      */
     public boolean hasScrollingToBottom() {
-      return ((bitField0_ & 0x00020000) == 0x00020000);
+      return ((bitField0_ & 0x00010000) == 0x00010000);
     }
     /**
      * <code>optional bool scrolling_to_bottom = 19;</code>
@@ -1136,49 +1145,34 @@ public final class PrefsProto {
       return scrollingToBottom_;
     }
 
-    public static final int SHOWING_FULL_CALLSTACK_FIELD_NUMBER = 20;
-    private boolean showingFullCallstack_;
+    public static final int SHOWING_FULL_CALL_STACK_FIELD_NUMBER = 20;
+    private boolean showingFullCallStack_;
     /**
-     * <code>optional bool showing_full_callstack = 20;</code>
+     * <code>optional bool showing_full_call_stack = 20;</code>
      */
-    public boolean hasShowingFullCallstack() {
+    public boolean hasShowingFullCallStack() {
+      return ((bitField0_ & 0x00020000) == 0x00020000);
+    }
+    /**
+     * <code>optional bool showing_full_call_stack = 20;</code>
+     */
+    public boolean getShowingFullCallStack() {
+      return showingFullCallStack_;
+    }
+
+    public static final int SHOWING_STATUS_BAR_FIELD_NUMBER = 22;
+    private boolean showingStatusBar_;
+    /**
+     * <code>optional bool showing_status_bar = 22;</code>
+     */
+    public boolean hasShowingStatusBar() {
       return ((bitField0_ & 0x00040000) == 0x00040000);
     }
     /**
-     * <code>optional bool showing_full_callstack = 20;</code>
+     * <code>optional bool showing_status_bar = 22;</code>
      */
-    public boolean getShowingFullCallstack() {
-      return showingFullCallstack_;
-    }
-
-    public static final int SHOWING_IDENTIFIER_FIELD_NUMBER = 21;
-    private boolean showingIdentifier_;
-    /**
-     * <code>optional bool showing_identifier = 21;</code>
-     */
-    public boolean hasShowingIdentifier() {
-      return ((bitField0_ & 0x00080000) == 0x00080000);
-    }
-    /**
-     * <code>optional bool showing_identifier = 21;</code>
-     */
-    public boolean getShowingIdentifier() {
-      return showingIdentifier_;
-    }
-
-    public static final int SHOWING_STATUSBAR_FIELD_NUMBER = 22;
-    private boolean showingStatusbar_;
-    /**
-     * <code>optional bool showing_statusbar = 22;</code>
-     */
-    public boolean hasShowingStatusbar() {
-      return ((bitField0_ & 0x00100000) == 0x00100000);
-    }
-    /**
-     * <code>optional bool showing_statusbar = 22;</code>
-     */
-    public boolean getShowingStatusbar() {
-      return showingStatusbar_;
+    public boolean getShowingStatusBar() {
+      return showingStatusBar_;
     }
 
     public static final int SHOWING_STACKTRACE_FIELD_NUMBER = 23;
@@ -1187,7 +1181,7 @@ public final class PrefsProto {
      * <code>optional bool showing_stacktrace = 23;</code>
      */
     public boolean hasShowingStacktrace() {
-      return ((bitField0_ & 0x00200000) == 0x00200000);
+      return ((bitField0_ & 0x00080000) == 0x00080000);
     }
     /**
      * <code>optional bool showing_stacktrace = 23;</code>
@@ -1202,7 +1196,7 @@ public final class PrefsProto {
      * <code>optional bool showing_tip_of_the_day = 24;</code>
      */
     public boolean hasShowingTipOfTheDay() {
-      return ((bitField0_ & 0x00400000) == 0x00400000);
+      return ((bitField0_ & 0x00100000) == 0x00100000);
     }
     /**
      * <code>optional bool showing_tip_of_the_day = 24;</code>
@@ -1217,7 +1211,7 @@ public final class PrefsProto {
      * <code>optional bool showing_toolbar = 25;</code>
      */
     public boolean hasShowingToolbar() {
-      return ((bitField0_ & 0x00800000) == 0x00800000);
+      return ((bitField0_ & 0x00200000) == 0x00200000);
     }
     /**
      * <code>optional bool showing_toolbar = 25;</code>
@@ -1232,7 +1226,7 @@ public final class PrefsProto {
      * <code>optional bool splash_screen_disabled = 26;</code>
      */
     public boolean hasSplashScreenDisabled() {
-      return ((bitField0_ & 0x01000000) == 0x01000000);
+      return ((bitField0_ & 0x00400000) == 0x00400000);
     }
     /**
      * <code>optional bool splash_screen_disabled = 26;</code>
@@ -1247,7 +1241,7 @@ public final class PrefsProto {
      * <code>optional bool using_internal_frames = 27;</code>
      */
     public boolean hasUsingInternalFrames() {
-      return ((bitField0_ & 0x02000000) == 0x02000000);
+      return ((bitField0_ & 0x00800000) == 0x00800000);
     }
     /**
      * <code>optional bool using_internal_frames = 27;</code>
@@ -1257,27 +1251,29 @@ public final class PrefsProto {
     }
 
     public static final int SOURCE_FILTERING_FIELD_NUMBER = 28;
-    private de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.SourceFiltering sourceFiltering_;
+    private int sourceFiltering_;
     /**
      * <code>optional .de.huxhorn.lilith.prefs.SourceFiltering source_filtering = 28;</code>
      */
     public boolean hasSourceFiltering() {
-      return ((bitField0_ & 0x04000000) == 0x04000000);
+      return ((bitField0_ & 0x01000000) == 0x01000000);
     }
     /**
      * <code>optional .de.huxhorn.lilith.prefs.SourceFiltering source_filtering = 28;</code>
      */
     public de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.SourceFiltering getSourceFiltering() {
-      return sourceFiltering_;
+      @SuppressWarnings("deprecation")
+      de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.SourceFiltering result = de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.SourceFiltering.valueOf(sourceFiltering_);
+      return result == null ? de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.SourceFiltering.NONE : result;
     }
 
     public static final int DEFAULT_CONDITION_NAME_FIELD_NUMBER = 29;
-    private java.lang.Object defaultConditionName_;
+    private volatile java.lang.Object defaultConditionName_;
     /**
      * <code>optional string default_condition_name = 29;</code>
      */
     public boolean hasDefaultConditionName() {
-      return ((bitField0_ & 0x08000000) == 0x08000000);
+      return ((bitField0_ & 0x02000000) == 0x02000000);
     }
     /**
      * <code>optional string default_condition_name = 29;</code>
@@ -1319,7 +1315,7 @@ public final class PrefsProto {
      * <code>optional bool checking_for_snapshot = 30;</code>
      */
     public boolean hasCheckingForSnapshot() {
-      return ((bitField0_ & 0x10000000) == 0x10000000);
+      return ((bitField0_ & 0x04000000) == 0x04000000);
     }
     /**
      * <code>optional bool checking_for_snapshot = 30;</code>
@@ -1334,19 +1330,19 @@ public final class PrefsProto {
      * <code>optional .de.huxhorn.lilith.prefs.DirectoryContent groovy_clipboard_formatters = 31;</code>
      */
     public boolean hasGroovyClipboardFormatters() {
-      return ((bitField0_ & 0x20000000) == 0x20000000);
+      return ((bitField0_ & 0x08000000) == 0x08000000);
     }
     /**
      * <code>optional .de.huxhorn.lilith.prefs.DirectoryContent groovy_clipboard_formatters = 31;</code>
      */
     public de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContent getGroovyClipboardFormatters() {
-      return groovyClipboardFormatters_;
+      return groovyClipboardFormatters_ == null ? de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContent.getDefaultInstance() : groovyClipboardFormatters_;
     }
     /**
      * <code>optional .de.huxhorn.lilith.prefs.DirectoryContent groovy_clipboard_formatters = 31;</code>
      */
     public de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContentOrBuilder getGroovyClipboardFormattersOrBuilder() {
-      return groovyClipboardFormatters_;
+      return groovyClipboardFormatters_ == null ? de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContent.getDefaultInstance() : groovyClipboardFormatters_;
     }
 
     public static final int TRAY_ACTIVE_FIELD_NUMBER = 32;
@@ -1355,7 +1351,7 @@ public final class PrefsProto {
      * <code>optional bool tray_active = 32;</code>
      */
     public boolean hasTrayActive() {
-      return ((bitField0_ & 0x40000000) == 0x40000000);
+      return ((bitField0_ & 0x10000000) == 0x10000000);
     }
     /**
      * <code>optional bool tray_active = 32;</code>
@@ -1370,7 +1366,7 @@ public final class PrefsProto {
      * <code>optional bool showing_full_recent_path = 33;</code>
      */
     public boolean hasShowingFullRecentPath() {
-      return ((bitField0_ & 0x80000000) == 0x80000000);
+      return ((bitField0_ & 0x20000000) == 0x20000000);
     }
     /**
      * <code>optional bool showing_full_recent_path = 33;</code>
@@ -1385,7 +1381,7 @@ public final class PrefsProto {
      * <code>optional bool hiding_on_close = 34;</code>
      */
     public boolean hasHidingOnClose() {
-      return ((bitField1_ & 0x00000001) == 0x00000001);
+      return ((bitField0_ & 0x40000000) == 0x40000000);
     }
     /**
      * <code>optional bool hiding_on_close = 34;</code>
@@ -1400,7 +1396,7 @@ public final class PrefsProto {
      * <code>optional bool using_wrapped_exception_style = 35;</code>
      */
     public boolean hasUsingWrappedExceptionStyle() {
-      return ((bitField1_ & 0x00000002) == 0x00000002);
+      return ((bitField0_ & 0x80000000) == 0x80000000);
     }
     /**
      * <code>optional bool using_wrapped_exception_style = 35;</code>
@@ -1409,43 +1405,53 @@ public final class PrefsProto {
       return usingWrappedExceptionStyle_;
     }
 
-    private void initFields() {
-      groovyConditions_ = de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContent.getDefaultInstance();
-      detailsView_ = de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContent.getDefaultInstance();
-      rootFiles_ = de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContent.getDefaultInstance();
-      blacklistName_ = "";
-      whitelistName_ = "";
-      lookAndFeel_ = "";
-      askingBeforeQuit_ = false;
-      autoClosing_ = false;
-      autoFocusingWindow_ = false;
-      autoOpening_ = false;
-      checkingForUpdate_ = false;
-      cleaningLogsOnExit_ = false;
-      coloringWholeRow_ = false;
-      globalLoggingEnabled_ = false;
-      loggingStatisticEnabled_ = false;
-      maximizingInternalFrames_ = false;
-      mute_ = false;
-      scrollingToBottom_ = false;
-      showingFullCallstack_ = false;
-      showingIdentifier_ = false;
-      showingStatusbar_ = false;
-      showingStacktrace_ = false;
-      showingTipOfTheDay_ = false;
-      showingToolbar_ = false;
-      splashScreenDisabled_ = false;
-      usingInternalFrames_ = false;
-      sourceFiltering_ = de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.SourceFiltering.NONE;
-      defaultConditionName_ = "";
-      checkingForSnapshot_ = false;
-      groovyClipboardFormatters_ = de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContent.getDefaultInstance();
-      trayActive_ = false;
-      showingFullRecentPath_ = false;
-      hidingOnClose_ = false;
-      usingWrappedExceptionStyle_ = false;
+    public static final int SHOWING_PRIMARY_IDENTIFIER_FIELD_NUMBER = 36;
+    private boolean showingPrimaryIdentifier_;
+    /**
+     * <code>optional bool showing_primary_identifier = 36;</code>
+     */
+    public boolean hasShowingPrimaryIdentifier() {
+      return ((bitField1_ & 0x00000001) == 0x00000001);
     }
+    /**
+     * <code>optional bool showing_primary_identifier = 36;</code>
+     */
+    public boolean getShowingPrimaryIdentifier() {
+      return showingPrimaryIdentifier_;
+    }
+
+    public static final int SHOWING_SECONDARY_IDENTIFIER_FIELD_NUMBER = 37;
+    private boolean showingSecondaryIdentifier_;
+    /**
+     * <code>optional bool showing_secondary_identifier = 37;</code>
+     */
+    public boolean hasShowingSecondaryIdentifier() {
+      return ((bitField1_ & 0x00000002) == 0x00000002);
+    }
+    /**
+     * <code>optional bool showing_secondary_identifier = 37;</code>
+     */
+    public boolean getShowingSecondaryIdentifier() {
+      return showingSecondaryIdentifier_;
+    }
+
+    public static final int SCROLLING_SMOOTHLY_FIELD_NUMBER = 38;
+    private boolean scrollingSmoothly_;
+    /**
+     * <code>optional bool scrolling_smoothly = 38;</code>
+     */
+    public boolean hasScrollingSmoothly() {
+      return ((bitField1_ & 0x00000004) == 0x00000004);
+    }
+    /**
+     * <code>optional bool scrolling_smoothly = 38;</code>
+     */
+    public boolean getScrollingSmoothly() {
+      return scrollingSmoothly_;
+    }
+
     private byte memoizedIsInitialized = -1;
+    @java.lang.Override
     public final boolean isInitialized() {
       byte isInitialized = memoizedIsInitialized;
       if (isInitialized == 1) return true;
@@ -1479,26 +1485,26 @@ public final class PrefsProto {
       return true;
     }
 
+    @java.lang.Override
     public void writeTo(com.google.protobuf.CodedOutputStream output)
                         throws java.io.IOException {
-      getSerializedSize();
       if (((bitField0_ & 0x00000001) == 0x00000001)) {
-        output.writeMessage(1, groovyConditions_);
+        output.writeMessage(1, getGroovyConditions());
       }
       if (((bitField0_ & 0x00000002) == 0x00000002)) {
-        output.writeMessage(2, detailsView_);
+        output.writeMessage(2, getDetailsView());
       }
       if (((bitField0_ & 0x00000004) == 0x00000004)) {
-        output.writeMessage(3, rootFiles_);
+        output.writeMessage(3, getRootFiles());
       }
       if (((bitField0_ & 0x00000008) == 0x00000008)) {
-        output.writeBytes(4, getBlacklistNameBytes());
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 4, blacklistName_);
       }
       if (((bitField0_ & 0x00000010) == 0x00000010)) {
-        output.writeBytes(5, getWhitelistNameBytes());
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 5, whitelistName_);
       }
       if (((bitField0_ & 0x00000020) == 0x00000020)) {
-        output.writeBytes(6, getLookAndFeelBytes());
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 6, lookAndFeel_);
       }
       if (((bitField0_ & 0x00000040) == 0x00000040)) {
         output.writeBool(7, askingBeforeQuit_);
@@ -1525,97 +1531,97 @@ public final class PrefsProto {
         output.writeBool(14, globalLoggingEnabled_);
       }
       if (((bitField0_ & 0x00004000) == 0x00004000)) {
-        output.writeBool(16, loggingStatisticEnabled_);
-      }
-      if (((bitField0_ & 0x00008000) == 0x00008000)) {
         output.writeBool(17, maximizingInternalFrames_);
       }
-      if (((bitField0_ & 0x00010000) == 0x00010000)) {
+      if (((bitField0_ & 0x00008000) == 0x00008000)) {
         output.writeBool(18, mute_);
       }
-      if (((bitField0_ & 0x00020000) == 0x00020000)) {
+      if (((bitField0_ & 0x00010000) == 0x00010000)) {
         output.writeBool(19, scrollingToBottom_);
       }
+      if (((bitField0_ & 0x00020000) == 0x00020000)) {
+        output.writeBool(20, showingFullCallStack_);
+      }
       if (((bitField0_ & 0x00040000) == 0x00040000)) {
-        output.writeBool(20, showingFullCallstack_);
+        output.writeBool(22, showingStatusBar_);
       }
       if (((bitField0_ & 0x00080000) == 0x00080000)) {
-        output.writeBool(21, showingIdentifier_);
-      }
-      if (((bitField0_ & 0x00100000) == 0x00100000)) {
-        output.writeBool(22, showingStatusbar_);
-      }
-      if (((bitField0_ & 0x00200000) == 0x00200000)) {
         output.writeBool(23, showingStacktrace_);
       }
-      if (((bitField0_ & 0x00400000) == 0x00400000)) {
+      if (((bitField0_ & 0x00100000) == 0x00100000)) {
         output.writeBool(24, showingTipOfTheDay_);
       }
-      if (((bitField0_ & 0x00800000) == 0x00800000)) {
+      if (((bitField0_ & 0x00200000) == 0x00200000)) {
         output.writeBool(25, showingToolbar_);
       }
-      if (((bitField0_ & 0x01000000) == 0x01000000)) {
+      if (((bitField0_ & 0x00400000) == 0x00400000)) {
         output.writeBool(26, splashScreenDisabled_);
       }
-      if (((bitField0_ & 0x02000000) == 0x02000000)) {
+      if (((bitField0_ & 0x00800000) == 0x00800000)) {
         output.writeBool(27, usingInternalFrames_);
       }
+      if (((bitField0_ & 0x01000000) == 0x01000000)) {
+        output.writeEnum(28, sourceFiltering_);
+      }
+      if (((bitField0_ & 0x02000000) == 0x02000000)) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 29, defaultConditionName_);
+      }
       if (((bitField0_ & 0x04000000) == 0x04000000)) {
-        output.writeEnum(28, sourceFiltering_.getNumber());
-      }
-      if (((bitField0_ & 0x08000000) == 0x08000000)) {
-        output.writeBytes(29, getDefaultConditionNameBytes());
-      }
-      if (((bitField0_ & 0x10000000) == 0x10000000)) {
         output.writeBool(30, checkingForSnapshot_);
       }
-      if (((bitField0_ & 0x20000000) == 0x20000000)) {
-        output.writeMessage(31, groovyClipboardFormatters_);
+      if (((bitField0_ & 0x08000000) == 0x08000000)) {
+        output.writeMessage(31, getGroovyClipboardFormatters());
       }
-      if (((bitField0_ & 0x40000000) == 0x40000000)) {
+      if (((bitField0_ & 0x10000000) == 0x10000000)) {
         output.writeBool(32, trayActive_);
       }
-      if (((bitField0_ & 0x80000000) == 0x80000000)) {
+      if (((bitField0_ & 0x20000000) == 0x20000000)) {
         output.writeBool(33, showingFullRecentPath_);
       }
-      if (((bitField1_ & 0x00000001) == 0x00000001)) {
+      if (((bitField0_ & 0x40000000) == 0x40000000)) {
         output.writeBool(34, hidingOnClose_);
       }
-      if (((bitField1_ & 0x00000002) == 0x00000002)) {
+      if (((bitField0_ & 0x80000000) == 0x80000000)) {
         output.writeBool(35, usingWrappedExceptionStyle_);
       }
-      getUnknownFields().writeTo(output);
+      if (((bitField1_ & 0x00000001) == 0x00000001)) {
+        output.writeBool(36, showingPrimaryIdentifier_);
+      }
+      if (((bitField1_ & 0x00000002) == 0x00000002)) {
+        output.writeBool(37, showingSecondaryIdentifier_);
+      }
+      if (((bitField1_ & 0x00000004) == 0x00000004)) {
+        output.writeBool(38, scrollingSmoothly_);
+      }
+      unknownFields.writeTo(output);
     }
 
-    private int memoizedSerializedSize = -1;
+    @java.lang.Override
     public int getSerializedSize() {
-      int size = memoizedSerializedSize;
+      int size = memoizedSize;
       if (size != -1) return size;
 
       size = 0;
       if (((bitField0_ & 0x00000001) == 0x00000001)) {
         size += com.google.protobuf.CodedOutputStream
-          .computeMessageSize(1, groovyConditions_);
+          .computeMessageSize(1, getGroovyConditions());
       }
       if (((bitField0_ & 0x00000002) == 0x00000002)) {
         size += com.google.protobuf.CodedOutputStream
-          .computeMessageSize(2, detailsView_);
+          .computeMessageSize(2, getDetailsView());
       }
       if (((bitField0_ & 0x00000004) == 0x00000004)) {
         size += com.google.protobuf.CodedOutputStream
-          .computeMessageSize(3, rootFiles_);
+          .computeMessageSize(3, getRootFiles());
       }
       if (((bitField0_ & 0x00000008) == 0x00000008)) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeBytesSize(4, getBlacklistNameBytes());
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(4, blacklistName_);
       }
       if (((bitField0_ & 0x00000010) == 0x00000010)) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeBytesSize(5, getWhitelistNameBytes());
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(5, whitelistName_);
       }
       if (((bitField0_ & 0x00000020) == 0x00000020)) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeBytesSize(6, getLookAndFeelBytes());
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(6, lookAndFeel_);
       }
       if (((bitField0_ & 0x00000040) == 0x00000040)) {
         size += com.google.protobuf.CodedOutputStream
@@ -1651,96 +1657,470 @@ public final class PrefsProto {
       }
       if (((bitField0_ & 0x00004000) == 0x00004000)) {
         size += com.google.protobuf.CodedOutputStream
-          .computeBoolSize(16, loggingStatisticEnabled_);
+          .computeBoolSize(17, maximizingInternalFrames_);
       }
       if (((bitField0_ & 0x00008000) == 0x00008000)) {
         size += com.google.protobuf.CodedOutputStream
-          .computeBoolSize(17, maximizingInternalFrames_);
+          .computeBoolSize(18, mute_);
       }
       if (((bitField0_ & 0x00010000) == 0x00010000)) {
         size += com.google.protobuf.CodedOutputStream
-          .computeBoolSize(18, mute_);
+          .computeBoolSize(19, scrollingToBottom_);
       }
       if (((bitField0_ & 0x00020000) == 0x00020000)) {
         size += com.google.protobuf.CodedOutputStream
-          .computeBoolSize(19, scrollingToBottom_);
+          .computeBoolSize(20, showingFullCallStack_);
       }
       if (((bitField0_ & 0x00040000) == 0x00040000)) {
         size += com.google.protobuf.CodedOutputStream
-          .computeBoolSize(20, showingFullCallstack_);
+          .computeBoolSize(22, showingStatusBar_);
       }
       if (((bitField0_ & 0x00080000) == 0x00080000)) {
         size += com.google.protobuf.CodedOutputStream
-          .computeBoolSize(21, showingIdentifier_);
+          .computeBoolSize(23, showingStacktrace_);
       }
       if (((bitField0_ & 0x00100000) == 0x00100000)) {
         size += com.google.protobuf.CodedOutputStream
-          .computeBoolSize(22, showingStatusbar_);
+          .computeBoolSize(24, showingTipOfTheDay_);
       }
       if (((bitField0_ & 0x00200000) == 0x00200000)) {
         size += com.google.protobuf.CodedOutputStream
-          .computeBoolSize(23, showingStacktrace_);
+          .computeBoolSize(25, showingToolbar_);
       }
       if (((bitField0_ & 0x00400000) == 0x00400000)) {
         size += com.google.protobuf.CodedOutputStream
-          .computeBoolSize(24, showingTipOfTheDay_);
+          .computeBoolSize(26, splashScreenDisabled_);
       }
       if (((bitField0_ & 0x00800000) == 0x00800000)) {
         size += com.google.protobuf.CodedOutputStream
-          .computeBoolSize(25, showingToolbar_);
+          .computeBoolSize(27, usingInternalFrames_);
       }
       if (((bitField0_ & 0x01000000) == 0x01000000)) {
         size += com.google.protobuf.CodedOutputStream
-          .computeBoolSize(26, splashScreenDisabled_);
+          .computeEnumSize(28, sourceFiltering_);
       }
       if (((bitField0_ & 0x02000000) == 0x02000000)) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeBoolSize(27, usingInternalFrames_);
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(29, defaultConditionName_);
       }
       if (((bitField0_ & 0x04000000) == 0x04000000)) {
         size += com.google.protobuf.CodedOutputStream
-          .computeEnumSize(28, sourceFiltering_.getNumber());
+          .computeBoolSize(30, checkingForSnapshot_);
       }
       if (((bitField0_ & 0x08000000) == 0x08000000)) {
         size += com.google.protobuf.CodedOutputStream
-          .computeBytesSize(29, getDefaultConditionNameBytes());
+          .computeMessageSize(31, getGroovyClipboardFormatters());
       }
       if (((bitField0_ & 0x10000000) == 0x10000000)) {
         size += com.google.protobuf.CodedOutputStream
-          .computeBoolSize(30, checkingForSnapshot_);
+          .computeBoolSize(32, trayActive_);
       }
       if (((bitField0_ & 0x20000000) == 0x20000000)) {
         size += com.google.protobuf.CodedOutputStream
-          .computeMessageSize(31, groovyClipboardFormatters_);
+          .computeBoolSize(33, showingFullRecentPath_);
       }
       if (((bitField0_ & 0x40000000) == 0x40000000)) {
         size += com.google.protobuf.CodedOutputStream
-          .computeBoolSize(32, trayActive_);
+          .computeBoolSize(34, hidingOnClose_);
       }
       if (((bitField0_ & 0x80000000) == 0x80000000)) {
         size += com.google.protobuf.CodedOutputStream
-          .computeBoolSize(33, showingFullRecentPath_);
+          .computeBoolSize(35, usingWrappedExceptionStyle_);
       }
       if (((bitField1_ & 0x00000001) == 0x00000001)) {
         size += com.google.protobuf.CodedOutputStream
-          .computeBoolSize(34, hidingOnClose_);
+          .computeBoolSize(36, showingPrimaryIdentifier_);
       }
       if (((bitField1_ & 0x00000002) == 0x00000002)) {
         size += com.google.protobuf.CodedOutputStream
-          .computeBoolSize(35, usingWrappedExceptionStyle_);
+          .computeBoolSize(37, showingSecondaryIdentifier_);
       }
-      size += getUnknownFields().getSerializedSize();
-      memoizedSerializedSize = size;
+      if (((bitField1_ & 0x00000004) == 0x00000004)) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeBoolSize(38, scrollingSmoothly_);
+      }
+      size += unknownFields.getSerializedSize();
+      memoizedSize = size;
       return size;
     }
 
-    private static final long serialVersionUID = 0L;
     @java.lang.Override
-    protected java.lang.Object writeReplace()
-        throws java.io.ObjectStreamException {
-      return super.writeReplace();
+    public boolean equals(final java.lang.Object obj) {
+      if (obj == this) {
+       return true;
+      }
+      if (!(obj instanceof de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.LilithPreferences)) {
+        return super.equals(obj);
+      }
+      de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.LilithPreferences other = (de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.LilithPreferences) obj;
+
+      boolean result = true;
+      result = result && (hasGroovyConditions() == other.hasGroovyConditions());
+      if (hasGroovyConditions()) {
+        result = result && getGroovyConditions()
+            .equals(other.getGroovyConditions());
+      }
+      result = result && (hasDetailsView() == other.hasDetailsView());
+      if (hasDetailsView()) {
+        result = result && getDetailsView()
+            .equals(other.getDetailsView());
+      }
+      result = result && (hasRootFiles() == other.hasRootFiles());
+      if (hasRootFiles()) {
+        result = result && getRootFiles()
+            .equals(other.getRootFiles());
+      }
+      result = result && (hasBlacklistName() == other.hasBlacklistName());
+      if (hasBlacklistName()) {
+        result = result && getBlacklistName()
+            .equals(other.getBlacklistName());
+      }
+      result = result && (hasWhitelistName() == other.hasWhitelistName());
+      if (hasWhitelistName()) {
+        result = result && getWhitelistName()
+            .equals(other.getWhitelistName());
+      }
+      result = result && (hasLookAndFeel() == other.hasLookAndFeel());
+      if (hasLookAndFeel()) {
+        result = result && getLookAndFeel()
+            .equals(other.getLookAndFeel());
+      }
+      result = result && (hasAskingBeforeQuit() == other.hasAskingBeforeQuit());
+      if (hasAskingBeforeQuit()) {
+        result = result && (getAskingBeforeQuit()
+            == other.getAskingBeforeQuit());
+      }
+      result = result && (hasAutoClosing() == other.hasAutoClosing());
+      if (hasAutoClosing()) {
+        result = result && (getAutoClosing()
+            == other.getAutoClosing());
+      }
+      result = result && (hasAutoFocusingWindow() == other.hasAutoFocusingWindow());
+      if (hasAutoFocusingWindow()) {
+        result = result && (getAutoFocusingWindow()
+            == other.getAutoFocusingWindow());
+      }
+      result = result && (hasAutoOpening() == other.hasAutoOpening());
+      if (hasAutoOpening()) {
+        result = result && (getAutoOpening()
+            == other.getAutoOpening());
+      }
+      result = result && (hasCheckingForUpdate() == other.hasCheckingForUpdate());
+      if (hasCheckingForUpdate()) {
+        result = result && (getCheckingForUpdate()
+            == other.getCheckingForUpdate());
+      }
+      result = result && (hasCleaningLogsOnExit() == other.hasCleaningLogsOnExit());
+      if (hasCleaningLogsOnExit()) {
+        result = result && (getCleaningLogsOnExit()
+            == other.getCleaningLogsOnExit());
+      }
+      result = result && (hasColoringWholeRow() == other.hasColoringWholeRow());
+      if (hasColoringWholeRow()) {
+        result = result && (getColoringWholeRow()
+            == other.getColoringWholeRow());
+      }
+      result = result && (hasGlobalLoggingEnabled() == other.hasGlobalLoggingEnabled());
+      if (hasGlobalLoggingEnabled()) {
+        result = result && (getGlobalLoggingEnabled()
+            == other.getGlobalLoggingEnabled());
+      }
+      result = result && (hasMaximizingInternalFrames() == other.hasMaximizingInternalFrames());
+      if (hasMaximizingInternalFrames()) {
+        result = result && (getMaximizingInternalFrames()
+            == other.getMaximizingInternalFrames());
+      }
+      result = result && (hasMute() == other.hasMute());
+      if (hasMute()) {
+        result = result && (getMute()
+            == other.getMute());
+      }
+      result = result && (hasScrollingToBottom() == other.hasScrollingToBottom());
+      if (hasScrollingToBottom()) {
+        result = result && (getScrollingToBottom()
+            == other.getScrollingToBottom());
+      }
+      result = result && (hasShowingFullCallStack() == other.hasShowingFullCallStack());
+      if (hasShowingFullCallStack()) {
+        result = result && (getShowingFullCallStack()
+            == other.getShowingFullCallStack());
+      }
+      result = result && (hasShowingStatusBar() == other.hasShowingStatusBar());
+      if (hasShowingStatusBar()) {
+        result = result && (getShowingStatusBar()
+            == other.getShowingStatusBar());
+      }
+      result = result && (hasShowingStacktrace() == other.hasShowingStacktrace());
+      if (hasShowingStacktrace()) {
+        result = result && (getShowingStacktrace()
+            == other.getShowingStacktrace());
+      }
+      result = result && (hasShowingTipOfTheDay() == other.hasShowingTipOfTheDay());
+      if (hasShowingTipOfTheDay()) {
+        result = result && (getShowingTipOfTheDay()
+            == other.getShowingTipOfTheDay());
+      }
+      result = result && (hasShowingToolbar() == other.hasShowingToolbar());
+      if (hasShowingToolbar()) {
+        result = result && (getShowingToolbar()
+            == other.getShowingToolbar());
+      }
+      result = result && (hasSplashScreenDisabled() == other.hasSplashScreenDisabled());
+      if (hasSplashScreenDisabled()) {
+        result = result && (getSplashScreenDisabled()
+            == other.getSplashScreenDisabled());
+      }
+      result = result && (hasUsingInternalFrames() == other.hasUsingInternalFrames());
+      if (hasUsingInternalFrames()) {
+        result = result && (getUsingInternalFrames()
+            == other.getUsingInternalFrames());
+      }
+      result = result && (hasSourceFiltering() == other.hasSourceFiltering());
+      if (hasSourceFiltering()) {
+        result = result && sourceFiltering_ == other.sourceFiltering_;
+      }
+      result = result && (hasDefaultConditionName() == other.hasDefaultConditionName());
+      if (hasDefaultConditionName()) {
+        result = result && getDefaultConditionName()
+            .equals(other.getDefaultConditionName());
+      }
+      result = result && (hasCheckingForSnapshot() == other.hasCheckingForSnapshot());
+      if (hasCheckingForSnapshot()) {
+        result = result && (getCheckingForSnapshot()
+            == other.getCheckingForSnapshot());
+      }
+      result = result && (hasGroovyClipboardFormatters() == other.hasGroovyClipboardFormatters());
+      if (hasGroovyClipboardFormatters()) {
+        result = result && getGroovyClipboardFormatters()
+            .equals(other.getGroovyClipboardFormatters());
+      }
+      result = result && (hasTrayActive() == other.hasTrayActive());
+      if (hasTrayActive()) {
+        result = result && (getTrayActive()
+            == other.getTrayActive());
+      }
+      result = result && (hasShowingFullRecentPath() == other.hasShowingFullRecentPath());
+      if (hasShowingFullRecentPath()) {
+        result = result && (getShowingFullRecentPath()
+            == other.getShowingFullRecentPath());
+      }
+      result = result && (hasHidingOnClose() == other.hasHidingOnClose());
+      if (hasHidingOnClose()) {
+        result = result && (getHidingOnClose()
+            == other.getHidingOnClose());
+      }
+      result = result && (hasUsingWrappedExceptionStyle() == other.hasUsingWrappedExceptionStyle());
+      if (hasUsingWrappedExceptionStyle()) {
+        result = result && (getUsingWrappedExceptionStyle()
+            == other.getUsingWrappedExceptionStyle());
+      }
+      result = result && (hasShowingPrimaryIdentifier() == other.hasShowingPrimaryIdentifier());
+      if (hasShowingPrimaryIdentifier()) {
+        result = result && (getShowingPrimaryIdentifier()
+            == other.getShowingPrimaryIdentifier());
+      }
+      result = result && (hasShowingSecondaryIdentifier() == other.hasShowingSecondaryIdentifier());
+      if (hasShowingSecondaryIdentifier()) {
+        result = result && (getShowingSecondaryIdentifier()
+            == other.getShowingSecondaryIdentifier());
+      }
+      result = result && (hasScrollingSmoothly() == other.hasScrollingSmoothly());
+      if (hasScrollingSmoothly()) {
+        result = result && (getScrollingSmoothly()
+            == other.getScrollingSmoothly());
+      }
+      result = result && unknownFields.equals(other.unknownFields);
+      return result;
     }
 
+    @java.lang.Override
+    public int hashCode() {
+      if (memoizedHashCode != 0) {
+        return memoizedHashCode;
+      }
+      int hash = 41;
+      hash = (19 * hash) + getDescriptor().hashCode();
+      if (hasGroovyConditions()) {
+        hash = (37 * hash) + GROOVY_CONDITIONS_FIELD_NUMBER;
+        hash = (53 * hash) + getGroovyConditions().hashCode();
+      }
+      if (hasDetailsView()) {
+        hash = (37 * hash) + DETAILS_VIEW_FIELD_NUMBER;
+        hash = (53 * hash) + getDetailsView().hashCode();
+      }
+      if (hasRootFiles()) {
+        hash = (37 * hash) + ROOT_FILES_FIELD_NUMBER;
+        hash = (53 * hash) + getRootFiles().hashCode();
+      }
+      if (hasBlacklistName()) {
+        hash = (37 * hash) + BLACKLIST_NAME_FIELD_NUMBER;
+        hash = (53 * hash) + getBlacklistName().hashCode();
+      }
+      if (hasWhitelistName()) {
+        hash = (37 * hash) + WHITELIST_NAME_FIELD_NUMBER;
+        hash = (53 * hash) + getWhitelistName().hashCode();
+      }
+      if (hasLookAndFeel()) {
+        hash = (37 * hash) + LOOK_AND_FEEL_FIELD_NUMBER;
+        hash = (53 * hash) + getLookAndFeel().hashCode();
+      }
+      if (hasAskingBeforeQuit()) {
+        hash = (37 * hash) + ASKING_BEFORE_QUIT_FIELD_NUMBER;
+        hash = (53 * hash) + com.google.protobuf.Internal.hashBoolean(
+            getAskingBeforeQuit());
+      }
+      if (hasAutoClosing()) {
+        hash = (37 * hash) + AUTO_CLOSING_FIELD_NUMBER;
+        hash = (53 * hash) + com.google.protobuf.Internal.hashBoolean(
+            getAutoClosing());
+      }
+      if (hasAutoFocusingWindow()) {
+        hash = (37 * hash) + AUTO_FOCUSING_WINDOW_FIELD_NUMBER;
+        hash = (53 * hash) + com.google.protobuf.Internal.hashBoolean(
+            getAutoFocusingWindow());
+      }
+      if (hasAutoOpening()) {
+        hash = (37 * hash) + AUTO_OPENING_FIELD_NUMBER;
+        hash = (53 * hash) + com.google.protobuf.Internal.hashBoolean(
+            getAutoOpening());
+      }
+      if (hasCheckingForUpdate()) {
+        hash = (37 * hash) + CHECKING_FOR_UPDATE_FIELD_NUMBER;
+        hash = (53 * hash) + com.google.protobuf.Internal.hashBoolean(
+            getCheckingForUpdate());
+      }
+      if (hasCleaningLogsOnExit()) {
+        hash = (37 * hash) + CLEANING_LOGS_ON_EXIT_FIELD_NUMBER;
+        hash = (53 * hash) + com.google.protobuf.Internal.hashBoolean(
+            getCleaningLogsOnExit());
+      }
+      if (hasColoringWholeRow()) {
+        hash = (37 * hash) + COLORING_WHOLE_ROW_FIELD_NUMBER;
+        hash = (53 * hash) + com.google.protobuf.Internal.hashBoolean(
+            getColoringWholeRow());
+      }
+      if (hasGlobalLoggingEnabled()) {
+        hash = (37 * hash) + GLOBAL_LOGGING_ENABLED_FIELD_NUMBER;
+        hash = (53 * hash) + com.google.protobuf.Internal.hashBoolean(
+            getGlobalLoggingEnabled());
+      }
+      if (hasMaximizingInternalFrames()) {
+        hash = (37 * hash) + MAXIMIZING_INTERNAL_FRAMES_FIELD_NUMBER;
+        hash = (53 * hash) + com.google.protobuf.Internal.hashBoolean(
+            getMaximizingInternalFrames());
+      }
+      if (hasMute()) {
+        hash = (37 * hash) + MUTE_FIELD_NUMBER;
+        hash = (53 * hash) + com.google.protobuf.Internal.hashBoolean(
+            getMute());
+      }
+      if (hasScrollingToBottom()) {
+        hash = (37 * hash) + SCROLLING_TO_BOTTOM_FIELD_NUMBER;
+        hash = (53 * hash) + com.google.protobuf.Internal.hashBoolean(
+            getScrollingToBottom());
+      }
+      if (hasShowingFullCallStack()) {
+        hash = (37 * hash) + SHOWING_FULL_CALL_STACK_FIELD_NUMBER;
+        hash = (53 * hash) + com.google.protobuf.Internal.hashBoolean(
+            getShowingFullCallStack());
+      }
+      if (hasShowingStatusBar()) {
+        hash = (37 * hash) + SHOWING_STATUS_BAR_FIELD_NUMBER;
+        hash = (53 * hash) + com.google.protobuf.Internal.hashBoolean(
+            getShowingStatusBar());
+      }
+      if (hasShowingStacktrace()) {
+        hash = (37 * hash) + SHOWING_STACKTRACE_FIELD_NUMBER;
+        hash = (53 * hash) + com.google.protobuf.Internal.hashBoolean(
+            getShowingStacktrace());
+      }
+      if (hasShowingTipOfTheDay()) {
+        hash = (37 * hash) + SHOWING_TIP_OF_THE_DAY_FIELD_NUMBER;
+        hash = (53 * hash) + com.google.protobuf.Internal.hashBoolean(
+            getShowingTipOfTheDay());
+      }
+      if (hasShowingToolbar()) {
+        hash = (37 * hash) + SHOWING_TOOLBAR_FIELD_NUMBER;
+        hash = (53 * hash) + com.google.protobuf.Internal.hashBoolean(
+            getShowingToolbar());
+      }
+      if (hasSplashScreenDisabled()) {
+        hash = (37 * hash) + SPLASH_SCREEN_DISABLED_FIELD_NUMBER;
+        hash = (53 * hash) + com.google.protobuf.Internal.hashBoolean(
+            getSplashScreenDisabled());
+      }
+      if (hasUsingInternalFrames()) {
+        hash = (37 * hash) + USING_INTERNAL_FRAMES_FIELD_NUMBER;
+        hash = (53 * hash) + com.google.protobuf.Internal.hashBoolean(
+            getUsingInternalFrames());
+      }
+      if (hasSourceFiltering()) {
+        hash = (37 * hash) + SOURCE_FILTERING_FIELD_NUMBER;
+        hash = (53 * hash) + sourceFiltering_;
+      }
+      if (hasDefaultConditionName()) {
+        hash = (37 * hash) + DEFAULT_CONDITION_NAME_FIELD_NUMBER;
+        hash = (53 * hash) + getDefaultConditionName().hashCode();
+      }
+      if (hasCheckingForSnapshot()) {
+        hash = (37 * hash) + CHECKING_FOR_SNAPSHOT_FIELD_NUMBER;
+        hash = (53 * hash) + com.google.protobuf.Internal.hashBoolean(
+            getCheckingForSnapshot());
+      }
+      if (hasGroovyClipboardFormatters()) {
+        hash = (37 * hash) + GROOVY_CLIPBOARD_FORMATTERS_FIELD_NUMBER;
+        hash = (53 * hash) + getGroovyClipboardFormatters().hashCode();
+      }
+      if (hasTrayActive()) {
+        hash = (37 * hash) + TRAY_ACTIVE_FIELD_NUMBER;
+        hash = (53 * hash) + com.google.protobuf.Internal.hashBoolean(
+            getTrayActive());
+      }
+      if (hasShowingFullRecentPath()) {
+        hash = (37 * hash) + SHOWING_FULL_RECENT_PATH_FIELD_NUMBER;
+        hash = (53 * hash) + com.google.protobuf.Internal.hashBoolean(
+            getShowingFullRecentPath());
+      }
+      if (hasHidingOnClose()) {
+        hash = (37 * hash) + HIDING_ON_CLOSE_FIELD_NUMBER;
+        hash = (53 * hash) + com.google.protobuf.Internal.hashBoolean(
+            getHidingOnClose());
+      }
+      if (hasUsingWrappedExceptionStyle()) {
+        hash = (37 * hash) + USING_WRAPPED_EXCEPTION_STYLE_FIELD_NUMBER;
+        hash = (53 * hash) + com.google.protobuf.Internal.hashBoolean(
+            getUsingWrappedExceptionStyle());
+      }
+      if (hasShowingPrimaryIdentifier()) {
+        hash = (37 * hash) + SHOWING_PRIMARY_IDENTIFIER_FIELD_NUMBER;
+        hash = (53 * hash) + com.google.protobuf.Internal.hashBoolean(
+            getShowingPrimaryIdentifier());
+      }
+      if (hasShowingSecondaryIdentifier()) {
+        hash = (37 * hash) + SHOWING_SECONDARY_IDENTIFIER_FIELD_NUMBER;
+        hash = (53 * hash) + com.google.protobuf.Internal.hashBoolean(
+            getShowingSecondaryIdentifier());
+      }
+      if (hasScrollingSmoothly()) {
+        hash = (37 * hash) + SCROLLING_SMOOTHLY_FIELD_NUMBER;
+        hash = (53 * hash) + com.google.protobuf.Internal.hashBoolean(
+            getScrollingSmoothly());
+      }
+      hash = (29 * hash) + unknownFields.hashCode();
+      memoizedHashCode = hash;
+      return hash;
+    }
+
+    public static de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.LilithPreferences parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.LilithPreferences parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
     public static de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.LilithPreferences parseFrom(
         com.google.protobuf.ByteString data)
         throws com.google.protobuf.InvalidProtocolBufferException {
@@ -1764,46 +2144,59 @@ public final class PrefsProto {
     }
     public static de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.LilithPreferences parseFrom(java.io.InputStream input)
         throws java.io.IOException {
-      return PARSER.parseFrom(input);
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
     }
     public static de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.LilithPreferences parseFrom(
         java.io.InputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
-      return PARSER.parseFrom(input, extensionRegistry);
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
     }
     public static de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.LilithPreferences parseDelimitedFrom(java.io.InputStream input)
         throws java.io.IOException {
-      return PARSER.parseDelimitedFrom(input);
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input);
     }
     public static de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.LilithPreferences parseDelimitedFrom(
         java.io.InputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
-      return PARSER.parseDelimitedFrom(input, extensionRegistry);
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
     }
     public static de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.LilithPreferences parseFrom(
         com.google.protobuf.CodedInputStream input)
         throws java.io.IOException {
-      return PARSER.parseFrom(input);
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
     }
     public static de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.LilithPreferences parseFrom(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
-      return PARSER.parseFrom(input, extensionRegistry);
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
     }
 
-    public static Builder newBuilder() { return Builder.create(); }
+    @java.lang.Override
     public Builder newBuilderForType() { return newBuilder(); }
-    public static Builder newBuilder(de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.LilithPreferences prototype) {
-      return newBuilder().mergeFrom(prototype);
+    public static Builder newBuilder() {
+      return DEFAULT_INSTANCE.toBuilder();
     }
-    public Builder toBuilder() { return newBuilder(this); }
+    public static Builder newBuilder(de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.LilithPreferences prototype) {
+      return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+    }
+    @java.lang.Override
+    public Builder toBuilder() {
+      return this == DEFAULT_INSTANCE
+          ? new Builder() : new Builder().mergeFrom(this);
+    }
 
     @java.lang.Override
     protected Builder newBuilderForType(
-        com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
       Builder builder = new Builder(parent);
       return builder;
     }
@@ -1811,7 +2204,7 @@ public final class PrefsProto {
      * Protobuf type {@code de.huxhorn.lilith.prefs.LilithPreferences}
      */
     public static final class Builder extends
-        com.google.protobuf.GeneratedMessage.Builder<Builder> implements
+        com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
         // @@protoc_insertion_point(builder_implements:de.huxhorn.lilith.prefs.LilithPreferences)
         de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.LilithPreferencesOrBuilder {
       public static final com.google.protobuf.Descriptors.Descriptor
@@ -1819,7 +2212,8 @@ public final class PrefsProto {
         return de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.internal_static_de_huxhorn_lilith_prefs_LilithPreferences_descriptor;
       }
 
-      protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+      @java.lang.Override
+      protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
           internalGetFieldAccessorTable() {
         return de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.internal_static_de_huxhorn_lilith_prefs_LilithPreferences_fieldAccessorTable
             .ensureFieldAccessorsInitialized(
@@ -1832,38 +2226,36 @@ public final class PrefsProto {
       }
 
       private Builder(
-          com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+          com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
         super(parent);
         maybeForceBuilderInitialization();
       }
       private void maybeForceBuilderInitialization() {
-        if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
+        if (com.google.protobuf.GeneratedMessageV3
+                .alwaysUseFieldBuilders) {
           getGroovyConditionsFieldBuilder();
           getDetailsViewFieldBuilder();
           getRootFilesFieldBuilder();
           getGroovyClipboardFormattersFieldBuilder();
         }
       }
-      private static Builder create() {
-        return new Builder();
-      }
-
+      @java.lang.Override
       public Builder clear() {
         super.clear();
         if (groovyConditionsBuilder_ == null) {
-          groovyConditions_ = de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContent.getDefaultInstance();
+          groovyConditions_ = null;
         } else {
           groovyConditionsBuilder_.clear();
         }
         bitField0_ = (bitField0_ & ~0x00000001);
         if (detailsViewBuilder_ == null) {
-          detailsView_ = de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContent.getDefaultInstance();
+          detailsView_ = null;
         } else {
           detailsViewBuilder_.clear();
         }
         bitField0_ = (bitField0_ & ~0x00000002);
         if (rootFilesBuilder_ == null) {
-          rootFiles_ = de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContent.getDefaultInstance();
+          rootFiles_ = null;
         } else {
           rootFilesBuilder_.clear();
         }
@@ -1890,66 +2282,67 @@ public final class PrefsProto {
         bitField0_ = (bitField0_ & ~0x00001000);
         globalLoggingEnabled_ = false;
         bitField0_ = (bitField0_ & ~0x00002000);
-        loggingStatisticEnabled_ = false;
-        bitField0_ = (bitField0_ & ~0x00004000);
         maximizingInternalFrames_ = false;
-        bitField0_ = (bitField0_ & ~0x00008000);
+        bitField0_ = (bitField0_ & ~0x00004000);
         mute_ = false;
-        bitField0_ = (bitField0_ & ~0x00010000);
+        bitField0_ = (bitField0_ & ~0x00008000);
         scrollingToBottom_ = false;
+        bitField0_ = (bitField0_ & ~0x00010000);
+        showingFullCallStack_ = false;
         bitField0_ = (bitField0_ & ~0x00020000);
-        showingFullCallstack_ = false;
+        showingStatusBar_ = false;
         bitField0_ = (bitField0_ & ~0x00040000);
-        showingIdentifier_ = false;
-        bitField0_ = (bitField0_ & ~0x00080000);
-        showingStatusbar_ = false;
-        bitField0_ = (bitField0_ & ~0x00100000);
         showingStacktrace_ = false;
-        bitField0_ = (bitField0_ & ~0x00200000);
+        bitField0_ = (bitField0_ & ~0x00080000);
         showingTipOfTheDay_ = false;
-        bitField0_ = (bitField0_ & ~0x00400000);
+        bitField0_ = (bitField0_ & ~0x00100000);
         showingToolbar_ = false;
-        bitField0_ = (bitField0_ & ~0x00800000);
+        bitField0_ = (bitField0_ & ~0x00200000);
         splashScreenDisabled_ = false;
-        bitField0_ = (bitField0_ & ~0x01000000);
+        bitField0_ = (bitField0_ & ~0x00400000);
         usingInternalFrames_ = false;
-        bitField0_ = (bitField0_ & ~0x02000000);
-        sourceFiltering_ = de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.SourceFiltering.NONE;
-        bitField0_ = (bitField0_ & ~0x04000000);
+        bitField0_ = (bitField0_ & ~0x00800000);
+        sourceFiltering_ = 0;
+        bitField0_ = (bitField0_ & ~0x01000000);
         defaultConditionName_ = "";
-        bitField0_ = (bitField0_ & ~0x08000000);
+        bitField0_ = (bitField0_ & ~0x02000000);
         checkingForSnapshot_ = false;
-        bitField0_ = (bitField0_ & ~0x10000000);
+        bitField0_ = (bitField0_ & ~0x04000000);
         if (groovyClipboardFormattersBuilder_ == null) {
-          groovyClipboardFormatters_ = de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContent.getDefaultInstance();
+          groovyClipboardFormatters_ = null;
         } else {
           groovyClipboardFormattersBuilder_.clear();
         }
-        bitField0_ = (bitField0_ & ~0x20000000);
+        bitField0_ = (bitField0_ & ~0x08000000);
         trayActive_ = false;
-        bitField0_ = (bitField0_ & ~0x40000000);
+        bitField0_ = (bitField0_ & ~0x10000000);
         showingFullRecentPath_ = false;
-        bitField0_ = (bitField0_ & ~0x80000000);
+        bitField0_ = (bitField0_ & ~0x20000000);
         hidingOnClose_ = false;
-        bitField1_ = (bitField1_ & ~0x00000001);
+        bitField0_ = (bitField0_ & ~0x40000000);
         usingWrappedExceptionStyle_ = false;
+        bitField0_ = (bitField0_ & ~0x80000000);
+        showingPrimaryIdentifier_ = false;
+        bitField1_ = (bitField1_ & ~0x00000001);
+        showingSecondaryIdentifier_ = false;
         bitField1_ = (bitField1_ & ~0x00000002);
+        scrollingSmoothly_ = false;
+        bitField1_ = (bitField1_ & ~0x00000004);
         return this;
       }
 
-      public Builder clone() {
-        return create().mergeFrom(buildPartial());
-      }
-
+      @java.lang.Override
       public com.google.protobuf.Descriptors.Descriptor
           getDescriptorForType() {
         return de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.internal_static_de_huxhorn_lilith_prefs_LilithPreferences_descriptor;
       }
 
+      @java.lang.Override
       public de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.LilithPreferences getDefaultInstanceForType() {
         return de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.LilithPreferences.getDefaultInstance();
       }
 
+      @java.lang.Override
       public de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.LilithPreferences build() {
         de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.LilithPreferences result = buildPartial();
         if (!result.isInitialized()) {
@@ -1958,6 +2351,7 @@ public final class PrefsProto {
         return result;
       }
 
+      @java.lang.Override
       public de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.LilithPreferences buildPartial() {
         de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.LilithPreferences result = new de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.LilithPreferences(this);
         int from_bitField0_ = bitField0_;
@@ -2035,93 +2429,130 @@ public final class PrefsProto {
         if (((from_bitField0_ & 0x00004000) == 0x00004000)) {
           to_bitField0_ |= 0x00004000;
         }
-        result.loggingStatisticEnabled_ = loggingStatisticEnabled_;
+        result.maximizingInternalFrames_ = maximizingInternalFrames_;
         if (((from_bitField0_ & 0x00008000) == 0x00008000)) {
           to_bitField0_ |= 0x00008000;
         }
-        result.maximizingInternalFrames_ = maximizingInternalFrames_;
+        result.mute_ = mute_;
         if (((from_bitField0_ & 0x00010000) == 0x00010000)) {
           to_bitField0_ |= 0x00010000;
         }
-        result.mute_ = mute_;
+        result.scrollingToBottom_ = scrollingToBottom_;
         if (((from_bitField0_ & 0x00020000) == 0x00020000)) {
           to_bitField0_ |= 0x00020000;
         }
-        result.scrollingToBottom_ = scrollingToBottom_;
+        result.showingFullCallStack_ = showingFullCallStack_;
         if (((from_bitField0_ & 0x00040000) == 0x00040000)) {
           to_bitField0_ |= 0x00040000;
         }
-        result.showingFullCallstack_ = showingFullCallstack_;
+        result.showingStatusBar_ = showingStatusBar_;
         if (((from_bitField0_ & 0x00080000) == 0x00080000)) {
           to_bitField0_ |= 0x00080000;
         }
-        result.showingIdentifier_ = showingIdentifier_;
+        result.showingStacktrace_ = showingStacktrace_;
         if (((from_bitField0_ & 0x00100000) == 0x00100000)) {
           to_bitField0_ |= 0x00100000;
         }
-        result.showingStatusbar_ = showingStatusbar_;
+        result.showingTipOfTheDay_ = showingTipOfTheDay_;
         if (((from_bitField0_ & 0x00200000) == 0x00200000)) {
           to_bitField0_ |= 0x00200000;
         }
-        result.showingStacktrace_ = showingStacktrace_;
+        result.showingToolbar_ = showingToolbar_;
         if (((from_bitField0_ & 0x00400000) == 0x00400000)) {
           to_bitField0_ |= 0x00400000;
         }
-        result.showingTipOfTheDay_ = showingTipOfTheDay_;
+        result.splashScreenDisabled_ = splashScreenDisabled_;
         if (((from_bitField0_ & 0x00800000) == 0x00800000)) {
           to_bitField0_ |= 0x00800000;
         }
-        result.showingToolbar_ = showingToolbar_;
+        result.usingInternalFrames_ = usingInternalFrames_;
         if (((from_bitField0_ & 0x01000000) == 0x01000000)) {
           to_bitField0_ |= 0x01000000;
         }
-        result.splashScreenDisabled_ = splashScreenDisabled_;
+        result.sourceFiltering_ = sourceFiltering_;
         if (((from_bitField0_ & 0x02000000) == 0x02000000)) {
           to_bitField0_ |= 0x02000000;
         }
-        result.usingInternalFrames_ = usingInternalFrames_;
+        result.defaultConditionName_ = defaultConditionName_;
         if (((from_bitField0_ & 0x04000000) == 0x04000000)) {
           to_bitField0_ |= 0x04000000;
         }
-        result.sourceFiltering_ = sourceFiltering_;
+        result.checkingForSnapshot_ = checkingForSnapshot_;
         if (((from_bitField0_ & 0x08000000) == 0x08000000)) {
           to_bitField0_ |= 0x08000000;
-        }
-        result.defaultConditionName_ = defaultConditionName_;
-        if (((from_bitField0_ & 0x10000000) == 0x10000000)) {
-          to_bitField0_ |= 0x10000000;
-        }
-        result.checkingForSnapshot_ = checkingForSnapshot_;
-        if (((from_bitField0_ & 0x20000000) == 0x20000000)) {
-          to_bitField0_ |= 0x20000000;
         }
         if (groovyClipboardFormattersBuilder_ == null) {
           result.groovyClipboardFormatters_ = groovyClipboardFormatters_;
         } else {
           result.groovyClipboardFormatters_ = groovyClipboardFormattersBuilder_.build();
         }
+        if (((from_bitField0_ & 0x10000000) == 0x10000000)) {
+          to_bitField0_ |= 0x10000000;
+        }
+        result.trayActive_ = trayActive_;
+        if (((from_bitField0_ & 0x20000000) == 0x20000000)) {
+          to_bitField0_ |= 0x20000000;
+        }
+        result.showingFullRecentPath_ = showingFullRecentPath_;
         if (((from_bitField0_ & 0x40000000) == 0x40000000)) {
           to_bitField0_ |= 0x40000000;
         }
-        result.trayActive_ = trayActive_;
+        result.hidingOnClose_ = hidingOnClose_;
         if (((from_bitField0_ & 0x80000000) == 0x80000000)) {
           to_bitField0_ |= 0x80000000;
         }
-        result.showingFullRecentPath_ = showingFullRecentPath_;
+        result.usingWrappedExceptionStyle_ = usingWrappedExceptionStyle_;
         if (((from_bitField1_ & 0x00000001) == 0x00000001)) {
           to_bitField1_ |= 0x00000001;
         }
-        result.hidingOnClose_ = hidingOnClose_;
+        result.showingPrimaryIdentifier_ = showingPrimaryIdentifier_;
         if (((from_bitField1_ & 0x00000002) == 0x00000002)) {
           to_bitField1_ |= 0x00000002;
         }
-        result.usingWrappedExceptionStyle_ = usingWrappedExceptionStyle_;
+        result.showingSecondaryIdentifier_ = showingSecondaryIdentifier_;
+        if (((from_bitField1_ & 0x00000004) == 0x00000004)) {
+          to_bitField1_ |= 0x00000004;
+        }
+        result.scrollingSmoothly_ = scrollingSmoothly_;
         result.bitField0_ = to_bitField0_;
         result.bitField1_ = to_bitField1_;
         onBuilt();
         return result;
       }
 
+      @java.lang.Override
+      public Builder clone() {
+        return (Builder) super.clone();
+      }
+      @java.lang.Override
+      public Builder setField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return (Builder) super.setField(field, value);
+      }
+      @java.lang.Override
+      public Builder clearField(
+          com.google.protobuf.Descriptors.FieldDescriptor field) {
+        return (Builder) super.clearField(field);
+      }
+      @java.lang.Override
+      public Builder clearOneof(
+          com.google.protobuf.Descriptors.OneofDescriptor oneof) {
+        return (Builder) super.clearOneof(oneof);
+      }
+      @java.lang.Override
+      public Builder setRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          int index, java.lang.Object value) {
+        return (Builder) super.setRepeatedField(field, index, value);
+      }
+      @java.lang.Override
+      public Builder addRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return (Builder) super.addRepeatedField(field, value);
+      }
+      @java.lang.Override
       public Builder mergeFrom(com.google.protobuf.Message other) {
         if (other instanceof de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.LilithPreferences) {
           return mergeFrom((de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.LilithPreferences)other);
@@ -2181,9 +2612,6 @@ public final class PrefsProto {
         if (other.hasGlobalLoggingEnabled()) {
           setGlobalLoggingEnabled(other.getGlobalLoggingEnabled());
         }
-        if (other.hasLoggingStatisticEnabled()) {
-          setLoggingStatisticEnabled(other.getLoggingStatisticEnabled());
-        }
         if (other.hasMaximizingInternalFrames()) {
           setMaximizingInternalFrames(other.getMaximizingInternalFrames());
         }
@@ -2193,14 +2621,11 @@ public final class PrefsProto {
         if (other.hasScrollingToBottom()) {
           setScrollingToBottom(other.getScrollingToBottom());
         }
-        if (other.hasShowingFullCallstack()) {
-          setShowingFullCallstack(other.getShowingFullCallstack());
+        if (other.hasShowingFullCallStack()) {
+          setShowingFullCallStack(other.getShowingFullCallStack());
         }
-        if (other.hasShowingIdentifier()) {
-          setShowingIdentifier(other.getShowingIdentifier());
-        }
-        if (other.hasShowingStatusbar()) {
-          setShowingStatusbar(other.getShowingStatusbar());
+        if (other.hasShowingStatusBar()) {
+          setShowingStatusBar(other.getShowingStatusBar());
         }
         if (other.hasShowingStacktrace()) {
           setShowingStacktrace(other.getShowingStacktrace());
@@ -2221,7 +2646,7 @@ public final class PrefsProto {
           setSourceFiltering(other.getSourceFiltering());
         }
         if (other.hasDefaultConditionName()) {
-          bitField0_ |= 0x08000000;
+          bitField0_ |= 0x02000000;
           defaultConditionName_ = other.defaultConditionName_;
           onChanged();
         }
@@ -2243,38 +2668,46 @@ public final class PrefsProto {
         if (other.hasUsingWrappedExceptionStyle()) {
           setUsingWrappedExceptionStyle(other.getUsingWrappedExceptionStyle());
         }
-        this.mergeUnknownFields(other.getUnknownFields());
+        if (other.hasShowingPrimaryIdentifier()) {
+          setShowingPrimaryIdentifier(other.getShowingPrimaryIdentifier());
+        }
+        if (other.hasShowingSecondaryIdentifier()) {
+          setShowingSecondaryIdentifier(other.getShowingSecondaryIdentifier());
+        }
+        if (other.hasScrollingSmoothly()) {
+          setScrollingSmoothly(other.getScrollingSmoothly());
+        }
+        this.mergeUnknownFields(other.unknownFields);
+        onChanged();
         return this;
       }
 
+      @java.lang.Override
       public final boolean isInitialized() {
         if (hasGroovyConditions()) {
           if (!getGroovyConditions().isInitialized()) {
-            
             return false;
           }
         }
         if (hasDetailsView()) {
           if (!getDetailsView().isInitialized()) {
-            
             return false;
           }
         }
         if (hasRootFiles()) {
           if (!getRootFiles().isInitialized()) {
-            
             return false;
           }
         }
         if (hasGroovyClipboardFormatters()) {
           if (!getGroovyClipboardFormatters().isInitialized()) {
-            
             return false;
           }
         }
         return true;
       }
 
+      @java.lang.Override
       public Builder mergeFrom(
           com.google.protobuf.CodedInputStream input,
           com.google.protobuf.ExtensionRegistryLite extensionRegistry)
@@ -2284,7 +2717,7 @@ public final class PrefsProto {
           parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
         } catch (com.google.protobuf.InvalidProtocolBufferException e) {
           parsedMessage = (de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.LilithPreferences) e.getUnfinishedMessage();
-          throw e;
+          throw e.unwrapIOException();
         } finally {
           if (parsedMessage != null) {
             mergeFrom(parsedMessage);
@@ -2295,8 +2728,8 @@ public final class PrefsProto {
       private int bitField0_;
       private int bitField1_;
 
-      private de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContent groovyConditions_ = de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContent.getDefaultInstance();
-      private com.google.protobuf.SingleFieldBuilder<
+      private de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContent groovyConditions_ = null;
+      private com.google.protobuf.SingleFieldBuilderV3<
           de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContent, de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContent.Builder, de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContentOrBuilder> groovyConditionsBuilder_;
       /**
        * <code>optional .de.huxhorn.lilith.prefs.DirectoryContent groovy_conditions = 1;</code>
@@ -2309,7 +2742,7 @@ public final class PrefsProto {
        */
       public de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContent getGroovyConditions() {
         if (groovyConditionsBuilder_ == null) {
-          return groovyConditions_;
+          return groovyConditions_ == null ? de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContent.getDefaultInstance() : groovyConditions_;
         } else {
           return groovyConditionsBuilder_.getMessage();
         }
@@ -2350,6 +2783,7 @@ public final class PrefsProto {
       public Builder mergeGroovyConditions(de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContent value) {
         if (groovyConditionsBuilder_ == null) {
           if (((bitField0_ & 0x00000001) == 0x00000001) &&
+              groovyConditions_ != null &&
               groovyConditions_ != de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContent.getDefaultInstance()) {
             groovyConditions_ =
               de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContent.newBuilder(groovyConditions_).mergeFrom(value).buildPartial();
@@ -2368,7 +2802,7 @@ public final class PrefsProto {
        */
       public Builder clearGroovyConditions() {
         if (groovyConditionsBuilder_ == null) {
-          groovyConditions_ = de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContent.getDefaultInstance();
+          groovyConditions_ = null;
           onChanged();
         } else {
           groovyConditionsBuilder_.clear();
@@ -2391,17 +2825,18 @@ public final class PrefsProto {
         if (groovyConditionsBuilder_ != null) {
           return groovyConditionsBuilder_.getMessageOrBuilder();
         } else {
-          return groovyConditions_;
+          return groovyConditions_ == null ?
+              de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContent.getDefaultInstance() : groovyConditions_;
         }
       }
       /**
        * <code>optional .de.huxhorn.lilith.prefs.DirectoryContent groovy_conditions = 1;</code>
        */
-      private com.google.protobuf.SingleFieldBuilder<
+      private com.google.protobuf.SingleFieldBuilderV3<
           de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContent, de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContent.Builder, de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContentOrBuilder> 
           getGroovyConditionsFieldBuilder() {
         if (groovyConditionsBuilder_ == null) {
-          groovyConditionsBuilder_ = new com.google.protobuf.SingleFieldBuilder<
+          groovyConditionsBuilder_ = new com.google.protobuf.SingleFieldBuilderV3<
               de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContent, de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContent.Builder, de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContentOrBuilder>(
                   getGroovyConditions(),
                   getParentForChildren(),
@@ -2411,8 +2846,8 @@ public final class PrefsProto {
         return groovyConditionsBuilder_;
       }
 
-      private de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContent detailsView_ = de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContent.getDefaultInstance();
-      private com.google.protobuf.SingleFieldBuilder<
+      private de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContent detailsView_ = null;
+      private com.google.protobuf.SingleFieldBuilderV3<
           de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContent, de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContent.Builder, de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContentOrBuilder> detailsViewBuilder_;
       /**
        * <code>optional .de.huxhorn.lilith.prefs.DirectoryContent details_view = 2;</code>
@@ -2425,7 +2860,7 @@ public final class PrefsProto {
        */
       public de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContent getDetailsView() {
         if (detailsViewBuilder_ == null) {
-          return detailsView_;
+          return detailsView_ == null ? de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContent.getDefaultInstance() : detailsView_;
         } else {
           return detailsViewBuilder_.getMessage();
         }
@@ -2466,6 +2901,7 @@ public final class PrefsProto {
       public Builder mergeDetailsView(de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContent value) {
         if (detailsViewBuilder_ == null) {
           if (((bitField0_ & 0x00000002) == 0x00000002) &&
+              detailsView_ != null &&
               detailsView_ != de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContent.getDefaultInstance()) {
             detailsView_ =
               de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContent.newBuilder(detailsView_).mergeFrom(value).buildPartial();
@@ -2484,7 +2920,7 @@ public final class PrefsProto {
        */
       public Builder clearDetailsView() {
         if (detailsViewBuilder_ == null) {
-          detailsView_ = de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContent.getDefaultInstance();
+          detailsView_ = null;
           onChanged();
         } else {
           detailsViewBuilder_.clear();
@@ -2507,17 +2943,18 @@ public final class PrefsProto {
         if (detailsViewBuilder_ != null) {
           return detailsViewBuilder_.getMessageOrBuilder();
         } else {
-          return detailsView_;
+          return detailsView_ == null ?
+              de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContent.getDefaultInstance() : detailsView_;
         }
       }
       /**
        * <code>optional .de.huxhorn.lilith.prefs.DirectoryContent details_view = 2;</code>
        */
-      private com.google.protobuf.SingleFieldBuilder<
+      private com.google.protobuf.SingleFieldBuilderV3<
           de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContent, de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContent.Builder, de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContentOrBuilder> 
           getDetailsViewFieldBuilder() {
         if (detailsViewBuilder_ == null) {
-          detailsViewBuilder_ = new com.google.protobuf.SingleFieldBuilder<
+          detailsViewBuilder_ = new com.google.protobuf.SingleFieldBuilderV3<
               de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContent, de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContent.Builder, de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContentOrBuilder>(
                   getDetailsView(),
                   getParentForChildren(),
@@ -2527,8 +2964,8 @@ public final class PrefsProto {
         return detailsViewBuilder_;
       }
 
-      private de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContent rootFiles_ = de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContent.getDefaultInstance();
-      private com.google.protobuf.SingleFieldBuilder<
+      private de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContent rootFiles_ = null;
+      private com.google.protobuf.SingleFieldBuilderV3<
           de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContent, de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContent.Builder, de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContentOrBuilder> rootFilesBuilder_;
       /**
        * <code>optional .de.huxhorn.lilith.prefs.DirectoryContent root_files = 3;</code>
@@ -2541,7 +2978,7 @@ public final class PrefsProto {
        */
       public de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContent getRootFiles() {
         if (rootFilesBuilder_ == null) {
-          return rootFiles_;
+          return rootFiles_ == null ? de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContent.getDefaultInstance() : rootFiles_;
         } else {
           return rootFilesBuilder_.getMessage();
         }
@@ -2582,6 +3019,7 @@ public final class PrefsProto {
       public Builder mergeRootFiles(de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContent value) {
         if (rootFilesBuilder_ == null) {
           if (((bitField0_ & 0x00000004) == 0x00000004) &&
+              rootFiles_ != null &&
               rootFiles_ != de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContent.getDefaultInstance()) {
             rootFiles_ =
               de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContent.newBuilder(rootFiles_).mergeFrom(value).buildPartial();
@@ -2600,7 +3038,7 @@ public final class PrefsProto {
        */
       public Builder clearRootFiles() {
         if (rootFilesBuilder_ == null) {
-          rootFiles_ = de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContent.getDefaultInstance();
+          rootFiles_ = null;
           onChanged();
         } else {
           rootFilesBuilder_.clear();
@@ -2623,17 +3061,18 @@ public final class PrefsProto {
         if (rootFilesBuilder_ != null) {
           return rootFilesBuilder_.getMessageOrBuilder();
         } else {
-          return rootFiles_;
+          return rootFiles_ == null ?
+              de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContent.getDefaultInstance() : rootFiles_;
         }
       }
       /**
        * <code>optional .de.huxhorn.lilith.prefs.DirectoryContent root_files = 3;</code>
        */
-      private com.google.protobuf.SingleFieldBuilder<
+      private com.google.protobuf.SingleFieldBuilderV3<
           de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContent, de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContent.Builder, de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContentOrBuilder> 
           getRootFilesFieldBuilder() {
         if (rootFilesBuilder_ == null) {
-          rootFilesBuilder_ = new com.google.protobuf.SingleFieldBuilder<
+          rootFilesBuilder_ = new com.google.protobuf.SingleFieldBuilderV3<
               de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContent, de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContent.Builder, de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContentOrBuilder>(
                   getRootFiles(),
                   getParentForChildren(),
@@ -3127,60 +3566,12 @@ public final class PrefsProto {
         return this;
       }
 
-      private boolean loggingStatisticEnabled_ ;
-      /**
-       * <code>optional bool logging_statistic_enabled = 16;</code>
-       *
-       * <pre>
-       *	optional bool              licensed                      = 15;
-       * </pre>
-       */
-      public boolean hasLoggingStatisticEnabled() {
-        return ((bitField0_ & 0x00004000) == 0x00004000);
-      }
-      /**
-       * <code>optional bool logging_statistic_enabled = 16;</code>
-       *
-       * <pre>
-       *	optional bool              licensed                      = 15;
-       * </pre>
-       */
-      public boolean getLoggingStatisticEnabled() {
-        return loggingStatisticEnabled_;
-      }
-      /**
-       * <code>optional bool logging_statistic_enabled = 16;</code>
-       *
-       * <pre>
-       *	optional bool              licensed                      = 15;
-       * </pre>
-       */
-      public Builder setLoggingStatisticEnabled(boolean value) {
-        bitField0_ |= 0x00004000;
-        loggingStatisticEnabled_ = value;
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>optional bool logging_statistic_enabled = 16;</code>
-       *
-       * <pre>
-       *	optional bool              licensed                      = 15;
-       * </pre>
-       */
-      public Builder clearLoggingStatisticEnabled() {
-        bitField0_ = (bitField0_ & ~0x00004000);
-        loggingStatisticEnabled_ = false;
-        onChanged();
-        return this;
-      }
-
       private boolean maximizingInternalFrames_ ;
       /**
        * <code>optional bool maximizing_internal_frames = 17;</code>
        */
       public boolean hasMaximizingInternalFrames() {
-        return ((bitField0_ & 0x00008000) == 0x00008000);
+        return ((bitField0_ & 0x00004000) == 0x00004000);
       }
       /**
        * <code>optional bool maximizing_internal_frames = 17;</code>
@@ -3192,7 +3583,7 @@ public final class PrefsProto {
        * <code>optional bool maximizing_internal_frames = 17;</code>
        */
       public Builder setMaximizingInternalFrames(boolean value) {
-        bitField0_ |= 0x00008000;
+        bitField0_ |= 0x00004000;
         maximizingInternalFrames_ = value;
         onChanged();
         return this;
@@ -3201,7 +3592,7 @@ public final class PrefsProto {
        * <code>optional bool maximizing_internal_frames = 17;</code>
        */
       public Builder clearMaximizingInternalFrames() {
-        bitField0_ = (bitField0_ & ~0x00008000);
+        bitField0_ = (bitField0_ & ~0x00004000);
         maximizingInternalFrames_ = false;
         onChanged();
         return this;
@@ -3212,7 +3603,7 @@ public final class PrefsProto {
        * <code>optional bool mute = 18;</code>
        */
       public boolean hasMute() {
-        return ((bitField0_ & 0x00010000) == 0x00010000);
+        return ((bitField0_ & 0x00008000) == 0x00008000);
       }
       /**
        * <code>optional bool mute = 18;</code>
@@ -3224,7 +3615,7 @@ public final class PrefsProto {
        * <code>optional bool mute = 18;</code>
        */
       public Builder setMute(boolean value) {
-        bitField0_ |= 0x00010000;
+        bitField0_ |= 0x00008000;
         mute_ = value;
         onChanged();
         return this;
@@ -3233,7 +3624,7 @@ public final class PrefsProto {
        * <code>optional bool mute = 18;</code>
        */
       public Builder clearMute() {
-        bitField0_ = (bitField0_ & ~0x00010000);
+        bitField0_ = (bitField0_ & ~0x00008000);
         mute_ = false;
         onChanged();
         return this;
@@ -3244,7 +3635,7 @@ public final class PrefsProto {
        * <code>optional bool scrolling_to_bottom = 19;</code>
        */
       public boolean hasScrollingToBottom() {
-        return ((bitField0_ & 0x00020000) == 0x00020000);
+        return ((bitField0_ & 0x00010000) == 0x00010000);
       }
       /**
        * <code>optional bool scrolling_to_bottom = 19;</code>
@@ -3256,7 +3647,7 @@ public final class PrefsProto {
        * <code>optional bool scrolling_to_bottom = 19;</code>
        */
       public Builder setScrollingToBottom(boolean value) {
-        bitField0_ |= 0x00020000;
+        bitField0_ |= 0x00010000;
         scrollingToBottom_ = value;
         onChanged();
         return this;
@@ -3265,104 +3656,72 @@ public final class PrefsProto {
        * <code>optional bool scrolling_to_bottom = 19;</code>
        */
       public Builder clearScrollingToBottom() {
-        bitField0_ = (bitField0_ & ~0x00020000);
+        bitField0_ = (bitField0_ & ~0x00010000);
         scrollingToBottom_ = false;
         onChanged();
         return this;
       }
 
-      private boolean showingFullCallstack_ ;
+      private boolean showingFullCallStack_ ;
       /**
-       * <code>optional bool showing_full_callstack = 20;</code>
+       * <code>optional bool showing_full_call_stack = 20;</code>
        */
-      public boolean hasShowingFullCallstack() {
+      public boolean hasShowingFullCallStack() {
+        return ((bitField0_ & 0x00020000) == 0x00020000);
+      }
+      /**
+       * <code>optional bool showing_full_call_stack = 20;</code>
+       */
+      public boolean getShowingFullCallStack() {
+        return showingFullCallStack_;
+      }
+      /**
+       * <code>optional bool showing_full_call_stack = 20;</code>
+       */
+      public Builder setShowingFullCallStack(boolean value) {
+        bitField0_ |= 0x00020000;
+        showingFullCallStack_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional bool showing_full_call_stack = 20;</code>
+       */
+      public Builder clearShowingFullCallStack() {
+        bitField0_ = (bitField0_ & ~0x00020000);
+        showingFullCallStack_ = false;
+        onChanged();
+        return this;
+      }
+
+      private boolean showingStatusBar_ ;
+      /**
+       * <code>optional bool showing_status_bar = 22;</code>
+       */
+      public boolean hasShowingStatusBar() {
         return ((bitField0_ & 0x00040000) == 0x00040000);
       }
       /**
-       * <code>optional bool showing_full_callstack = 20;</code>
+       * <code>optional bool showing_status_bar = 22;</code>
        */
-      public boolean getShowingFullCallstack() {
-        return showingFullCallstack_;
+      public boolean getShowingStatusBar() {
+        return showingStatusBar_;
       }
       /**
-       * <code>optional bool showing_full_callstack = 20;</code>
+       * <code>optional bool showing_status_bar = 22;</code>
        */
-      public Builder setShowingFullCallstack(boolean value) {
+      public Builder setShowingStatusBar(boolean value) {
         bitField0_ |= 0x00040000;
-        showingFullCallstack_ = value;
+        showingStatusBar_ = value;
         onChanged();
         return this;
       }
       /**
-       * <code>optional bool showing_full_callstack = 20;</code>
+       * <code>optional bool showing_status_bar = 22;</code>
        */
-      public Builder clearShowingFullCallstack() {
+      public Builder clearShowingStatusBar() {
         bitField0_ = (bitField0_ & ~0x00040000);
-        showingFullCallstack_ = false;
-        onChanged();
-        return this;
-      }
-
-      private boolean showingIdentifier_ ;
-      /**
-       * <code>optional bool showing_identifier = 21;</code>
-       */
-      public boolean hasShowingIdentifier() {
-        return ((bitField0_ & 0x00080000) == 0x00080000);
-      }
-      /**
-       * <code>optional bool showing_identifier = 21;</code>
-       */
-      public boolean getShowingIdentifier() {
-        return showingIdentifier_;
-      }
-      /**
-       * <code>optional bool showing_identifier = 21;</code>
-       */
-      public Builder setShowingIdentifier(boolean value) {
-        bitField0_ |= 0x00080000;
-        showingIdentifier_ = value;
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>optional bool showing_identifier = 21;</code>
-       */
-      public Builder clearShowingIdentifier() {
-        bitField0_ = (bitField0_ & ~0x00080000);
-        showingIdentifier_ = false;
-        onChanged();
-        return this;
-      }
-
-      private boolean showingStatusbar_ ;
-      /**
-       * <code>optional bool showing_statusbar = 22;</code>
-       */
-      public boolean hasShowingStatusbar() {
-        return ((bitField0_ & 0x00100000) == 0x00100000);
-      }
-      /**
-       * <code>optional bool showing_statusbar = 22;</code>
-       */
-      public boolean getShowingStatusbar() {
-        return showingStatusbar_;
-      }
-      /**
-       * <code>optional bool showing_statusbar = 22;</code>
-       */
-      public Builder setShowingStatusbar(boolean value) {
-        bitField0_ |= 0x00100000;
-        showingStatusbar_ = value;
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>optional bool showing_statusbar = 22;</code>
-       */
-      public Builder clearShowingStatusbar() {
-        bitField0_ = (bitField0_ & ~0x00100000);
-        showingStatusbar_ = false;
+        showingStatusBar_ = false;
         onChanged();
         return this;
       }
@@ -3372,7 +3731,7 @@ public final class PrefsProto {
        * <code>optional bool showing_stacktrace = 23;</code>
        */
       public boolean hasShowingStacktrace() {
-        return ((bitField0_ & 0x00200000) == 0x00200000);
+        return ((bitField0_ & 0x00080000) == 0x00080000);
       }
       /**
        * <code>optional bool showing_stacktrace = 23;</code>
@@ -3384,7 +3743,7 @@ public final class PrefsProto {
        * <code>optional bool showing_stacktrace = 23;</code>
        */
       public Builder setShowingStacktrace(boolean value) {
-        bitField0_ |= 0x00200000;
+        bitField0_ |= 0x00080000;
         showingStacktrace_ = value;
         onChanged();
         return this;
@@ -3393,7 +3752,7 @@ public final class PrefsProto {
        * <code>optional bool showing_stacktrace = 23;</code>
        */
       public Builder clearShowingStacktrace() {
-        bitField0_ = (bitField0_ & ~0x00200000);
+        bitField0_ = (bitField0_ & ~0x00080000);
         showingStacktrace_ = false;
         onChanged();
         return this;
@@ -3404,7 +3763,7 @@ public final class PrefsProto {
        * <code>optional bool showing_tip_of_the_day = 24;</code>
        */
       public boolean hasShowingTipOfTheDay() {
-        return ((bitField0_ & 0x00400000) == 0x00400000);
+        return ((bitField0_ & 0x00100000) == 0x00100000);
       }
       /**
        * <code>optional bool showing_tip_of_the_day = 24;</code>
@@ -3416,7 +3775,7 @@ public final class PrefsProto {
        * <code>optional bool showing_tip_of_the_day = 24;</code>
        */
       public Builder setShowingTipOfTheDay(boolean value) {
-        bitField0_ |= 0x00400000;
+        bitField0_ |= 0x00100000;
         showingTipOfTheDay_ = value;
         onChanged();
         return this;
@@ -3425,7 +3784,7 @@ public final class PrefsProto {
        * <code>optional bool showing_tip_of_the_day = 24;</code>
        */
       public Builder clearShowingTipOfTheDay() {
-        bitField0_ = (bitField0_ & ~0x00400000);
+        bitField0_ = (bitField0_ & ~0x00100000);
         showingTipOfTheDay_ = false;
         onChanged();
         return this;
@@ -3436,7 +3795,7 @@ public final class PrefsProto {
        * <code>optional bool showing_toolbar = 25;</code>
        */
       public boolean hasShowingToolbar() {
-        return ((bitField0_ & 0x00800000) == 0x00800000);
+        return ((bitField0_ & 0x00200000) == 0x00200000);
       }
       /**
        * <code>optional bool showing_toolbar = 25;</code>
@@ -3448,7 +3807,7 @@ public final class PrefsProto {
        * <code>optional bool showing_toolbar = 25;</code>
        */
       public Builder setShowingToolbar(boolean value) {
-        bitField0_ |= 0x00800000;
+        bitField0_ |= 0x00200000;
         showingToolbar_ = value;
         onChanged();
         return this;
@@ -3457,7 +3816,7 @@ public final class PrefsProto {
        * <code>optional bool showing_toolbar = 25;</code>
        */
       public Builder clearShowingToolbar() {
-        bitField0_ = (bitField0_ & ~0x00800000);
+        bitField0_ = (bitField0_ & ~0x00200000);
         showingToolbar_ = false;
         onChanged();
         return this;
@@ -3468,7 +3827,7 @@ public final class PrefsProto {
        * <code>optional bool splash_screen_disabled = 26;</code>
        */
       public boolean hasSplashScreenDisabled() {
-        return ((bitField0_ & 0x01000000) == 0x01000000);
+        return ((bitField0_ & 0x00400000) == 0x00400000);
       }
       /**
        * <code>optional bool splash_screen_disabled = 26;</code>
@@ -3480,7 +3839,7 @@ public final class PrefsProto {
        * <code>optional bool splash_screen_disabled = 26;</code>
        */
       public Builder setSplashScreenDisabled(boolean value) {
-        bitField0_ |= 0x01000000;
+        bitField0_ |= 0x00400000;
         splashScreenDisabled_ = value;
         onChanged();
         return this;
@@ -3489,7 +3848,7 @@ public final class PrefsProto {
        * <code>optional bool splash_screen_disabled = 26;</code>
        */
       public Builder clearSplashScreenDisabled() {
-        bitField0_ = (bitField0_ & ~0x01000000);
+        bitField0_ = (bitField0_ & ~0x00400000);
         splashScreenDisabled_ = false;
         onChanged();
         return this;
@@ -3500,7 +3859,7 @@ public final class PrefsProto {
        * <code>optional bool using_internal_frames = 27;</code>
        */
       public boolean hasUsingInternalFrames() {
-        return ((bitField0_ & 0x02000000) == 0x02000000);
+        return ((bitField0_ & 0x00800000) == 0x00800000);
       }
       /**
        * <code>optional bool using_internal_frames = 27;</code>
@@ -3512,7 +3871,7 @@ public final class PrefsProto {
        * <code>optional bool using_internal_frames = 27;</code>
        */
       public Builder setUsingInternalFrames(boolean value) {
-        bitField0_ |= 0x02000000;
+        bitField0_ |= 0x00800000;
         usingInternalFrames_ = value;
         onChanged();
         return this;
@@ -3521,24 +3880,26 @@ public final class PrefsProto {
        * <code>optional bool using_internal_frames = 27;</code>
        */
       public Builder clearUsingInternalFrames() {
-        bitField0_ = (bitField0_ & ~0x02000000);
+        bitField0_ = (bitField0_ & ~0x00800000);
         usingInternalFrames_ = false;
         onChanged();
         return this;
       }
 
-      private de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.SourceFiltering sourceFiltering_ = de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.SourceFiltering.NONE;
+      private int sourceFiltering_ = 0;
       /**
        * <code>optional .de.huxhorn.lilith.prefs.SourceFiltering source_filtering = 28;</code>
        */
       public boolean hasSourceFiltering() {
-        return ((bitField0_ & 0x04000000) == 0x04000000);
+        return ((bitField0_ & 0x01000000) == 0x01000000);
       }
       /**
        * <code>optional .de.huxhorn.lilith.prefs.SourceFiltering source_filtering = 28;</code>
        */
       public de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.SourceFiltering getSourceFiltering() {
-        return sourceFiltering_;
+        @SuppressWarnings("deprecation")
+        de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.SourceFiltering result = de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.SourceFiltering.valueOf(sourceFiltering_);
+        return result == null ? de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.SourceFiltering.NONE : result;
       }
       /**
        * <code>optional .de.huxhorn.lilith.prefs.SourceFiltering source_filtering = 28;</code>
@@ -3547,8 +3908,8 @@ public final class PrefsProto {
         if (value == null) {
           throw new NullPointerException();
         }
-        bitField0_ |= 0x04000000;
-        sourceFiltering_ = value;
+        bitField0_ |= 0x01000000;
+        sourceFiltering_ = value.getNumber();
         onChanged();
         return this;
       }
@@ -3556,8 +3917,8 @@ public final class PrefsProto {
        * <code>optional .de.huxhorn.lilith.prefs.SourceFiltering source_filtering = 28;</code>
        */
       public Builder clearSourceFiltering() {
-        bitField0_ = (bitField0_ & ~0x04000000);
-        sourceFiltering_ = de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.SourceFiltering.NONE;
+        bitField0_ = (bitField0_ & ~0x01000000);
+        sourceFiltering_ = 0;
         onChanged();
         return this;
       }
@@ -3567,7 +3928,7 @@ public final class PrefsProto {
        * <code>optional string default_condition_name = 29;</code>
        */
       public boolean hasDefaultConditionName() {
-        return ((bitField0_ & 0x08000000) == 0x08000000);
+        return ((bitField0_ & 0x02000000) == 0x02000000);
       }
       /**
        * <code>optional string default_condition_name = 29;</code>
@@ -3610,7 +3971,7 @@ public final class PrefsProto {
         if (value == null) {
     throw new NullPointerException();
   }
-  bitField0_ |= 0x08000000;
+  bitField0_ |= 0x02000000;
         defaultConditionName_ = value;
         onChanged();
         return this;
@@ -3619,7 +3980,7 @@ public final class PrefsProto {
        * <code>optional string default_condition_name = 29;</code>
        */
       public Builder clearDefaultConditionName() {
-        bitField0_ = (bitField0_ & ~0x08000000);
+        bitField0_ = (bitField0_ & ~0x02000000);
         defaultConditionName_ = getDefaultInstance().getDefaultConditionName();
         onChanged();
         return this;
@@ -3632,7 +3993,7 @@ public final class PrefsProto {
         if (value == null) {
     throw new NullPointerException();
   }
-  bitField0_ |= 0x08000000;
+  bitField0_ |= 0x02000000;
         defaultConditionName_ = value;
         onChanged();
         return this;
@@ -3643,7 +4004,7 @@ public final class PrefsProto {
        * <code>optional bool checking_for_snapshot = 30;</code>
        */
       public boolean hasCheckingForSnapshot() {
-        return ((bitField0_ & 0x10000000) == 0x10000000);
+        return ((bitField0_ & 0x04000000) == 0x04000000);
       }
       /**
        * <code>optional bool checking_for_snapshot = 30;</code>
@@ -3655,7 +4016,7 @@ public final class PrefsProto {
        * <code>optional bool checking_for_snapshot = 30;</code>
        */
       public Builder setCheckingForSnapshot(boolean value) {
-        bitField0_ |= 0x10000000;
+        bitField0_ |= 0x04000000;
         checkingForSnapshot_ = value;
         onChanged();
         return this;
@@ -3664,27 +4025,27 @@ public final class PrefsProto {
        * <code>optional bool checking_for_snapshot = 30;</code>
        */
       public Builder clearCheckingForSnapshot() {
-        bitField0_ = (bitField0_ & ~0x10000000);
+        bitField0_ = (bitField0_ & ~0x04000000);
         checkingForSnapshot_ = false;
         onChanged();
         return this;
       }
 
-      private de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContent groovyClipboardFormatters_ = de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContent.getDefaultInstance();
-      private com.google.protobuf.SingleFieldBuilder<
+      private de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContent groovyClipboardFormatters_ = null;
+      private com.google.protobuf.SingleFieldBuilderV3<
           de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContent, de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContent.Builder, de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContentOrBuilder> groovyClipboardFormattersBuilder_;
       /**
        * <code>optional .de.huxhorn.lilith.prefs.DirectoryContent groovy_clipboard_formatters = 31;</code>
        */
       public boolean hasGroovyClipboardFormatters() {
-        return ((bitField0_ & 0x20000000) == 0x20000000);
+        return ((bitField0_ & 0x08000000) == 0x08000000);
       }
       /**
        * <code>optional .de.huxhorn.lilith.prefs.DirectoryContent groovy_clipboard_formatters = 31;</code>
        */
       public de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContent getGroovyClipboardFormatters() {
         if (groovyClipboardFormattersBuilder_ == null) {
-          return groovyClipboardFormatters_;
+          return groovyClipboardFormatters_ == null ? de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContent.getDefaultInstance() : groovyClipboardFormatters_;
         } else {
           return groovyClipboardFormattersBuilder_.getMessage();
         }
@@ -3702,7 +4063,7 @@ public final class PrefsProto {
         } else {
           groovyClipboardFormattersBuilder_.setMessage(value);
         }
-        bitField0_ |= 0x20000000;
+        bitField0_ |= 0x08000000;
         return this;
       }
       /**
@@ -3716,7 +4077,7 @@ public final class PrefsProto {
         } else {
           groovyClipboardFormattersBuilder_.setMessage(builderForValue.build());
         }
-        bitField0_ |= 0x20000000;
+        bitField0_ |= 0x08000000;
         return this;
       }
       /**
@@ -3724,7 +4085,8 @@ public final class PrefsProto {
        */
       public Builder mergeGroovyClipboardFormatters(de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContent value) {
         if (groovyClipboardFormattersBuilder_ == null) {
-          if (((bitField0_ & 0x20000000) == 0x20000000) &&
+          if (((bitField0_ & 0x08000000) == 0x08000000) &&
+              groovyClipboardFormatters_ != null &&
               groovyClipboardFormatters_ != de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContent.getDefaultInstance()) {
             groovyClipboardFormatters_ =
               de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContent.newBuilder(groovyClipboardFormatters_).mergeFrom(value).buildPartial();
@@ -3735,7 +4097,7 @@ public final class PrefsProto {
         } else {
           groovyClipboardFormattersBuilder_.mergeFrom(value);
         }
-        bitField0_ |= 0x20000000;
+        bitField0_ |= 0x08000000;
         return this;
       }
       /**
@@ -3743,19 +4105,19 @@ public final class PrefsProto {
        */
       public Builder clearGroovyClipboardFormatters() {
         if (groovyClipboardFormattersBuilder_ == null) {
-          groovyClipboardFormatters_ = de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContent.getDefaultInstance();
+          groovyClipboardFormatters_ = null;
           onChanged();
         } else {
           groovyClipboardFormattersBuilder_.clear();
         }
-        bitField0_ = (bitField0_ & ~0x20000000);
+        bitField0_ = (bitField0_ & ~0x08000000);
         return this;
       }
       /**
        * <code>optional .de.huxhorn.lilith.prefs.DirectoryContent groovy_clipboard_formatters = 31;</code>
        */
       public de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContent.Builder getGroovyClipboardFormattersBuilder() {
-        bitField0_ |= 0x20000000;
+        bitField0_ |= 0x08000000;
         onChanged();
         return getGroovyClipboardFormattersFieldBuilder().getBuilder();
       }
@@ -3766,17 +4128,18 @@ public final class PrefsProto {
         if (groovyClipboardFormattersBuilder_ != null) {
           return groovyClipboardFormattersBuilder_.getMessageOrBuilder();
         } else {
-          return groovyClipboardFormatters_;
+          return groovyClipboardFormatters_ == null ?
+              de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContent.getDefaultInstance() : groovyClipboardFormatters_;
         }
       }
       /**
        * <code>optional .de.huxhorn.lilith.prefs.DirectoryContent groovy_clipboard_formatters = 31;</code>
        */
-      private com.google.protobuf.SingleFieldBuilder<
+      private com.google.protobuf.SingleFieldBuilderV3<
           de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContent, de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContent.Builder, de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContentOrBuilder> 
           getGroovyClipboardFormattersFieldBuilder() {
         if (groovyClipboardFormattersBuilder_ == null) {
-          groovyClipboardFormattersBuilder_ = new com.google.protobuf.SingleFieldBuilder<
+          groovyClipboardFormattersBuilder_ = new com.google.protobuf.SingleFieldBuilderV3<
               de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContent, de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContent.Builder, de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContentOrBuilder>(
                   getGroovyClipboardFormatters(),
                   getParentForChildren(),
@@ -3791,7 +4154,7 @@ public final class PrefsProto {
        * <code>optional bool tray_active = 32;</code>
        */
       public boolean hasTrayActive() {
-        return ((bitField0_ & 0x40000000) == 0x40000000);
+        return ((bitField0_ & 0x10000000) == 0x10000000);
       }
       /**
        * <code>optional bool tray_active = 32;</code>
@@ -3803,7 +4166,7 @@ public final class PrefsProto {
        * <code>optional bool tray_active = 32;</code>
        */
       public Builder setTrayActive(boolean value) {
-        bitField0_ |= 0x40000000;
+        bitField0_ |= 0x10000000;
         trayActive_ = value;
         onChanged();
         return this;
@@ -3812,7 +4175,7 @@ public final class PrefsProto {
        * <code>optional bool tray_active = 32;</code>
        */
       public Builder clearTrayActive() {
-        bitField0_ = (bitField0_ & ~0x40000000);
+        bitField0_ = (bitField0_ & ~0x10000000);
         trayActive_ = false;
         onChanged();
         return this;
@@ -3823,7 +4186,7 @@ public final class PrefsProto {
        * <code>optional bool showing_full_recent_path = 33;</code>
        */
       public boolean hasShowingFullRecentPath() {
-        return ((bitField0_ & 0x80000000) == 0x80000000);
+        return ((bitField0_ & 0x20000000) == 0x20000000);
       }
       /**
        * <code>optional bool showing_full_recent_path = 33;</code>
@@ -3835,7 +4198,7 @@ public final class PrefsProto {
        * <code>optional bool showing_full_recent_path = 33;</code>
        */
       public Builder setShowingFullRecentPath(boolean value) {
-        bitField0_ |= 0x80000000;
+        bitField0_ |= 0x20000000;
         showingFullRecentPath_ = value;
         onChanged();
         return this;
@@ -3844,7 +4207,7 @@ public final class PrefsProto {
        * <code>optional bool showing_full_recent_path = 33;</code>
        */
       public Builder clearShowingFullRecentPath() {
-        bitField0_ = (bitField0_ & ~0x80000000);
+        bitField0_ = (bitField0_ & ~0x20000000);
         showingFullRecentPath_ = false;
         onChanged();
         return this;
@@ -3855,7 +4218,7 @@ public final class PrefsProto {
        * <code>optional bool hiding_on_close = 34;</code>
        */
       public boolean hasHidingOnClose() {
-        return ((bitField1_ & 0x00000001) == 0x00000001);
+        return ((bitField0_ & 0x40000000) == 0x40000000);
       }
       /**
        * <code>optional bool hiding_on_close = 34;</code>
@@ -3867,7 +4230,7 @@ public final class PrefsProto {
        * <code>optional bool hiding_on_close = 34;</code>
        */
       public Builder setHidingOnClose(boolean value) {
-        bitField1_ |= 0x00000001;
+        bitField0_ |= 0x40000000;
         hidingOnClose_ = value;
         onChanged();
         return this;
@@ -3876,7 +4239,7 @@ public final class PrefsProto {
        * <code>optional bool hiding_on_close = 34;</code>
        */
       public Builder clearHidingOnClose() {
-        bitField1_ = (bitField1_ & ~0x00000001);
+        bitField0_ = (bitField0_ & ~0x40000000);
         hidingOnClose_ = false;
         onChanged();
         return this;
@@ -3887,7 +4250,7 @@ public final class PrefsProto {
        * <code>optional bool using_wrapped_exception_style = 35;</code>
        */
       public boolean hasUsingWrappedExceptionStyle() {
-        return ((bitField1_ & 0x00000002) == 0x00000002);
+        return ((bitField0_ & 0x80000000) == 0x80000000);
       }
       /**
        * <code>optional bool using_wrapped_exception_style = 35;</code>
@@ -3899,7 +4262,7 @@ public final class PrefsProto {
        * <code>optional bool using_wrapped_exception_style = 35;</code>
        */
       public Builder setUsingWrappedExceptionStyle(boolean value) {
-        bitField1_ |= 0x00000002;
+        bitField0_ |= 0x80000000;
         usingWrappedExceptionStyle_ = value;
         onChanged();
         return this;
@@ -3908,21 +4271,158 @@ public final class PrefsProto {
        * <code>optional bool using_wrapped_exception_style = 35;</code>
        */
       public Builder clearUsingWrappedExceptionStyle() {
-        bitField1_ = (bitField1_ & ~0x00000002);
+        bitField0_ = (bitField0_ & ~0x80000000);
         usingWrappedExceptionStyle_ = false;
         onChanged();
         return this;
       }
 
+      private boolean showingPrimaryIdentifier_ ;
+      /**
+       * <code>optional bool showing_primary_identifier = 36;</code>
+       */
+      public boolean hasShowingPrimaryIdentifier() {
+        return ((bitField1_ & 0x00000001) == 0x00000001);
+      }
+      /**
+       * <code>optional bool showing_primary_identifier = 36;</code>
+       */
+      public boolean getShowingPrimaryIdentifier() {
+        return showingPrimaryIdentifier_;
+      }
+      /**
+       * <code>optional bool showing_primary_identifier = 36;</code>
+       */
+      public Builder setShowingPrimaryIdentifier(boolean value) {
+        bitField1_ |= 0x00000001;
+        showingPrimaryIdentifier_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional bool showing_primary_identifier = 36;</code>
+       */
+      public Builder clearShowingPrimaryIdentifier() {
+        bitField1_ = (bitField1_ & ~0x00000001);
+        showingPrimaryIdentifier_ = false;
+        onChanged();
+        return this;
+      }
+
+      private boolean showingSecondaryIdentifier_ ;
+      /**
+       * <code>optional bool showing_secondary_identifier = 37;</code>
+       */
+      public boolean hasShowingSecondaryIdentifier() {
+        return ((bitField1_ & 0x00000002) == 0x00000002);
+      }
+      /**
+       * <code>optional bool showing_secondary_identifier = 37;</code>
+       */
+      public boolean getShowingSecondaryIdentifier() {
+        return showingSecondaryIdentifier_;
+      }
+      /**
+       * <code>optional bool showing_secondary_identifier = 37;</code>
+       */
+      public Builder setShowingSecondaryIdentifier(boolean value) {
+        bitField1_ |= 0x00000002;
+        showingSecondaryIdentifier_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional bool showing_secondary_identifier = 37;</code>
+       */
+      public Builder clearShowingSecondaryIdentifier() {
+        bitField1_ = (bitField1_ & ~0x00000002);
+        showingSecondaryIdentifier_ = false;
+        onChanged();
+        return this;
+      }
+
+      private boolean scrollingSmoothly_ ;
+      /**
+       * <code>optional bool scrolling_smoothly = 38;</code>
+       */
+      public boolean hasScrollingSmoothly() {
+        return ((bitField1_ & 0x00000004) == 0x00000004);
+      }
+      /**
+       * <code>optional bool scrolling_smoothly = 38;</code>
+       */
+      public boolean getScrollingSmoothly() {
+        return scrollingSmoothly_;
+      }
+      /**
+       * <code>optional bool scrolling_smoothly = 38;</code>
+       */
+      public Builder setScrollingSmoothly(boolean value) {
+        bitField1_ |= 0x00000004;
+        scrollingSmoothly_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional bool scrolling_smoothly = 38;</code>
+       */
+      public Builder clearScrollingSmoothly() {
+        bitField1_ = (bitField1_ & ~0x00000004);
+        scrollingSmoothly_ = false;
+        onChanged();
+        return this;
+      }
+      @java.lang.Override
+      public final Builder setUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.setUnknownFields(unknownFields);
+      }
+
+      @java.lang.Override
+      public final Builder mergeUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.mergeUnknownFields(unknownFields);
+      }
+
+
       // @@protoc_insertion_point(builder_scope:de.huxhorn.lilith.prefs.LilithPreferences)
     }
 
+    // @@protoc_insertion_point(class_scope:de.huxhorn.lilith.prefs.LilithPreferences)
+    private static final de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.LilithPreferences DEFAULT_INSTANCE;
     static {
-      defaultInstance = new LilithPreferences(true);
-      defaultInstance.initFields();
+      DEFAULT_INSTANCE = new de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.LilithPreferences();
     }
 
-    // @@protoc_insertion_point(class_scope:de.huxhorn.lilith.prefs.LilithPreferences)
+    public static de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.LilithPreferences getDefaultInstance() {
+      return DEFAULT_INSTANCE;
+    }
+
+    @java.lang.Deprecated public static final com.google.protobuf.Parser<LilithPreferences>
+        PARSER = new com.google.protobuf.AbstractParser<LilithPreferences>() {
+      @java.lang.Override
+      public LilithPreferences parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return new LilithPreferences(input, extensionRegistry);
+      }
+    };
+
+    public static com.google.protobuf.Parser<LilithPreferences> parser() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<LilithPreferences> getParserForType() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.LilithPreferences getDefaultInstanceForType() {
+      return DEFAULT_INSTANCE;
+    }
+
   }
 
   public interface DirectoryContentOrBuilder extends
@@ -3968,45 +4468,45 @@ public final class PrefsProto {
         int index);
 
     /**
-     * <code>repeated .de.huxhorn.lilith.prefs.DirectoryContent directory = 3;</code>
-     *
      * <pre>
      * supporting sub-dirs, unused
      * </pre>
+     *
+     * <code>repeated .de.huxhorn.lilith.prefs.DirectoryContent directory = 3;</code>
      */
     java.util.List<de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContent> 
         getDirectoryList();
     /**
-     * <code>repeated .de.huxhorn.lilith.prefs.DirectoryContent directory = 3;</code>
-     *
      * <pre>
      * supporting sub-dirs, unused
      * </pre>
+     *
+     * <code>repeated .de.huxhorn.lilith.prefs.DirectoryContent directory = 3;</code>
      */
     de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContent getDirectory(int index);
     /**
-     * <code>repeated .de.huxhorn.lilith.prefs.DirectoryContent directory = 3;</code>
-     *
      * <pre>
      * supporting sub-dirs, unused
      * </pre>
+     *
+     * <code>repeated .de.huxhorn.lilith.prefs.DirectoryContent directory = 3;</code>
      */
     int getDirectoryCount();
     /**
-     * <code>repeated .de.huxhorn.lilith.prefs.DirectoryContent directory = 3;</code>
-     *
      * <pre>
      * supporting sub-dirs, unused
      * </pre>
+     *
+     * <code>repeated .de.huxhorn.lilith.prefs.DirectoryContent directory = 3;</code>
      */
     java.util.List<? extends de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContentOrBuilder> 
         getDirectoryOrBuilderList();
     /**
-     * <code>repeated .de.huxhorn.lilith.prefs.DirectoryContent directory = 3;</code>
-     *
      * <pre>
      * supporting sub-dirs, unused
      * </pre>
+     *
+     * <code>repeated .de.huxhorn.lilith.prefs.DirectoryContent directory = 3;</code>
      */
     de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContentOrBuilder getDirectoryOrBuilder(
         int index);
@@ -4014,37 +4514,34 @@ public final class PrefsProto {
   /**
    * Protobuf type {@code de.huxhorn.lilith.prefs.DirectoryContent}
    */
-  public static final class DirectoryContent extends
-      com.google.protobuf.GeneratedMessage implements
+  public  static final class DirectoryContent extends
+      com.google.protobuf.GeneratedMessageV3 implements
       // @@protoc_insertion_point(message_implements:de.huxhorn.lilith.prefs.DirectoryContent)
       DirectoryContentOrBuilder {
+  private static final long serialVersionUID = 0L;
     // Use DirectoryContent.newBuilder() to construct.
-    private DirectoryContent(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
+    private DirectoryContent(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
       super(builder);
-      this.unknownFields = builder.getUnknownFields();
     }
-    private DirectoryContent(boolean noInit) { this.unknownFields = com.google.protobuf.UnknownFieldSet.getDefaultInstance(); }
-
-    private static final DirectoryContent defaultInstance;
-    public static DirectoryContent getDefaultInstance() {
-      return defaultInstance;
+    private DirectoryContent() {
+      name_ = "";
+      entry_ = java.util.Collections.emptyList();
+      directory_ = java.util.Collections.emptyList();
     }
 
-    public DirectoryContent getDefaultInstanceForType() {
-      return defaultInstance;
-    }
-
-    private final com.google.protobuf.UnknownFieldSet unknownFields;
     @java.lang.Override
     public final com.google.protobuf.UnknownFieldSet
-        getUnknownFields() {
+    getUnknownFields() {
       return this.unknownFields;
     }
     private DirectoryContent(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
-      initFields();
+      this();
+      if (extensionRegistry == null) {
+        throw new java.lang.NullPointerException();
+      }
       int mutable_bitField0_ = 0;
       com.google.protobuf.UnknownFieldSet.Builder unknownFields =
           com.google.protobuf.UnknownFieldSet.newBuilder();
@@ -4056,13 +4553,6 @@ public final class PrefsProto {
             case 0:
               done = true;
               break;
-            default: {
-              if (!parseUnknownField(input, unknownFields,
-                                     extensionRegistry, tag)) {
-                done = true;
-              }
-              break;
-            }
             case 10: {
               com.google.protobuf.ByteString bs = input.readBytes();
               bitField0_ |= 0x00000001;
@@ -4074,7 +4564,8 @@ public final class PrefsProto {
                 entry_ = new java.util.ArrayList<de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.ByteArrayMapEntry>();
                 mutable_bitField0_ |= 0x00000002;
               }
-              entry_.add(input.readMessage(de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.ByteArrayMapEntry.PARSER, extensionRegistry));
+              entry_.add(
+                  input.readMessage(de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.ByteArrayMapEntry.PARSER, extensionRegistry));
               break;
             }
             case 26: {
@@ -4082,7 +4573,15 @@ public final class PrefsProto {
                 directory_ = new java.util.ArrayList<de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContent>();
                 mutable_bitField0_ |= 0x00000004;
               }
-              directory_.add(input.readMessage(de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContent.PARSER, extensionRegistry));
+              directory_.add(
+                  input.readMessage(de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContent.PARSER, extensionRegistry));
+              break;
+            }
+            default: {
+              if (!parseUnknownField(
+                  input, unknownFields, extensionRegistry, tag)) {
+                done = true;
+              }
               break;
             }
           }
@@ -4091,7 +4590,7 @@ public final class PrefsProto {
         throw e.setUnfinishedMessage(this);
       } catch (java.io.IOException e) {
         throw new com.google.protobuf.InvalidProtocolBufferException(
-            e.getMessage()).setUnfinishedMessage(this);
+            e).setUnfinishedMessage(this);
       } finally {
         if (((mutable_bitField0_ & 0x00000002) == 0x00000002)) {
           entry_ = java.util.Collections.unmodifiableList(entry_);
@@ -4108,31 +4607,17 @@ public final class PrefsProto {
       return de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.internal_static_de_huxhorn_lilith_prefs_DirectoryContent_descriptor;
     }
 
-    protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+    @java.lang.Override
+    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
         internalGetFieldAccessorTable() {
       return de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.internal_static_de_huxhorn_lilith_prefs_DirectoryContent_fieldAccessorTable
           .ensureFieldAccessorsInitialized(
               de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContent.class, de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContent.Builder.class);
     }
 
-    public static com.google.protobuf.Parser<DirectoryContent> PARSER =
-        new com.google.protobuf.AbstractParser<DirectoryContent>() {
-      public DirectoryContent parsePartialFrom(
-          com.google.protobuf.CodedInputStream input,
-          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-          throws com.google.protobuf.InvalidProtocolBufferException {
-        return new DirectoryContent(input, extensionRegistry);
-      }
-    };
-
-    @java.lang.Override
-    public com.google.protobuf.Parser<DirectoryContent> getParserForType() {
-      return PARSER;
-    }
-
     private int bitField0_;
     public static final int NAME_FIELD_NUMBER = 1;
-    private java.lang.Object name_;
+    private volatile java.lang.Object name_;
     /**
      * <code>optional string name = 1;</code>
      */
@@ -4211,64 +4696,60 @@ public final class PrefsProto {
     public static final int DIRECTORY_FIELD_NUMBER = 3;
     private java.util.List<de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContent> directory_;
     /**
-     * <code>repeated .de.huxhorn.lilith.prefs.DirectoryContent directory = 3;</code>
-     *
      * <pre>
      * supporting sub-dirs, unused
      * </pre>
+     *
+     * <code>repeated .de.huxhorn.lilith.prefs.DirectoryContent directory = 3;</code>
      */
     public java.util.List<de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContent> getDirectoryList() {
       return directory_;
     }
     /**
-     * <code>repeated .de.huxhorn.lilith.prefs.DirectoryContent directory = 3;</code>
-     *
      * <pre>
      * supporting sub-dirs, unused
      * </pre>
+     *
+     * <code>repeated .de.huxhorn.lilith.prefs.DirectoryContent directory = 3;</code>
      */
     public java.util.List<? extends de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContentOrBuilder> 
         getDirectoryOrBuilderList() {
       return directory_;
     }
     /**
-     * <code>repeated .de.huxhorn.lilith.prefs.DirectoryContent directory = 3;</code>
-     *
      * <pre>
      * supporting sub-dirs, unused
      * </pre>
+     *
+     * <code>repeated .de.huxhorn.lilith.prefs.DirectoryContent directory = 3;</code>
      */
     public int getDirectoryCount() {
       return directory_.size();
     }
     /**
-     * <code>repeated .de.huxhorn.lilith.prefs.DirectoryContent directory = 3;</code>
-     *
      * <pre>
      * supporting sub-dirs, unused
      * </pre>
+     *
+     * <code>repeated .de.huxhorn.lilith.prefs.DirectoryContent directory = 3;</code>
      */
     public de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContent getDirectory(int index) {
       return directory_.get(index);
     }
     /**
-     * <code>repeated .de.huxhorn.lilith.prefs.DirectoryContent directory = 3;</code>
-     *
      * <pre>
      * supporting sub-dirs, unused
      * </pre>
+     *
+     * <code>repeated .de.huxhorn.lilith.prefs.DirectoryContent directory = 3;</code>
      */
     public de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContentOrBuilder getDirectoryOrBuilder(
         int index) {
       return directory_.get(index);
     }
 
-    private void initFields() {
-      name_ = "";
-      entry_ = java.util.Collections.emptyList();
-      directory_ = java.util.Collections.emptyList();
-    }
     private byte memoizedIsInitialized = -1;
+    @java.lang.Override
     public final boolean isInitialized() {
       byte isInitialized = memoizedIsInitialized;
       if (isInitialized == 1) return true;
@@ -4290,11 +4771,11 @@ public final class PrefsProto {
       return true;
     }
 
+    @java.lang.Override
     public void writeTo(com.google.protobuf.CodedOutputStream output)
                         throws java.io.IOException {
-      getSerializedSize();
       if (((bitField0_ & 0x00000001) == 0x00000001)) {
-        output.writeBytes(1, getNameBytes());
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 1, name_);
       }
       for (int i = 0; i < entry_.size(); i++) {
         output.writeMessage(2, entry_.get(i));
@@ -4302,18 +4783,17 @@ public final class PrefsProto {
       for (int i = 0; i < directory_.size(); i++) {
         output.writeMessage(3, directory_.get(i));
       }
-      getUnknownFields().writeTo(output);
+      unknownFields.writeTo(output);
     }
 
-    private int memoizedSerializedSize = -1;
+    @java.lang.Override
     public int getSerializedSize() {
-      int size = memoizedSerializedSize;
+      int size = memoizedSize;
       if (size != -1) return size;
 
       size = 0;
       if (((bitField0_ & 0x00000001) == 0x00000001)) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeBytesSize(1, getNameBytes());
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(1, name_);
       }
       for (int i = 0; i < entry_.size(); i++) {
         size += com.google.protobuf.CodedOutputStream
@@ -4323,18 +4803,70 @@ public final class PrefsProto {
         size += com.google.protobuf.CodedOutputStream
           .computeMessageSize(3, directory_.get(i));
       }
-      size += getUnknownFields().getSerializedSize();
-      memoizedSerializedSize = size;
+      size += unknownFields.getSerializedSize();
+      memoizedSize = size;
       return size;
     }
 
-    private static final long serialVersionUID = 0L;
     @java.lang.Override
-    protected java.lang.Object writeReplace()
-        throws java.io.ObjectStreamException {
-      return super.writeReplace();
+    public boolean equals(final java.lang.Object obj) {
+      if (obj == this) {
+       return true;
+      }
+      if (!(obj instanceof de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContent)) {
+        return super.equals(obj);
+      }
+      de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContent other = (de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContent) obj;
+
+      boolean result = true;
+      result = result && (hasName() == other.hasName());
+      if (hasName()) {
+        result = result && getName()
+            .equals(other.getName());
+      }
+      result = result && getEntryList()
+          .equals(other.getEntryList());
+      result = result && getDirectoryList()
+          .equals(other.getDirectoryList());
+      result = result && unknownFields.equals(other.unknownFields);
+      return result;
     }
 
+    @java.lang.Override
+    public int hashCode() {
+      if (memoizedHashCode != 0) {
+        return memoizedHashCode;
+      }
+      int hash = 41;
+      hash = (19 * hash) + getDescriptor().hashCode();
+      if (hasName()) {
+        hash = (37 * hash) + NAME_FIELD_NUMBER;
+        hash = (53 * hash) + getName().hashCode();
+      }
+      if (getEntryCount() > 0) {
+        hash = (37 * hash) + ENTRY_FIELD_NUMBER;
+        hash = (53 * hash) + getEntryList().hashCode();
+      }
+      if (getDirectoryCount() > 0) {
+        hash = (37 * hash) + DIRECTORY_FIELD_NUMBER;
+        hash = (53 * hash) + getDirectoryList().hashCode();
+      }
+      hash = (29 * hash) + unknownFields.hashCode();
+      memoizedHashCode = hash;
+      return hash;
+    }
+
+    public static de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContent parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContent parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
     public static de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContent parseFrom(
         com.google.protobuf.ByteString data)
         throws com.google.protobuf.InvalidProtocolBufferException {
@@ -4358,46 +4890,59 @@ public final class PrefsProto {
     }
     public static de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContent parseFrom(java.io.InputStream input)
         throws java.io.IOException {
-      return PARSER.parseFrom(input);
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
     }
     public static de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContent parseFrom(
         java.io.InputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
-      return PARSER.parseFrom(input, extensionRegistry);
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
     }
     public static de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContent parseDelimitedFrom(java.io.InputStream input)
         throws java.io.IOException {
-      return PARSER.parseDelimitedFrom(input);
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input);
     }
     public static de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContent parseDelimitedFrom(
         java.io.InputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
-      return PARSER.parseDelimitedFrom(input, extensionRegistry);
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
     }
     public static de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContent parseFrom(
         com.google.protobuf.CodedInputStream input)
         throws java.io.IOException {
-      return PARSER.parseFrom(input);
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
     }
     public static de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContent parseFrom(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
-      return PARSER.parseFrom(input, extensionRegistry);
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
     }
 
-    public static Builder newBuilder() { return Builder.create(); }
+    @java.lang.Override
     public Builder newBuilderForType() { return newBuilder(); }
-    public static Builder newBuilder(de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContent prototype) {
-      return newBuilder().mergeFrom(prototype);
+    public static Builder newBuilder() {
+      return DEFAULT_INSTANCE.toBuilder();
     }
-    public Builder toBuilder() { return newBuilder(this); }
+    public static Builder newBuilder(de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContent prototype) {
+      return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+    }
+    @java.lang.Override
+    public Builder toBuilder() {
+      return this == DEFAULT_INSTANCE
+          ? new Builder() : new Builder().mergeFrom(this);
+    }
 
     @java.lang.Override
     protected Builder newBuilderForType(
-        com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
       Builder builder = new Builder(parent);
       return builder;
     }
@@ -4405,7 +4950,7 @@ public final class PrefsProto {
      * Protobuf type {@code de.huxhorn.lilith.prefs.DirectoryContent}
      */
     public static final class Builder extends
-        com.google.protobuf.GeneratedMessage.Builder<Builder> implements
+        com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
         // @@protoc_insertion_point(builder_implements:de.huxhorn.lilith.prefs.DirectoryContent)
         de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContentOrBuilder {
       public static final com.google.protobuf.Descriptors.Descriptor
@@ -4413,7 +4958,8 @@ public final class PrefsProto {
         return de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.internal_static_de_huxhorn_lilith_prefs_DirectoryContent_descriptor;
       }
 
-      protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+      @java.lang.Override
+      protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
           internalGetFieldAccessorTable() {
         return de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.internal_static_de_huxhorn_lilith_prefs_DirectoryContent_fieldAccessorTable
             .ensureFieldAccessorsInitialized(
@@ -4426,20 +4972,18 @@ public final class PrefsProto {
       }
 
       private Builder(
-          com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+          com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
         super(parent);
         maybeForceBuilderInitialization();
       }
       private void maybeForceBuilderInitialization() {
-        if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
+        if (com.google.protobuf.GeneratedMessageV3
+                .alwaysUseFieldBuilders) {
           getEntryFieldBuilder();
           getDirectoryFieldBuilder();
         }
       }
-      private static Builder create() {
-        return new Builder();
-      }
-
+      @java.lang.Override
       public Builder clear() {
         super.clear();
         name_ = "";
@@ -4459,19 +5003,18 @@ public final class PrefsProto {
         return this;
       }
 
-      public Builder clone() {
-        return create().mergeFrom(buildPartial());
-      }
-
+      @java.lang.Override
       public com.google.protobuf.Descriptors.Descriptor
           getDescriptorForType() {
         return de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.internal_static_de_huxhorn_lilith_prefs_DirectoryContent_descriptor;
       }
 
+      @java.lang.Override
       public de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContent getDefaultInstanceForType() {
         return de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContent.getDefaultInstance();
       }
 
+      @java.lang.Override
       public de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContent build() {
         de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContent result = buildPartial();
         if (!result.isInitialized()) {
@@ -4480,6 +5023,7 @@ public final class PrefsProto {
         return result;
       }
 
+      @java.lang.Override
       public de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContent buildPartial() {
         de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContent result = new de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContent(this);
         int from_bitField0_ = bitField0_;
@@ -4511,6 +5055,39 @@ public final class PrefsProto {
         return result;
       }
 
+      @java.lang.Override
+      public Builder clone() {
+        return (Builder) super.clone();
+      }
+      @java.lang.Override
+      public Builder setField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return (Builder) super.setField(field, value);
+      }
+      @java.lang.Override
+      public Builder clearField(
+          com.google.protobuf.Descriptors.FieldDescriptor field) {
+        return (Builder) super.clearField(field);
+      }
+      @java.lang.Override
+      public Builder clearOneof(
+          com.google.protobuf.Descriptors.OneofDescriptor oneof) {
+        return (Builder) super.clearOneof(oneof);
+      }
+      @java.lang.Override
+      public Builder setRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          int index, java.lang.Object value) {
+        return (Builder) super.setRepeatedField(field, index, value);
+      }
+      @java.lang.Override
+      public Builder addRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return (Builder) super.addRepeatedField(field, value);
+      }
+      @java.lang.Override
       public Builder mergeFrom(com.google.protobuf.Message other) {
         if (other instanceof de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContent) {
           return mergeFrom((de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContent)other);
@@ -4546,7 +5123,7 @@ public final class PrefsProto {
               entry_ = other.entry_;
               bitField0_ = (bitField0_ & ~0x00000002);
               entryBuilder_ = 
-                com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders ?
+                com.google.protobuf.GeneratedMessageV3.alwaysUseFieldBuilders ?
                    getEntryFieldBuilder() : null;
             } else {
               entryBuilder_.addAllMessages(other.entry_);
@@ -4572,33 +5149,34 @@ public final class PrefsProto {
               directory_ = other.directory_;
               bitField0_ = (bitField0_ & ~0x00000004);
               directoryBuilder_ = 
-                com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders ?
+                com.google.protobuf.GeneratedMessageV3.alwaysUseFieldBuilders ?
                    getDirectoryFieldBuilder() : null;
             } else {
               directoryBuilder_.addAllMessages(other.directory_);
             }
           }
         }
-        this.mergeUnknownFields(other.getUnknownFields());
+        this.mergeUnknownFields(other.unknownFields);
+        onChanged();
         return this;
       }
 
+      @java.lang.Override
       public final boolean isInitialized() {
         for (int i = 0; i < getEntryCount(); i++) {
           if (!getEntry(i).isInitialized()) {
-            
             return false;
           }
         }
         for (int i = 0; i < getDirectoryCount(); i++) {
           if (!getDirectory(i).isInitialized()) {
-            
             return false;
           }
         }
         return true;
       }
 
+      @java.lang.Override
       public Builder mergeFrom(
           com.google.protobuf.CodedInputStream input,
           com.google.protobuf.ExtensionRegistryLite extensionRegistry)
@@ -4608,7 +5186,7 @@ public final class PrefsProto {
           parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
         } catch (com.google.protobuf.InvalidProtocolBufferException e) {
           parsedMessage = (de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContent) e.getUnfinishedMessage();
-          throw e;
+          throw e.unwrapIOException();
         } finally {
           if (parsedMessage != null) {
             mergeFrom(parsedMessage);
@@ -4703,7 +5281,7 @@ public final class PrefsProto {
          }
       }
 
-      private com.google.protobuf.RepeatedFieldBuilder<
+      private com.google.protobuf.RepeatedFieldBuilderV3<
           de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.ByteArrayMapEntry, de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.ByteArrayMapEntry.Builder, de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.ByteArrayMapEntryOrBuilder> entryBuilder_;
 
       /**
@@ -4919,11 +5497,11 @@ public final class PrefsProto {
            getEntryBuilderList() {
         return getEntryFieldBuilder().getBuilderList();
       }
-      private com.google.protobuf.RepeatedFieldBuilder<
+      private com.google.protobuf.RepeatedFieldBuilderV3<
           de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.ByteArrayMapEntry, de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.ByteArrayMapEntry.Builder, de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.ByteArrayMapEntryOrBuilder> 
           getEntryFieldBuilder() {
         if (entryBuilder_ == null) {
-          entryBuilder_ = new com.google.protobuf.RepeatedFieldBuilder<
+          entryBuilder_ = new com.google.protobuf.RepeatedFieldBuilderV3<
               de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.ByteArrayMapEntry, de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.ByteArrayMapEntry.Builder, de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.ByteArrayMapEntryOrBuilder>(
                   entry_,
                   ((bitField0_ & 0x00000002) == 0x00000002),
@@ -4943,15 +5521,15 @@ public final class PrefsProto {
          }
       }
 
-      private com.google.protobuf.RepeatedFieldBuilder<
+      private com.google.protobuf.RepeatedFieldBuilderV3<
           de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContent, de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContent.Builder, de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContentOrBuilder> directoryBuilder_;
 
       /**
-       * <code>repeated .de.huxhorn.lilith.prefs.DirectoryContent directory = 3;</code>
-       *
        * <pre>
        * supporting sub-dirs, unused
        * </pre>
+       *
+       * <code>repeated .de.huxhorn.lilith.prefs.DirectoryContent directory = 3;</code>
        */
       public java.util.List<de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContent> getDirectoryList() {
         if (directoryBuilder_ == null) {
@@ -4961,11 +5539,11 @@ public final class PrefsProto {
         }
       }
       /**
-       * <code>repeated .de.huxhorn.lilith.prefs.DirectoryContent directory = 3;</code>
-       *
        * <pre>
        * supporting sub-dirs, unused
        * </pre>
+       *
+       * <code>repeated .de.huxhorn.lilith.prefs.DirectoryContent directory = 3;</code>
        */
       public int getDirectoryCount() {
         if (directoryBuilder_ == null) {
@@ -4975,11 +5553,11 @@ public final class PrefsProto {
         }
       }
       /**
-       * <code>repeated .de.huxhorn.lilith.prefs.DirectoryContent directory = 3;</code>
-       *
        * <pre>
        * supporting sub-dirs, unused
        * </pre>
+       *
+       * <code>repeated .de.huxhorn.lilith.prefs.DirectoryContent directory = 3;</code>
        */
       public de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContent getDirectory(int index) {
         if (directoryBuilder_ == null) {
@@ -4989,11 +5567,11 @@ public final class PrefsProto {
         }
       }
       /**
-       * <code>repeated .de.huxhorn.lilith.prefs.DirectoryContent directory = 3;</code>
-       *
        * <pre>
        * supporting sub-dirs, unused
        * </pre>
+       *
+       * <code>repeated .de.huxhorn.lilith.prefs.DirectoryContent directory = 3;</code>
        */
       public Builder setDirectory(
           int index, de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContent value) {
@@ -5010,11 +5588,11 @@ public final class PrefsProto {
         return this;
       }
       /**
-       * <code>repeated .de.huxhorn.lilith.prefs.DirectoryContent directory = 3;</code>
-       *
        * <pre>
        * supporting sub-dirs, unused
        * </pre>
+       *
+       * <code>repeated .de.huxhorn.lilith.prefs.DirectoryContent directory = 3;</code>
        */
       public Builder setDirectory(
           int index, de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContent.Builder builderForValue) {
@@ -5028,11 +5606,11 @@ public final class PrefsProto {
         return this;
       }
       /**
-       * <code>repeated .de.huxhorn.lilith.prefs.DirectoryContent directory = 3;</code>
-       *
        * <pre>
        * supporting sub-dirs, unused
        * </pre>
+       *
+       * <code>repeated .de.huxhorn.lilith.prefs.DirectoryContent directory = 3;</code>
        */
       public Builder addDirectory(de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContent value) {
         if (directoryBuilder_ == null) {
@@ -5048,11 +5626,11 @@ public final class PrefsProto {
         return this;
       }
       /**
-       * <code>repeated .de.huxhorn.lilith.prefs.DirectoryContent directory = 3;</code>
-       *
        * <pre>
        * supporting sub-dirs, unused
        * </pre>
+       *
+       * <code>repeated .de.huxhorn.lilith.prefs.DirectoryContent directory = 3;</code>
        */
       public Builder addDirectory(
           int index, de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContent value) {
@@ -5069,11 +5647,11 @@ public final class PrefsProto {
         return this;
       }
       /**
-       * <code>repeated .de.huxhorn.lilith.prefs.DirectoryContent directory = 3;</code>
-       *
        * <pre>
        * supporting sub-dirs, unused
        * </pre>
+       *
+       * <code>repeated .de.huxhorn.lilith.prefs.DirectoryContent directory = 3;</code>
        */
       public Builder addDirectory(
           de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContent.Builder builderForValue) {
@@ -5087,11 +5665,11 @@ public final class PrefsProto {
         return this;
       }
       /**
-       * <code>repeated .de.huxhorn.lilith.prefs.DirectoryContent directory = 3;</code>
-       *
        * <pre>
        * supporting sub-dirs, unused
        * </pre>
+       *
+       * <code>repeated .de.huxhorn.lilith.prefs.DirectoryContent directory = 3;</code>
        */
       public Builder addDirectory(
           int index, de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContent.Builder builderForValue) {
@@ -5105,11 +5683,11 @@ public final class PrefsProto {
         return this;
       }
       /**
-       * <code>repeated .de.huxhorn.lilith.prefs.DirectoryContent directory = 3;</code>
-       *
        * <pre>
        * supporting sub-dirs, unused
        * </pre>
+       *
+       * <code>repeated .de.huxhorn.lilith.prefs.DirectoryContent directory = 3;</code>
        */
       public Builder addAllDirectory(
           java.lang.Iterable<? extends de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContent> values) {
@@ -5124,11 +5702,11 @@ public final class PrefsProto {
         return this;
       }
       /**
-       * <code>repeated .de.huxhorn.lilith.prefs.DirectoryContent directory = 3;</code>
-       *
        * <pre>
        * supporting sub-dirs, unused
        * </pre>
+       *
+       * <code>repeated .de.huxhorn.lilith.prefs.DirectoryContent directory = 3;</code>
        */
       public Builder clearDirectory() {
         if (directoryBuilder_ == null) {
@@ -5141,11 +5719,11 @@ public final class PrefsProto {
         return this;
       }
       /**
-       * <code>repeated .de.huxhorn.lilith.prefs.DirectoryContent directory = 3;</code>
-       *
        * <pre>
        * supporting sub-dirs, unused
        * </pre>
+       *
+       * <code>repeated .de.huxhorn.lilith.prefs.DirectoryContent directory = 3;</code>
        */
       public Builder removeDirectory(int index) {
         if (directoryBuilder_ == null) {
@@ -5158,22 +5736,22 @@ public final class PrefsProto {
         return this;
       }
       /**
-       * <code>repeated .de.huxhorn.lilith.prefs.DirectoryContent directory = 3;</code>
-       *
        * <pre>
        * supporting sub-dirs, unused
        * </pre>
+       *
+       * <code>repeated .de.huxhorn.lilith.prefs.DirectoryContent directory = 3;</code>
        */
       public de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContent.Builder getDirectoryBuilder(
           int index) {
         return getDirectoryFieldBuilder().getBuilder(index);
       }
       /**
-       * <code>repeated .de.huxhorn.lilith.prefs.DirectoryContent directory = 3;</code>
-       *
        * <pre>
        * supporting sub-dirs, unused
        * </pre>
+       *
+       * <code>repeated .de.huxhorn.lilith.prefs.DirectoryContent directory = 3;</code>
        */
       public de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContentOrBuilder getDirectoryOrBuilder(
           int index) {
@@ -5183,11 +5761,11 @@ public final class PrefsProto {
         }
       }
       /**
-       * <code>repeated .de.huxhorn.lilith.prefs.DirectoryContent directory = 3;</code>
-       *
        * <pre>
        * supporting sub-dirs, unused
        * </pre>
+       *
+       * <code>repeated .de.huxhorn.lilith.prefs.DirectoryContent directory = 3;</code>
        */
       public java.util.List<? extends de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContentOrBuilder> 
            getDirectoryOrBuilderList() {
@@ -5198,22 +5776,22 @@ public final class PrefsProto {
         }
       }
       /**
-       * <code>repeated .de.huxhorn.lilith.prefs.DirectoryContent directory = 3;</code>
-       *
        * <pre>
        * supporting sub-dirs, unused
        * </pre>
+       *
+       * <code>repeated .de.huxhorn.lilith.prefs.DirectoryContent directory = 3;</code>
        */
       public de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContent.Builder addDirectoryBuilder() {
         return getDirectoryFieldBuilder().addBuilder(
             de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContent.getDefaultInstance());
       }
       /**
-       * <code>repeated .de.huxhorn.lilith.prefs.DirectoryContent directory = 3;</code>
-       *
        * <pre>
        * supporting sub-dirs, unused
        * </pre>
+       *
+       * <code>repeated .de.huxhorn.lilith.prefs.DirectoryContent directory = 3;</code>
        */
       public de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContent.Builder addDirectoryBuilder(
           int index) {
@@ -5221,21 +5799,21 @@ public final class PrefsProto {
             index, de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContent.getDefaultInstance());
       }
       /**
-       * <code>repeated .de.huxhorn.lilith.prefs.DirectoryContent directory = 3;</code>
-       *
        * <pre>
        * supporting sub-dirs, unused
        * </pre>
+       *
+       * <code>repeated .de.huxhorn.lilith.prefs.DirectoryContent directory = 3;</code>
        */
       public java.util.List<de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContent.Builder> 
            getDirectoryBuilderList() {
         return getDirectoryFieldBuilder().getBuilderList();
       }
-      private com.google.protobuf.RepeatedFieldBuilder<
+      private com.google.protobuf.RepeatedFieldBuilderV3<
           de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContent, de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContent.Builder, de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContentOrBuilder> 
           getDirectoryFieldBuilder() {
         if (directoryBuilder_ == null) {
-          directoryBuilder_ = new com.google.protobuf.RepeatedFieldBuilder<
+          directoryBuilder_ = new com.google.protobuf.RepeatedFieldBuilderV3<
               de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContent, de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContent.Builder, de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContentOrBuilder>(
                   directory_,
                   ((bitField0_ & 0x00000004) == 0x00000004),
@@ -5245,16 +5823,57 @@ public final class PrefsProto {
         }
         return directoryBuilder_;
       }
+      @java.lang.Override
+      public final Builder setUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.setUnknownFields(unknownFields);
+      }
+
+      @java.lang.Override
+      public final Builder mergeUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.mergeUnknownFields(unknownFields);
+      }
+
 
       // @@protoc_insertion_point(builder_scope:de.huxhorn.lilith.prefs.DirectoryContent)
     }
 
+    // @@protoc_insertion_point(class_scope:de.huxhorn.lilith.prefs.DirectoryContent)
+    private static final de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContent DEFAULT_INSTANCE;
     static {
-      defaultInstance = new DirectoryContent(true);
-      defaultInstance.initFields();
+      DEFAULT_INSTANCE = new de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContent();
     }
 
-    // @@protoc_insertion_point(class_scope:de.huxhorn.lilith.prefs.DirectoryContent)
+    public static de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContent getDefaultInstance() {
+      return DEFAULT_INSTANCE;
+    }
+
+    @java.lang.Deprecated public static final com.google.protobuf.Parser<DirectoryContent>
+        PARSER = new com.google.protobuf.AbstractParser<DirectoryContent>() {
+      @java.lang.Override
+      public DirectoryContent parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return new DirectoryContent(input, extensionRegistry);
+      }
+    };
+
+    public static com.google.protobuf.Parser<DirectoryContent> parser() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<DirectoryContent> getParserForType() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.DirectoryContent getDefaultInstanceForType() {
+      return DEFAULT_INSTANCE;
+    }
+
   }
 
   public interface ByteArrayMapEntryOrBuilder extends
@@ -5287,37 +5906,33 @@ public final class PrefsProto {
   /**
    * Protobuf type {@code de.huxhorn.lilith.prefs.ByteArrayMapEntry}
    */
-  public static final class ByteArrayMapEntry extends
-      com.google.protobuf.GeneratedMessage implements
+  public  static final class ByteArrayMapEntry extends
+      com.google.protobuf.GeneratedMessageV3 implements
       // @@protoc_insertion_point(message_implements:de.huxhorn.lilith.prefs.ByteArrayMapEntry)
       ByteArrayMapEntryOrBuilder {
+  private static final long serialVersionUID = 0L;
     // Use ByteArrayMapEntry.newBuilder() to construct.
-    private ByteArrayMapEntry(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
+    private ByteArrayMapEntry(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
       super(builder);
-      this.unknownFields = builder.getUnknownFields();
     }
-    private ByteArrayMapEntry(boolean noInit) { this.unknownFields = com.google.protobuf.UnknownFieldSet.getDefaultInstance(); }
-
-    private static final ByteArrayMapEntry defaultInstance;
-    public static ByteArrayMapEntry getDefaultInstance() {
-      return defaultInstance;
+    private ByteArrayMapEntry() {
+      key_ = "";
+      value_ = com.google.protobuf.ByteString.EMPTY;
     }
 
-    public ByteArrayMapEntry getDefaultInstanceForType() {
-      return defaultInstance;
-    }
-
-    private final com.google.protobuf.UnknownFieldSet unknownFields;
     @java.lang.Override
     public final com.google.protobuf.UnknownFieldSet
-        getUnknownFields() {
+    getUnknownFields() {
       return this.unknownFields;
     }
     private ByteArrayMapEntry(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
-      initFields();
+      this();
+      if (extensionRegistry == null) {
+        throw new java.lang.NullPointerException();
+      }
       int mutable_bitField0_ = 0;
       com.google.protobuf.UnknownFieldSet.Builder unknownFields =
           com.google.protobuf.UnknownFieldSet.newBuilder();
@@ -5329,13 +5944,6 @@ public final class PrefsProto {
             case 0:
               done = true;
               break;
-            default: {
-              if (!parseUnknownField(input, unknownFields,
-                                     extensionRegistry, tag)) {
-                done = true;
-              }
-              break;
-            }
             case 10: {
               com.google.protobuf.ByteString bs = input.readBytes();
               bitField0_ |= 0x00000001;
@@ -5347,13 +5955,20 @@ public final class PrefsProto {
               value_ = input.readBytes();
               break;
             }
+            default: {
+              if (!parseUnknownField(
+                  input, unknownFields, extensionRegistry, tag)) {
+                done = true;
+              }
+              break;
+            }
           }
         }
       } catch (com.google.protobuf.InvalidProtocolBufferException e) {
         throw e.setUnfinishedMessage(this);
       } catch (java.io.IOException e) {
         throw new com.google.protobuf.InvalidProtocolBufferException(
-            e.getMessage()).setUnfinishedMessage(this);
+            e).setUnfinishedMessage(this);
       } finally {
         this.unknownFields = unknownFields.build();
         makeExtensionsImmutable();
@@ -5364,31 +5979,17 @@ public final class PrefsProto {
       return de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.internal_static_de_huxhorn_lilith_prefs_ByteArrayMapEntry_descriptor;
     }
 
-    protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+    @java.lang.Override
+    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
         internalGetFieldAccessorTable() {
       return de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.internal_static_de_huxhorn_lilith_prefs_ByteArrayMapEntry_fieldAccessorTable
           .ensureFieldAccessorsInitialized(
               de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.ByteArrayMapEntry.class, de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.ByteArrayMapEntry.Builder.class);
     }
 
-    public static com.google.protobuf.Parser<ByteArrayMapEntry> PARSER =
-        new com.google.protobuf.AbstractParser<ByteArrayMapEntry>() {
-      public ByteArrayMapEntry parsePartialFrom(
-          com.google.protobuf.CodedInputStream input,
-          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-          throws com.google.protobuf.InvalidProtocolBufferException {
-        return new ByteArrayMapEntry(input, extensionRegistry);
-      }
-    };
-
-    @java.lang.Override
-    public com.google.protobuf.Parser<ByteArrayMapEntry> getParserForType() {
-      return PARSER;
-    }
-
     private int bitField0_;
     public static final int KEY_FIELD_NUMBER = 1;
-    private java.lang.Object key_;
+    private volatile java.lang.Object key_;
     /**
      * <code>required string key = 1;</code>
      */
@@ -5444,11 +6045,8 @@ public final class PrefsProto {
       return value_;
     }
 
-    private void initFields() {
-      key_ = "";
-      value_ = com.google.protobuf.ByteString.EMPTY;
-    }
     private byte memoizedIsInitialized = -1;
+    @java.lang.Override
     public final boolean isInitialized() {
       byte isInitialized = memoizedIsInitialized;
       if (isInitialized == 1) return true;
@@ -5462,44 +6060,92 @@ public final class PrefsProto {
       return true;
     }
 
+    @java.lang.Override
     public void writeTo(com.google.protobuf.CodedOutputStream output)
                         throws java.io.IOException {
-      getSerializedSize();
       if (((bitField0_ & 0x00000001) == 0x00000001)) {
-        output.writeBytes(1, getKeyBytes());
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 1, key_);
       }
       if (((bitField0_ & 0x00000002) == 0x00000002)) {
         output.writeBytes(2, value_);
       }
-      getUnknownFields().writeTo(output);
+      unknownFields.writeTo(output);
     }
 
-    private int memoizedSerializedSize = -1;
+    @java.lang.Override
     public int getSerializedSize() {
-      int size = memoizedSerializedSize;
+      int size = memoizedSize;
       if (size != -1) return size;
 
       size = 0;
       if (((bitField0_ & 0x00000001) == 0x00000001)) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeBytesSize(1, getKeyBytes());
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(1, key_);
       }
       if (((bitField0_ & 0x00000002) == 0x00000002)) {
         size += com.google.protobuf.CodedOutputStream
           .computeBytesSize(2, value_);
       }
-      size += getUnknownFields().getSerializedSize();
-      memoizedSerializedSize = size;
+      size += unknownFields.getSerializedSize();
+      memoizedSize = size;
       return size;
     }
 
-    private static final long serialVersionUID = 0L;
     @java.lang.Override
-    protected java.lang.Object writeReplace()
-        throws java.io.ObjectStreamException {
-      return super.writeReplace();
+    public boolean equals(final java.lang.Object obj) {
+      if (obj == this) {
+       return true;
+      }
+      if (!(obj instanceof de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.ByteArrayMapEntry)) {
+        return super.equals(obj);
+      }
+      de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.ByteArrayMapEntry other = (de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.ByteArrayMapEntry) obj;
+
+      boolean result = true;
+      result = result && (hasKey() == other.hasKey());
+      if (hasKey()) {
+        result = result && getKey()
+            .equals(other.getKey());
+      }
+      result = result && (hasValue() == other.hasValue());
+      if (hasValue()) {
+        result = result && getValue()
+            .equals(other.getValue());
+      }
+      result = result && unknownFields.equals(other.unknownFields);
+      return result;
     }
 
+    @java.lang.Override
+    public int hashCode() {
+      if (memoizedHashCode != 0) {
+        return memoizedHashCode;
+      }
+      int hash = 41;
+      hash = (19 * hash) + getDescriptor().hashCode();
+      if (hasKey()) {
+        hash = (37 * hash) + KEY_FIELD_NUMBER;
+        hash = (53 * hash) + getKey().hashCode();
+      }
+      if (hasValue()) {
+        hash = (37 * hash) + VALUE_FIELD_NUMBER;
+        hash = (53 * hash) + getValue().hashCode();
+      }
+      hash = (29 * hash) + unknownFields.hashCode();
+      memoizedHashCode = hash;
+      return hash;
+    }
+
+    public static de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.ByteArrayMapEntry parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.ByteArrayMapEntry parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
     public static de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.ByteArrayMapEntry parseFrom(
         com.google.protobuf.ByteString data)
         throws com.google.protobuf.InvalidProtocolBufferException {
@@ -5523,46 +6169,59 @@ public final class PrefsProto {
     }
     public static de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.ByteArrayMapEntry parseFrom(java.io.InputStream input)
         throws java.io.IOException {
-      return PARSER.parseFrom(input);
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
     }
     public static de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.ByteArrayMapEntry parseFrom(
         java.io.InputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
-      return PARSER.parseFrom(input, extensionRegistry);
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
     }
     public static de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.ByteArrayMapEntry parseDelimitedFrom(java.io.InputStream input)
         throws java.io.IOException {
-      return PARSER.parseDelimitedFrom(input);
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input);
     }
     public static de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.ByteArrayMapEntry parseDelimitedFrom(
         java.io.InputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
-      return PARSER.parseDelimitedFrom(input, extensionRegistry);
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
     }
     public static de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.ByteArrayMapEntry parseFrom(
         com.google.protobuf.CodedInputStream input)
         throws java.io.IOException {
-      return PARSER.parseFrom(input);
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
     }
     public static de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.ByteArrayMapEntry parseFrom(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
-      return PARSER.parseFrom(input, extensionRegistry);
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
     }
 
-    public static Builder newBuilder() { return Builder.create(); }
+    @java.lang.Override
     public Builder newBuilderForType() { return newBuilder(); }
-    public static Builder newBuilder(de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.ByteArrayMapEntry prototype) {
-      return newBuilder().mergeFrom(prototype);
+    public static Builder newBuilder() {
+      return DEFAULT_INSTANCE.toBuilder();
     }
-    public Builder toBuilder() { return newBuilder(this); }
+    public static Builder newBuilder(de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.ByteArrayMapEntry prototype) {
+      return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+    }
+    @java.lang.Override
+    public Builder toBuilder() {
+      return this == DEFAULT_INSTANCE
+          ? new Builder() : new Builder().mergeFrom(this);
+    }
 
     @java.lang.Override
     protected Builder newBuilderForType(
-        com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
       Builder builder = new Builder(parent);
       return builder;
     }
@@ -5570,7 +6229,7 @@ public final class PrefsProto {
      * Protobuf type {@code de.huxhorn.lilith.prefs.ByteArrayMapEntry}
      */
     public static final class Builder extends
-        com.google.protobuf.GeneratedMessage.Builder<Builder> implements
+        com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
         // @@protoc_insertion_point(builder_implements:de.huxhorn.lilith.prefs.ByteArrayMapEntry)
         de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.ByteArrayMapEntryOrBuilder {
       public static final com.google.protobuf.Descriptors.Descriptor
@@ -5578,7 +6237,8 @@ public final class PrefsProto {
         return de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.internal_static_de_huxhorn_lilith_prefs_ByteArrayMapEntry_descriptor;
       }
 
-      protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+      @java.lang.Override
+      protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
           internalGetFieldAccessorTable() {
         return de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.internal_static_de_huxhorn_lilith_prefs_ByteArrayMapEntry_fieldAccessorTable
             .ensureFieldAccessorsInitialized(
@@ -5591,18 +6251,16 @@ public final class PrefsProto {
       }
 
       private Builder(
-          com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+          com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
         super(parent);
         maybeForceBuilderInitialization();
       }
       private void maybeForceBuilderInitialization() {
-        if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
+        if (com.google.protobuf.GeneratedMessageV3
+                .alwaysUseFieldBuilders) {
         }
       }
-      private static Builder create() {
-        return new Builder();
-      }
-
+      @java.lang.Override
       public Builder clear() {
         super.clear();
         key_ = "";
@@ -5612,19 +6270,18 @@ public final class PrefsProto {
         return this;
       }
 
-      public Builder clone() {
-        return create().mergeFrom(buildPartial());
-      }
-
+      @java.lang.Override
       public com.google.protobuf.Descriptors.Descriptor
           getDescriptorForType() {
         return de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.internal_static_de_huxhorn_lilith_prefs_ByteArrayMapEntry_descriptor;
       }
 
+      @java.lang.Override
       public de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.ByteArrayMapEntry getDefaultInstanceForType() {
         return de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.ByteArrayMapEntry.getDefaultInstance();
       }
 
+      @java.lang.Override
       public de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.ByteArrayMapEntry build() {
         de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.ByteArrayMapEntry result = buildPartial();
         if (!result.isInitialized()) {
@@ -5633,6 +6290,7 @@ public final class PrefsProto {
         return result;
       }
 
+      @java.lang.Override
       public de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.ByteArrayMapEntry buildPartial() {
         de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.ByteArrayMapEntry result = new de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.ByteArrayMapEntry(this);
         int from_bitField0_ = bitField0_;
@@ -5650,6 +6308,39 @@ public final class PrefsProto {
         return result;
       }
 
+      @java.lang.Override
+      public Builder clone() {
+        return (Builder) super.clone();
+      }
+      @java.lang.Override
+      public Builder setField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return (Builder) super.setField(field, value);
+      }
+      @java.lang.Override
+      public Builder clearField(
+          com.google.protobuf.Descriptors.FieldDescriptor field) {
+        return (Builder) super.clearField(field);
+      }
+      @java.lang.Override
+      public Builder clearOneof(
+          com.google.protobuf.Descriptors.OneofDescriptor oneof) {
+        return (Builder) super.clearOneof(oneof);
+      }
+      @java.lang.Override
+      public Builder setRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          int index, java.lang.Object value) {
+        return (Builder) super.setRepeatedField(field, index, value);
+      }
+      @java.lang.Override
+      public Builder addRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return (Builder) super.addRepeatedField(field, value);
+      }
+      @java.lang.Override
       public Builder mergeFrom(com.google.protobuf.Message other) {
         if (other instanceof de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.ByteArrayMapEntry) {
           return mergeFrom((de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.ByteArrayMapEntry)other);
@@ -5669,18 +6360,20 @@ public final class PrefsProto {
         if (other.hasValue()) {
           setValue(other.getValue());
         }
-        this.mergeUnknownFields(other.getUnknownFields());
+        this.mergeUnknownFields(other.unknownFields);
+        onChanged();
         return this;
       }
 
+      @java.lang.Override
       public final boolean isInitialized() {
         if (!hasKey()) {
-          
           return false;
         }
         return true;
       }
 
+      @java.lang.Override
       public Builder mergeFrom(
           com.google.protobuf.CodedInputStream input,
           com.google.protobuf.ExtensionRegistryLite extensionRegistry)
@@ -5690,7 +6383,7 @@ public final class PrefsProto {
           parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
         } catch (com.google.protobuf.InvalidProtocolBufferException e) {
           parsedMessage = (de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.ByteArrayMapEntry) e.getUnfinishedMessage();
-          throw e;
+          throw e.unwrapIOException();
         } finally {
           if (parsedMessage != null) {
             mergeFrom(parsedMessage);
@@ -5810,16 +6503,57 @@ public final class PrefsProto {
         onChanged();
         return this;
       }
+      @java.lang.Override
+      public final Builder setUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.setUnknownFields(unknownFields);
+      }
+
+      @java.lang.Override
+      public final Builder mergeUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.mergeUnknownFields(unknownFields);
+      }
+
 
       // @@protoc_insertion_point(builder_scope:de.huxhorn.lilith.prefs.ByteArrayMapEntry)
     }
 
+    // @@protoc_insertion_point(class_scope:de.huxhorn.lilith.prefs.ByteArrayMapEntry)
+    private static final de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.ByteArrayMapEntry DEFAULT_INSTANCE;
     static {
-      defaultInstance = new ByteArrayMapEntry(true);
-      defaultInstance.initFields();
+      DEFAULT_INSTANCE = new de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.ByteArrayMapEntry();
     }
 
-    // @@protoc_insertion_point(class_scope:de.huxhorn.lilith.prefs.ByteArrayMapEntry)
+    public static de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.ByteArrayMapEntry getDefaultInstance() {
+      return DEFAULT_INSTANCE;
+    }
+
+    @java.lang.Deprecated public static final com.google.protobuf.Parser<ByteArrayMapEntry>
+        PARSER = new com.google.protobuf.AbstractParser<ByteArrayMapEntry>() {
+      @java.lang.Override
+      public ByteArrayMapEntry parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return new ByteArrayMapEntry(input, extensionRegistry);
+      }
+    };
+
+    public static com.google.protobuf.Parser<ByteArrayMapEntry> parser() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<ByteArrayMapEntry> getParserForType() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.ByteArrayMapEntry getDefaultInstanceForType() {
+      return DEFAULT_INSTANCE;
+    }
+
   }
 
   public interface StringMapOrBuilder extends
@@ -5853,37 +6587,32 @@ public final class PrefsProto {
   /**
    * Protobuf type {@code de.huxhorn.lilith.prefs.StringMap}
    */
-  public static final class StringMap extends
-      com.google.protobuf.GeneratedMessage implements
+  public  static final class StringMap extends
+      com.google.protobuf.GeneratedMessageV3 implements
       // @@protoc_insertion_point(message_implements:de.huxhorn.lilith.prefs.StringMap)
       StringMapOrBuilder {
+  private static final long serialVersionUID = 0L;
     // Use StringMap.newBuilder() to construct.
-    private StringMap(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
+    private StringMap(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
       super(builder);
-      this.unknownFields = builder.getUnknownFields();
     }
-    private StringMap(boolean noInit) { this.unknownFields = com.google.protobuf.UnknownFieldSet.getDefaultInstance(); }
-
-    private static final StringMap defaultInstance;
-    public static StringMap getDefaultInstance() {
-      return defaultInstance;
+    private StringMap() {
+      entry_ = java.util.Collections.emptyList();
     }
 
-    public StringMap getDefaultInstanceForType() {
-      return defaultInstance;
-    }
-
-    private final com.google.protobuf.UnknownFieldSet unknownFields;
     @java.lang.Override
     public final com.google.protobuf.UnknownFieldSet
-        getUnknownFields() {
+    getUnknownFields() {
       return this.unknownFields;
     }
     private StringMap(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
-      initFields();
+      this();
+      if (extensionRegistry == null) {
+        throw new java.lang.NullPointerException();
+      }
       int mutable_bitField0_ = 0;
       com.google.protobuf.UnknownFieldSet.Builder unknownFields =
           com.google.protobuf.UnknownFieldSet.newBuilder();
@@ -5895,19 +6624,20 @@ public final class PrefsProto {
             case 0:
               done = true;
               break;
-            default: {
-              if (!parseUnknownField(input, unknownFields,
-                                     extensionRegistry, tag)) {
-                done = true;
-              }
-              break;
-            }
             case 10: {
               if (!((mutable_bitField0_ & 0x00000001) == 0x00000001)) {
                 entry_ = new java.util.ArrayList<de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringMapEntry>();
                 mutable_bitField0_ |= 0x00000001;
               }
-              entry_.add(input.readMessage(de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringMapEntry.PARSER, extensionRegistry));
+              entry_.add(
+                  input.readMessage(de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringMapEntry.PARSER, extensionRegistry));
+              break;
+            }
+            default: {
+              if (!parseUnknownField(
+                  input, unknownFields, extensionRegistry, tag)) {
+                done = true;
+              }
               break;
             }
           }
@@ -5916,7 +6646,7 @@ public final class PrefsProto {
         throw e.setUnfinishedMessage(this);
       } catch (java.io.IOException e) {
         throw new com.google.protobuf.InvalidProtocolBufferException(
-            e.getMessage()).setUnfinishedMessage(this);
+            e).setUnfinishedMessage(this);
       } finally {
         if (((mutable_bitField0_ & 0x00000001) == 0x00000001)) {
           entry_ = java.util.Collections.unmodifiableList(entry_);
@@ -5930,26 +6660,12 @@ public final class PrefsProto {
       return de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.internal_static_de_huxhorn_lilith_prefs_StringMap_descriptor;
     }
 
-    protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+    @java.lang.Override
+    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
         internalGetFieldAccessorTable() {
       return de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.internal_static_de_huxhorn_lilith_prefs_StringMap_fieldAccessorTable
           .ensureFieldAccessorsInitialized(
               de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringMap.class, de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringMap.Builder.class);
-    }
-
-    public static com.google.protobuf.Parser<StringMap> PARSER =
-        new com.google.protobuf.AbstractParser<StringMap>() {
-      public StringMap parsePartialFrom(
-          com.google.protobuf.CodedInputStream input,
-          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-          throws com.google.protobuf.InvalidProtocolBufferException {
-        return new StringMap(input, extensionRegistry);
-      }
-    };
-
-    @java.lang.Override
-    public com.google.protobuf.Parser<StringMap> getParserForType() {
-      return PARSER;
     }
 
     public static final int ENTRY_FIELD_NUMBER = 1;
@@ -5987,10 +6703,8 @@ public final class PrefsProto {
       return entry_.get(index);
     }
 
-    private void initFields() {
-      entry_ = java.util.Collections.emptyList();
-    }
     private byte memoizedIsInitialized = -1;
+    @java.lang.Override
     public final boolean isInitialized() {
       byte isInitialized = memoizedIsInitialized;
       if (isInitialized == 1) return true;
@@ -6006,18 +6720,18 @@ public final class PrefsProto {
       return true;
     }
 
+    @java.lang.Override
     public void writeTo(com.google.protobuf.CodedOutputStream output)
                         throws java.io.IOException {
-      getSerializedSize();
       for (int i = 0; i < entry_.size(); i++) {
         output.writeMessage(1, entry_.get(i));
       }
-      getUnknownFields().writeTo(output);
+      unknownFields.writeTo(output);
     }
 
-    private int memoizedSerializedSize = -1;
+    @java.lang.Override
     public int getSerializedSize() {
-      int size = memoizedSerializedSize;
+      int size = memoizedSize;
       if (size != -1) return size;
 
       size = 0;
@@ -6025,18 +6739,55 @@ public final class PrefsProto {
         size += com.google.protobuf.CodedOutputStream
           .computeMessageSize(1, entry_.get(i));
       }
-      size += getUnknownFields().getSerializedSize();
-      memoizedSerializedSize = size;
+      size += unknownFields.getSerializedSize();
+      memoizedSize = size;
       return size;
     }
 
-    private static final long serialVersionUID = 0L;
     @java.lang.Override
-    protected java.lang.Object writeReplace()
-        throws java.io.ObjectStreamException {
-      return super.writeReplace();
+    public boolean equals(final java.lang.Object obj) {
+      if (obj == this) {
+       return true;
+      }
+      if (!(obj instanceof de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringMap)) {
+        return super.equals(obj);
+      }
+      de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringMap other = (de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringMap) obj;
+
+      boolean result = true;
+      result = result && getEntryList()
+          .equals(other.getEntryList());
+      result = result && unknownFields.equals(other.unknownFields);
+      return result;
     }
 
+    @java.lang.Override
+    public int hashCode() {
+      if (memoizedHashCode != 0) {
+        return memoizedHashCode;
+      }
+      int hash = 41;
+      hash = (19 * hash) + getDescriptor().hashCode();
+      if (getEntryCount() > 0) {
+        hash = (37 * hash) + ENTRY_FIELD_NUMBER;
+        hash = (53 * hash) + getEntryList().hashCode();
+      }
+      hash = (29 * hash) + unknownFields.hashCode();
+      memoizedHashCode = hash;
+      return hash;
+    }
+
+    public static de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringMap parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringMap parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
     public static de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringMap parseFrom(
         com.google.protobuf.ByteString data)
         throws com.google.protobuf.InvalidProtocolBufferException {
@@ -6060,46 +6811,59 @@ public final class PrefsProto {
     }
     public static de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringMap parseFrom(java.io.InputStream input)
         throws java.io.IOException {
-      return PARSER.parseFrom(input);
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
     }
     public static de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringMap parseFrom(
         java.io.InputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
-      return PARSER.parseFrom(input, extensionRegistry);
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
     }
     public static de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringMap parseDelimitedFrom(java.io.InputStream input)
         throws java.io.IOException {
-      return PARSER.parseDelimitedFrom(input);
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input);
     }
     public static de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringMap parseDelimitedFrom(
         java.io.InputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
-      return PARSER.parseDelimitedFrom(input, extensionRegistry);
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
     }
     public static de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringMap parseFrom(
         com.google.protobuf.CodedInputStream input)
         throws java.io.IOException {
-      return PARSER.parseFrom(input);
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
     }
     public static de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringMap parseFrom(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
-      return PARSER.parseFrom(input, extensionRegistry);
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
     }
 
-    public static Builder newBuilder() { return Builder.create(); }
+    @java.lang.Override
     public Builder newBuilderForType() { return newBuilder(); }
-    public static Builder newBuilder(de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringMap prototype) {
-      return newBuilder().mergeFrom(prototype);
+    public static Builder newBuilder() {
+      return DEFAULT_INSTANCE.toBuilder();
     }
-    public Builder toBuilder() { return newBuilder(this); }
+    public static Builder newBuilder(de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringMap prototype) {
+      return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+    }
+    @java.lang.Override
+    public Builder toBuilder() {
+      return this == DEFAULT_INSTANCE
+          ? new Builder() : new Builder().mergeFrom(this);
+    }
 
     @java.lang.Override
     protected Builder newBuilderForType(
-        com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
       Builder builder = new Builder(parent);
       return builder;
     }
@@ -6107,7 +6871,7 @@ public final class PrefsProto {
      * Protobuf type {@code de.huxhorn.lilith.prefs.StringMap}
      */
     public static final class Builder extends
-        com.google.protobuf.GeneratedMessage.Builder<Builder> implements
+        com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
         // @@protoc_insertion_point(builder_implements:de.huxhorn.lilith.prefs.StringMap)
         de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringMapOrBuilder {
       public static final com.google.protobuf.Descriptors.Descriptor
@@ -6115,7 +6879,8 @@ public final class PrefsProto {
         return de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.internal_static_de_huxhorn_lilith_prefs_StringMap_descriptor;
       }
 
-      protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+      @java.lang.Override
+      protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
           internalGetFieldAccessorTable() {
         return de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.internal_static_de_huxhorn_lilith_prefs_StringMap_fieldAccessorTable
             .ensureFieldAccessorsInitialized(
@@ -6128,19 +6893,17 @@ public final class PrefsProto {
       }
 
       private Builder(
-          com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+          com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
         super(parent);
         maybeForceBuilderInitialization();
       }
       private void maybeForceBuilderInitialization() {
-        if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
+        if (com.google.protobuf.GeneratedMessageV3
+                .alwaysUseFieldBuilders) {
           getEntryFieldBuilder();
         }
       }
-      private static Builder create() {
-        return new Builder();
-      }
-
+      @java.lang.Override
       public Builder clear() {
         super.clear();
         if (entryBuilder_ == null) {
@@ -6152,19 +6915,18 @@ public final class PrefsProto {
         return this;
       }
 
-      public Builder clone() {
-        return create().mergeFrom(buildPartial());
-      }
-
+      @java.lang.Override
       public com.google.protobuf.Descriptors.Descriptor
           getDescriptorForType() {
         return de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.internal_static_de_huxhorn_lilith_prefs_StringMap_descriptor;
       }
 
+      @java.lang.Override
       public de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringMap getDefaultInstanceForType() {
         return de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringMap.getDefaultInstance();
       }
 
+      @java.lang.Override
       public de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringMap build() {
         de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringMap result = buildPartial();
         if (!result.isInitialized()) {
@@ -6173,6 +6935,7 @@ public final class PrefsProto {
         return result;
       }
 
+      @java.lang.Override
       public de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringMap buildPartial() {
         de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringMap result = new de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringMap(this);
         int from_bitField0_ = bitField0_;
@@ -6189,6 +6952,39 @@ public final class PrefsProto {
         return result;
       }
 
+      @java.lang.Override
+      public Builder clone() {
+        return (Builder) super.clone();
+      }
+      @java.lang.Override
+      public Builder setField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return (Builder) super.setField(field, value);
+      }
+      @java.lang.Override
+      public Builder clearField(
+          com.google.protobuf.Descriptors.FieldDescriptor field) {
+        return (Builder) super.clearField(field);
+      }
+      @java.lang.Override
+      public Builder clearOneof(
+          com.google.protobuf.Descriptors.OneofDescriptor oneof) {
+        return (Builder) super.clearOneof(oneof);
+      }
+      @java.lang.Override
+      public Builder setRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          int index, java.lang.Object value) {
+        return (Builder) super.setRepeatedField(field, index, value);
+      }
+      @java.lang.Override
+      public Builder addRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return (Builder) super.addRepeatedField(field, value);
+      }
+      @java.lang.Override
       public Builder mergeFrom(com.google.protobuf.Message other) {
         if (other instanceof de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringMap) {
           return mergeFrom((de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringMap)other);
@@ -6219,27 +7015,29 @@ public final class PrefsProto {
               entry_ = other.entry_;
               bitField0_ = (bitField0_ & ~0x00000001);
               entryBuilder_ = 
-                com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders ?
+                com.google.protobuf.GeneratedMessageV3.alwaysUseFieldBuilders ?
                    getEntryFieldBuilder() : null;
             } else {
               entryBuilder_.addAllMessages(other.entry_);
             }
           }
         }
-        this.mergeUnknownFields(other.getUnknownFields());
+        this.mergeUnknownFields(other.unknownFields);
+        onChanged();
         return this;
       }
 
+      @java.lang.Override
       public final boolean isInitialized() {
         for (int i = 0; i < getEntryCount(); i++) {
           if (!getEntry(i).isInitialized()) {
-            
             return false;
           }
         }
         return true;
       }
 
+      @java.lang.Override
       public Builder mergeFrom(
           com.google.protobuf.CodedInputStream input,
           com.google.protobuf.ExtensionRegistryLite extensionRegistry)
@@ -6249,7 +7047,7 @@ public final class PrefsProto {
           parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
         } catch (com.google.protobuf.InvalidProtocolBufferException e) {
           parsedMessage = (de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringMap) e.getUnfinishedMessage();
-          throw e;
+          throw e.unwrapIOException();
         } finally {
           if (parsedMessage != null) {
             mergeFrom(parsedMessage);
@@ -6268,7 +7066,7 @@ public final class PrefsProto {
          }
       }
 
-      private com.google.protobuf.RepeatedFieldBuilder<
+      private com.google.protobuf.RepeatedFieldBuilderV3<
           de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringMapEntry, de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringMapEntry.Builder, de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringMapEntryOrBuilder> entryBuilder_;
 
       /**
@@ -6484,11 +7282,11 @@ public final class PrefsProto {
            getEntryBuilderList() {
         return getEntryFieldBuilder().getBuilderList();
       }
-      private com.google.protobuf.RepeatedFieldBuilder<
+      private com.google.protobuf.RepeatedFieldBuilderV3<
           de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringMapEntry, de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringMapEntry.Builder, de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringMapEntryOrBuilder> 
           getEntryFieldBuilder() {
         if (entryBuilder_ == null) {
-          entryBuilder_ = new com.google.protobuf.RepeatedFieldBuilder<
+          entryBuilder_ = new com.google.protobuf.RepeatedFieldBuilderV3<
               de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringMapEntry, de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringMapEntry.Builder, de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringMapEntryOrBuilder>(
                   entry_,
                   ((bitField0_ & 0x00000001) == 0x00000001),
@@ -6498,16 +7296,57 @@ public final class PrefsProto {
         }
         return entryBuilder_;
       }
+      @java.lang.Override
+      public final Builder setUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.setUnknownFields(unknownFields);
+      }
+
+      @java.lang.Override
+      public final Builder mergeUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.mergeUnknownFields(unknownFields);
+      }
+
 
       // @@protoc_insertion_point(builder_scope:de.huxhorn.lilith.prefs.StringMap)
     }
 
+    // @@protoc_insertion_point(class_scope:de.huxhorn.lilith.prefs.StringMap)
+    private static final de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringMap DEFAULT_INSTANCE;
     static {
-      defaultInstance = new StringMap(true);
-      defaultInstance.initFields();
+      DEFAULT_INSTANCE = new de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringMap();
     }
 
-    // @@protoc_insertion_point(class_scope:de.huxhorn.lilith.prefs.StringMap)
+    public static de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringMap getDefaultInstance() {
+      return DEFAULT_INSTANCE;
+    }
+
+    @java.lang.Deprecated public static final com.google.protobuf.Parser<StringMap>
+        PARSER = new com.google.protobuf.AbstractParser<StringMap>() {
+      @java.lang.Override
+      public StringMap parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return new StringMap(input, extensionRegistry);
+      }
+    };
+
+    public static com.google.protobuf.Parser<StringMap> parser() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<StringMap> getParserForType() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringMap getDefaultInstanceForType() {
+      return DEFAULT_INSTANCE;
+    }
+
   }
 
   public interface StringMapEntryOrBuilder extends
@@ -6545,37 +7384,33 @@ public final class PrefsProto {
   /**
    * Protobuf type {@code de.huxhorn.lilith.prefs.StringMapEntry}
    */
-  public static final class StringMapEntry extends
-      com.google.protobuf.GeneratedMessage implements
+  public  static final class StringMapEntry extends
+      com.google.protobuf.GeneratedMessageV3 implements
       // @@protoc_insertion_point(message_implements:de.huxhorn.lilith.prefs.StringMapEntry)
       StringMapEntryOrBuilder {
+  private static final long serialVersionUID = 0L;
     // Use StringMapEntry.newBuilder() to construct.
-    private StringMapEntry(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
+    private StringMapEntry(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
       super(builder);
-      this.unknownFields = builder.getUnknownFields();
     }
-    private StringMapEntry(boolean noInit) { this.unknownFields = com.google.protobuf.UnknownFieldSet.getDefaultInstance(); }
-
-    private static final StringMapEntry defaultInstance;
-    public static StringMapEntry getDefaultInstance() {
-      return defaultInstance;
+    private StringMapEntry() {
+      key_ = "";
+      value_ = "";
     }
 
-    public StringMapEntry getDefaultInstanceForType() {
-      return defaultInstance;
-    }
-
-    private final com.google.protobuf.UnknownFieldSet unknownFields;
     @java.lang.Override
     public final com.google.protobuf.UnknownFieldSet
-        getUnknownFields() {
+    getUnknownFields() {
       return this.unknownFields;
     }
     private StringMapEntry(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
-      initFields();
+      this();
+      if (extensionRegistry == null) {
+        throw new java.lang.NullPointerException();
+      }
       int mutable_bitField0_ = 0;
       com.google.protobuf.UnknownFieldSet.Builder unknownFields =
           com.google.protobuf.UnknownFieldSet.newBuilder();
@@ -6587,13 +7422,6 @@ public final class PrefsProto {
             case 0:
               done = true;
               break;
-            default: {
-              if (!parseUnknownField(input, unknownFields,
-                                     extensionRegistry, tag)) {
-                done = true;
-              }
-              break;
-            }
             case 10: {
               com.google.protobuf.ByteString bs = input.readBytes();
               bitField0_ |= 0x00000001;
@@ -6606,13 +7434,20 @@ public final class PrefsProto {
               value_ = bs;
               break;
             }
+            default: {
+              if (!parseUnknownField(
+                  input, unknownFields, extensionRegistry, tag)) {
+                done = true;
+              }
+              break;
+            }
           }
         }
       } catch (com.google.protobuf.InvalidProtocolBufferException e) {
         throw e.setUnfinishedMessage(this);
       } catch (java.io.IOException e) {
         throw new com.google.protobuf.InvalidProtocolBufferException(
-            e.getMessage()).setUnfinishedMessage(this);
+            e).setUnfinishedMessage(this);
       } finally {
         this.unknownFields = unknownFields.build();
         makeExtensionsImmutable();
@@ -6623,31 +7458,17 @@ public final class PrefsProto {
       return de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.internal_static_de_huxhorn_lilith_prefs_StringMapEntry_descriptor;
     }
 
-    protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+    @java.lang.Override
+    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
         internalGetFieldAccessorTable() {
       return de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.internal_static_de_huxhorn_lilith_prefs_StringMapEntry_fieldAccessorTable
           .ensureFieldAccessorsInitialized(
               de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringMapEntry.class, de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringMapEntry.Builder.class);
     }
 
-    public static com.google.protobuf.Parser<StringMapEntry> PARSER =
-        new com.google.protobuf.AbstractParser<StringMapEntry>() {
-      public StringMapEntry parsePartialFrom(
-          com.google.protobuf.CodedInputStream input,
-          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-          throws com.google.protobuf.InvalidProtocolBufferException {
-        return new StringMapEntry(input, extensionRegistry);
-      }
-    };
-
-    @java.lang.Override
-    public com.google.protobuf.Parser<StringMapEntry> getParserForType() {
-      return PARSER;
-    }
-
     private int bitField0_;
     public static final int KEY_FIELD_NUMBER = 1;
-    private java.lang.Object key_;
+    private volatile java.lang.Object key_;
     /**
      * <code>required string key = 1;</code>
      */
@@ -6689,7 +7510,7 @@ public final class PrefsProto {
     }
 
     public static final int VALUE_FIELD_NUMBER = 2;
-    private java.lang.Object value_;
+    private volatile java.lang.Object value_;
     /**
      * <code>optional string value = 2;</code>
      */
@@ -6730,11 +7551,8 @@ public final class PrefsProto {
       }
     }
 
-    private void initFields() {
-      key_ = "";
-      value_ = "";
-    }
     private byte memoizedIsInitialized = -1;
+    @java.lang.Override
     public final boolean isInitialized() {
       byte isInitialized = memoizedIsInitialized;
       if (isInitialized == 1) return true;
@@ -6748,44 +7566,91 @@ public final class PrefsProto {
       return true;
     }
 
+    @java.lang.Override
     public void writeTo(com.google.protobuf.CodedOutputStream output)
                         throws java.io.IOException {
-      getSerializedSize();
       if (((bitField0_ & 0x00000001) == 0x00000001)) {
-        output.writeBytes(1, getKeyBytes());
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 1, key_);
       }
       if (((bitField0_ & 0x00000002) == 0x00000002)) {
-        output.writeBytes(2, getValueBytes());
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 2, value_);
       }
-      getUnknownFields().writeTo(output);
+      unknownFields.writeTo(output);
     }
 
-    private int memoizedSerializedSize = -1;
+    @java.lang.Override
     public int getSerializedSize() {
-      int size = memoizedSerializedSize;
+      int size = memoizedSize;
       if (size != -1) return size;
 
       size = 0;
       if (((bitField0_ & 0x00000001) == 0x00000001)) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeBytesSize(1, getKeyBytes());
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(1, key_);
       }
       if (((bitField0_ & 0x00000002) == 0x00000002)) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeBytesSize(2, getValueBytes());
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(2, value_);
       }
-      size += getUnknownFields().getSerializedSize();
-      memoizedSerializedSize = size;
+      size += unknownFields.getSerializedSize();
+      memoizedSize = size;
       return size;
     }
 
-    private static final long serialVersionUID = 0L;
     @java.lang.Override
-    protected java.lang.Object writeReplace()
-        throws java.io.ObjectStreamException {
-      return super.writeReplace();
+    public boolean equals(final java.lang.Object obj) {
+      if (obj == this) {
+       return true;
+      }
+      if (!(obj instanceof de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringMapEntry)) {
+        return super.equals(obj);
+      }
+      de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringMapEntry other = (de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringMapEntry) obj;
+
+      boolean result = true;
+      result = result && (hasKey() == other.hasKey());
+      if (hasKey()) {
+        result = result && getKey()
+            .equals(other.getKey());
+      }
+      result = result && (hasValue() == other.hasValue());
+      if (hasValue()) {
+        result = result && getValue()
+            .equals(other.getValue());
+      }
+      result = result && unknownFields.equals(other.unknownFields);
+      return result;
     }
 
+    @java.lang.Override
+    public int hashCode() {
+      if (memoizedHashCode != 0) {
+        return memoizedHashCode;
+      }
+      int hash = 41;
+      hash = (19 * hash) + getDescriptor().hashCode();
+      if (hasKey()) {
+        hash = (37 * hash) + KEY_FIELD_NUMBER;
+        hash = (53 * hash) + getKey().hashCode();
+      }
+      if (hasValue()) {
+        hash = (37 * hash) + VALUE_FIELD_NUMBER;
+        hash = (53 * hash) + getValue().hashCode();
+      }
+      hash = (29 * hash) + unknownFields.hashCode();
+      memoizedHashCode = hash;
+      return hash;
+    }
+
+    public static de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringMapEntry parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringMapEntry parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
     public static de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringMapEntry parseFrom(
         com.google.protobuf.ByteString data)
         throws com.google.protobuf.InvalidProtocolBufferException {
@@ -6809,46 +7674,59 @@ public final class PrefsProto {
     }
     public static de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringMapEntry parseFrom(java.io.InputStream input)
         throws java.io.IOException {
-      return PARSER.parseFrom(input);
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
     }
     public static de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringMapEntry parseFrom(
         java.io.InputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
-      return PARSER.parseFrom(input, extensionRegistry);
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
     }
     public static de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringMapEntry parseDelimitedFrom(java.io.InputStream input)
         throws java.io.IOException {
-      return PARSER.parseDelimitedFrom(input);
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input);
     }
     public static de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringMapEntry parseDelimitedFrom(
         java.io.InputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
-      return PARSER.parseDelimitedFrom(input, extensionRegistry);
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
     }
     public static de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringMapEntry parseFrom(
         com.google.protobuf.CodedInputStream input)
         throws java.io.IOException {
-      return PARSER.parseFrom(input);
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
     }
     public static de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringMapEntry parseFrom(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
-      return PARSER.parseFrom(input, extensionRegistry);
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
     }
 
-    public static Builder newBuilder() { return Builder.create(); }
+    @java.lang.Override
     public Builder newBuilderForType() { return newBuilder(); }
-    public static Builder newBuilder(de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringMapEntry prototype) {
-      return newBuilder().mergeFrom(prototype);
+    public static Builder newBuilder() {
+      return DEFAULT_INSTANCE.toBuilder();
     }
-    public Builder toBuilder() { return newBuilder(this); }
+    public static Builder newBuilder(de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringMapEntry prototype) {
+      return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+    }
+    @java.lang.Override
+    public Builder toBuilder() {
+      return this == DEFAULT_INSTANCE
+          ? new Builder() : new Builder().mergeFrom(this);
+    }
 
     @java.lang.Override
     protected Builder newBuilderForType(
-        com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
       Builder builder = new Builder(parent);
       return builder;
     }
@@ -6856,7 +7734,7 @@ public final class PrefsProto {
      * Protobuf type {@code de.huxhorn.lilith.prefs.StringMapEntry}
      */
     public static final class Builder extends
-        com.google.protobuf.GeneratedMessage.Builder<Builder> implements
+        com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
         // @@protoc_insertion_point(builder_implements:de.huxhorn.lilith.prefs.StringMapEntry)
         de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringMapEntryOrBuilder {
       public static final com.google.protobuf.Descriptors.Descriptor
@@ -6864,7 +7742,8 @@ public final class PrefsProto {
         return de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.internal_static_de_huxhorn_lilith_prefs_StringMapEntry_descriptor;
       }
 
-      protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+      @java.lang.Override
+      protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
           internalGetFieldAccessorTable() {
         return de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.internal_static_de_huxhorn_lilith_prefs_StringMapEntry_fieldAccessorTable
             .ensureFieldAccessorsInitialized(
@@ -6877,18 +7756,16 @@ public final class PrefsProto {
       }
 
       private Builder(
-          com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+          com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
         super(parent);
         maybeForceBuilderInitialization();
       }
       private void maybeForceBuilderInitialization() {
-        if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
+        if (com.google.protobuf.GeneratedMessageV3
+                .alwaysUseFieldBuilders) {
         }
       }
-      private static Builder create() {
-        return new Builder();
-      }
-
+      @java.lang.Override
       public Builder clear() {
         super.clear();
         key_ = "";
@@ -6898,19 +7775,18 @@ public final class PrefsProto {
         return this;
       }
 
-      public Builder clone() {
-        return create().mergeFrom(buildPartial());
-      }
-
+      @java.lang.Override
       public com.google.protobuf.Descriptors.Descriptor
           getDescriptorForType() {
         return de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.internal_static_de_huxhorn_lilith_prefs_StringMapEntry_descriptor;
       }
 
+      @java.lang.Override
       public de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringMapEntry getDefaultInstanceForType() {
         return de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringMapEntry.getDefaultInstance();
       }
 
+      @java.lang.Override
       public de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringMapEntry build() {
         de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringMapEntry result = buildPartial();
         if (!result.isInitialized()) {
@@ -6919,6 +7795,7 @@ public final class PrefsProto {
         return result;
       }
 
+      @java.lang.Override
       public de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringMapEntry buildPartial() {
         de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringMapEntry result = new de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringMapEntry(this);
         int from_bitField0_ = bitField0_;
@@ -6936,6 +7813,39 @@ public final class PrefsProto {
         return result;
       }
 
+      @java.lang.Override
+      public Builder clone() {
+        return (Builder) super.clone();
+      }
+      @java.lang.Override
+      public Builder setField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return (Builder) super.setField(field, value);
+      }
+      @java.lang.Override
+      public Builder clearField(
+          com.google.protobuf.Descriptors.FieldDescriptor field) {
+        return (Builder) super.clearField(field);
+      }
+      @java.lang.Override
+      public Builder clearOneof(
+          com.google.protobuf.Descriptors.OneofDescriptor oneof) {
+        return (Builder) super.clearOneof(oneof);
+      }
+      @java.lang.Override
+      public Builder setRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          int index, java.lang.Object value) {
+        return (Builder) super.setRepeatedField(field, index, value);
+      }
+      @java.lang.Override
+      public Builder addRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return (Builder) super.addRepeatedField(field, value);
+      }
+      @java.lang.Override
       public Builder mergeFrom(com.google.protobuf.Message other) {
         if (other instanceof de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringMapEntry) {
           return mergeFrom((de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringMapEntry)other);
@@ -6957,18 +7867,20 @@ public final class PrefsProto {
           value_ = other.value_;
           onChanged();
         }
-        this.mergeUnknownFields(other.getUnknownFields());
+        this.mergeUnknownFields(other.unknownFields);
+        onChanged();
         return this;
       }
 
+      @java.lang.Override
       public final boolean isInitialized() {
         if (!hasKey()) {
-          
           return false;
         }
         return true;
       }
 
+      @java.lang.Override
       public Builder mergeFrom(
           com.google.protobuf.CodedInputStream input,
           com.google.protobuf.ExtensionRegistryLite extensionRegistry)
@@ -6978,7 +7890,7 @@ public final class PrefsProto {
           parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
         } catch (com.google.protobuf.InvalidProtocolBufferException e) {
           parsedMessage = (de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringMapEntry) e.getUnfinishedMessage();
-          throw e;
+          throw e.unwrapIOException();
         } finally {
           if (parsedMessage != null) {
             mergeFrom(parsedMessage);
@@ -7139,16 +8051,57 @@ public final class PrefsProto {
         onChanged();
         return this;
       }
+      @java.lang.Override
+      public final Builder setUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.setUnknownFields(unknownFields);
+      }
+
+      @java.lang.Override
+      public final Builder mergeUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.mergeUnknownFields(unknownFields);
+      }
+
 
       // @@protoc_insertion_point(builder_scope:de.huxhorn.lilith.prefs.StringMapEntry)
     }
 
+    // @@protoc_insertion_point(class_scope:de.huxhorn.lilith.prefs.StringMapEntry)
+    private static final de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringMapEntry DEFAULT_INSTANCE;
     static {
-      defaultInstance = new StringMapEntry(true);
-      defaultInstance.initFields();
+      DEFAULT_INSTANCE = new de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringMapEntry();
     }
 
-    // @@protoc_insertion_point(class_scope:de.huxhorn.lilith.prefs.StringMapEntry)
+    public static de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringMapEntry getDefaultInstance() {
+      return DEFAULT_INSTANCE;
+    }
+
+    @java.lang.Deprecated public static final com.google.protobuf.Parser<StringMapEntry>
+        PARSER = new com.google.protobuf.AbstractParser<StringMapEntry>() {
+      @java.lang.Override
+      public StringMapEntry parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return new StringMapEntry(input, extensionRegistry);
+      }
+    };
+
+    public static com.google.protobuf.Parser<StringMapEntry> parser() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<StringMapEntry> getParserForType() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringMapEntry getDefaultInstanceForType() {
+      return DEFAULT_INSTANCE;
+    }
+
   }
 
   public interface StringArrayMapOrBuilder extends
@@ -7182,37 +8135,32 @@ public final class PrefsProto {
   /**
    * Protobuf type {@code de.huxhorn.lilith.prefs.StringArrayMap}
    */
-  public static final class StringArrayMap extends
-      com.google.protobuf.GeneratedMessage implements
+  public  static final class StringArrayMap extends
+      com.google.protobuf.GeneratedMessageV3 implements
       // @@protoc_insertion_point(message_implements:de.huxhorn.lilith.prefs.StringArrayMap)
       StringArrayMapOrBuilder {
+  private static final long serialVersionUID = 0L;
     // Use StringArrayMap.newBuilder() to construct.
-    private StringArrayMap(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
+    private StringArrayMap(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
       super(builder);
-      this.unknownFields = builder.getUnknownFields();
     }
-    private StringArrayMap(boolean noInit) { this.unknownFields = com.google.protobuf.UnknownFieldSet.getDefaultInstance(); }
-
-    private static final StringArrayMap defaultInstance;
-    public static StringArrayMap getDefaultInstance() {
-      return defaultInstance;
+    private StringArrayMap() {
+      entry_ = java.util.Collections.emptyList();
     }
 
-    public StringArrayMap getDefaultInstanceForType() {
-      return defaultInstance;
-    }
-
-    private final com.google.protobuf.UnknownFieldSet unknownFields;
     @java.lang.Override
     public final com.google.protobuf.UnknownFieldSet
-        getUnknownFields() {
+    getUnknownFields() {
       return this.unknownFields;
     }
     private StringArrayMap(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
-      initFields();
+      this();
+      if (extensionRegistry == null) {
+        throw new java.lang.NullPointerException();
+      }
       int mutable_bitField0_ = 0;
       com.google.protobuf.UnknownFieldSet.Builder unknownFields =
           com.google.protobuf.UnknownFieldSet.newBuilder();
@@ -7224,19 +8172,20 @@ public final class PrefsProto {
             case 0:
               done = true;
               break;
-            default: {
-              if (!parseUnknownField(input, unknownFields,
-                                     extensionRegistry, tag)) {
-                done = true;
-              }
-              break;
-            }
             case 10: {
               if (!((mutable_bitField0_ & 0x00000001) == 0x00000001)) {
                 entry_ = new java.util.ArrayList<de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringArrayMapEntry>();
                 mutable_bitField0_ |= 0x00000001;
               }
-              entry_.add(input.readMessage(de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringArrayMapEntry.PARSER, extensionRegistry));
+              entry_.add(
+                  input.readMessage(de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringArrayMapEntry.PARSER, extensionRegistry));
+              break;
+            }
+            default: {
+              if (!parseUnknownField(
+                  input, unknownFields, extensionRegistry, tag)) {
+                done = true;
+              }
               break;
             }
           }
@@ -7245,7 +8194,7 @@ public final class PrefsProto {
         throw e.setUnfinishedMessage(this);
       } catch (java.io.IOException e) {
         throw new com.google.protobuf.InvalidProtocolBufferException(
-            e.getMessage()).setUnfinishedMessage(this);
+            e).setUnfinishedMessage(this);
       } finally {
         if (((mutable_bitField0_ & 0x00000001) == 0x00000001)) {
           entry_ = java.util.Collections.unmodifiableList(entry_);
@@ -7259,26 +8208,12 @@ public final class PrefsProto {
       return de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.internal_static_de_huxhorn_lilith_prefs_StringArrayMap_descriptor;
     }
 
-    protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+    @java.lang.Override
+    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
         internalGetFieldAccessorTable() {
       return de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.internal_static_de_huxhorn_lilith_prefs_StringArrayMap_fieldAccessorTable
           .ensureFieldAccessorsInitialized(
               de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringArrayMap.class, de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringArrayMap.Builder.class);
-    }
-
-    public static com.google.protobuf.Parser<StringArrayMap> PARSER =
-        new com.google.protobuf.AbstractParser<StringArrayMap>() {
-      public StringArrayMap parsePartialFrom(
-          com.google.protobuf.CodedInputStream input,
-          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-          throws com.google.protobuf.InvalidProtocolBufferException {
-        return new StringArrayMap(input, extensionRegistry);
-      }
-    };
-
-    @java.lang.Override
-    public com.google.protobuf.Parser<StringArrayMap> getParserForType() {
-      return PARSER;
     }
 
     public static final int ENTRY_FIELD_NUMBER = 1;
@@ -7316,10 +8251,8 @@ public final class PrefsProto {
       return entry_.get(index);
     }
 
-    private void initFields() {
-      entry_ = java.util.Collections.emptyList();
-    }
     private byte memoizedIsInitialized = -1;
+    @java.lang.Override
     public final boolean isInitialized() {
       byte isInitialized = memoizedIsInitialized;
       if (isInitialized == 1) return true;
@@ -7335,18 +8268,18 @@ public final class PrefsProto {
       return true;
     }
 
+    @java.lang.Override
     public void writeTo(com.google.protobuf.CodedOutputStream output)
                         throws java.io.IOException {
-      getSerializedSize();
       for (int i = 0; i < entry_.size(); i++) {
         output.writeMessage(1, entry_.get(i));
       }
-      getUnknownFields().writeTo(output);
+      unknownFields.writeTo(output);
     }
 
-    private int memoizedSerializedSize = -1;
+    @java.lang.Override
     public int getSerializedSize() {
-      int size = memoizedSerializedSize;
+      int size = memoizedSize;
       if (size != -1) return size;
 
       size = 0;
@@ -7354,18 +8287,55 @@ public final class PrefsProto {
         size += com.google.protobuf.CodedOutputStream
           .computeMessageSize(1, entry_.get(i));
       }
-      size += getUnknownFields().getSerializedSize();
-      memoizedSerializedSize = size;
+      size += unknownFields.getSerializedSize();
+      memoizedSize = size;
       return size;
     }
 
-    private static final long serialVersionUID = 0L;
     @java.lang.Override
-    protected java.lang.Object writeReplace()
-        throws java.io.ObjectStreamException {
-      return super.writeReplace();
+    public boolean equals(final java.lang.Object obj) {
+      if (obj == this) {
+       return true;
+      }
+      if (!(obj instanceof de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringArrayMap)) {
+        return super.equals(obj);
+      }
+      de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringArrayMap other = (de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringArrayMap) obj;
+
+      boolean result = true;
+      result = result && getEntryList()
+          .equals(other.getEntryList());
+      result = result && unknownFields.equals(other.unknownFields);
+      return result;
     }
 
+    @java.lang.Override
+    public int hashCode() {
+      if (memoizedHashCode != 0) {
+        return memoizedHashCode;
+      }
+      int hash = 41;
+      hash = (19 * hash) + getDescriptor().hashCode();
+      if (getEntryCount() > 0) {
+        hash = (37 * hash) + ENTRY_FIELD_NUMBER;
+        hash = (53 * hash) + getEntryList().hashCode();
+      }
+      hash = (29 * hash) + unknownFields.hashCode();
+      memoizedHashCode = hash;
+      return hash;
+    }
+
+    public static de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringArrayMap parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringArrayMap parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
     public static de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringArrayMap parseFrom(
         com.google.protobuf.ByteString data)
         throws com.google.protobuf.InvalidProtocolBufferException {
@@ -7389,46 +8359,59 @@ public final class PrefsProto {
     }
     public static de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringArrayMap parseFrom(java.io.InputStream input)
         throws java.io.IOException {
-      return PARSER.parseFrom(input);
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
     }
     public static de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringArrayMap parseFrom(
         java.io.InputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
-      return PARSER.parseFrom(input, extensionRegistry);
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
     }
     public static de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringArrayMap parseDelimitedFrom(java.io.InputStream input)
         throws java.io.IOException {
-      return PARSER.parseDelimitedFrom(input);
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input);
     }
     public static de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringArrayMap parseDelimitedFrom(
         java.io.InputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
-      return PARSER.parseDelimitedFrom(input, extensionRegistry);
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
     }
     public static de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringArrayMap parseFrom(
         com.google.protobuf.CodedInputStream input)
         throws java.io.IOException {
-      return PARSER.parseFrom(input);
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
     }
     public static de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringArrayMap parseFrom(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
-      return PARSER.parseFrom(input, extensionRegistry);
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
     }
 
-    public static Builder newBuilder() { return Builder.create(); }
+    @java.lang.Override
     public Builder newBuilderForType() { return newBuilder(); }
-    public static Builder newBuilder(de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringArrayMap prototype) {
-      return newBuilder().mergeFrom(prototype);
+    public static Builder newBuilder() {
+      return DEFAULT_INSTANCE.toBuilder();
     }
-    public Builder toBuilder() { return newBuilder(this); }
+    public static Builder newBuilder(de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringArrayMap prototype) {
+      return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+    }
+    @java.lang.Override
+    public Builder toBuilder() {
+      return this == DEFAULT_INSTANCE
+          ? new Builder() : new Builder().mergeFrom(this);
+    }
 
     @java.lang.Override
     protected Builder newBuilderForType(
-        com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
       Builder builder = new Builder(parent);
       return builder;
     }
@@ -7436,7 +8419,7 @@ public final class PrefsProto {
      * Protobuf type {@code de.huxhorn.lilith.prefs.StringArrayMap}
      */
     public static final class Builder extends
-        com.google.protobuf.GeneratedMessage.Builder<Builder> implements
+        com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
         // @@protoc_insertion_point(builder_implements:de.huxhorn.lilith.prefs.StringArrayMap)
         de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringArrayMapOrBuilder {
       public static final com.google.protobuf.Descriptors.Descriptor
@@ -7444,7 +8427,8 @@ public final class PrefsProto {
         return de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.internal_static_de_huxhorn_lilith_prefs_StringArrayMap_descriptor;
       }
 
-      protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+      @java.lang.Override
+      protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
           internalGetFieldAccessorTable() {
         return de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.internal_static_de_huxhorn_lilith_prefs_StringArrayMap_fieldAccessorTable
             .ensureFieldAccessorsInitialized(
@@ -7457,19 +8441,17 @@ public final class PrefsProto {
       }
 
       private Builder(
-          com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+          com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
         super(parent);
         maybeForceBuilderInitialization();
       }
       private void maybeForceBuilderInitialization() {
-        if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
+        if (com.google.protobuf.GeneratedMessageV3
+                .alwaysUseFieldBuilders) {
           getEntryFieldBuilder();
         }
       }
-      private static Builder create() {
-        return new Builder();
-      }
-
+      @java.lang.Override
       public Builder clear() {
         super.clear();
         if (entryBuilder_ == null) {
@@ -7481,19 +8463,18 @@ public final class PrefsProto {
         return this;
       }
 
-      public Builder clone() {
-        return create().mergeFrom(buildPartial());
-      }
-
+      @java.lang.Override
       public com.google.protobuf.Descriptors.Descriptor
           getDescriptorForType() {
         return de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.internal_static_de_huxhorn_lilith_prefs_StringArrayMap_descriptor;
       }
 
+      @java.lang.Override
       public de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringArrayMap getDefaultInstanceForType() {
         return de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringArrayMap.getDefaultInstance();
       }
 
+      @java.lang.Override
       public de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringArrayMap build() {
         de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringArrayMap result = buildPartial();
         if (!result.isInitialized()) {
@@ -7502,6 +8483,7 @@ public final class PrefsProto {
         return result;
       }
 
+      @java.lang.Override
       public de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringArrayMap buildPartial() {
         de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringArrayMap result = new de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringArrayMap(this);
         int from_bitField0_ = bitField0_;
@@ -7518,6 +8500,39 @@ public final class PrefsProto {
         return result;
       }
 
+      @java.lang.Override
+      public Builder clone() {
+        return (Builder) super.clone();
+      }
+      @java.lang.Override
+      public Builder setField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return (Builder) super.setField(field, value);
+      }
+      @java.lang.Override
+      public Builder clearField(
+          com.google.protobuf.Descriptors.FieldDescriptor field) {
+        return (Builder) super.clearField(field);
+      }
+      @java.lang.Override
+      public Builder clearOneof(
+          com.google.protobuf.Descriptors.OneofDescriptor oneof) {
+        return (Builder) super.clearOneof(oneof);
+      }
+      @java.lang.Override
+      public Builder setRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          int index, java.lang.Object value) {
+        return (Builder) super.setRepeatedField(field, index, value);
+      }
+      @java.lang.Override
+      public Builder addRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return (Builder) super.addRepeatedField(field, value);
+      }
+      @java.lang.Override
       public Builder mergeFrom(com.google.protobuf.Message other) {
         if (other instanceof de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringArrayMap) {
           return mergeFrom((de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringArrayMap)other);
@@ -7548,27 +8563,29 @@ public final class PrefsProto {
               entry_ = other.entry_;
               bitField0_ = (bitField0_ & ~0x00000001);
               entryBuilder_ = 
-                com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders ?
+                com.google.protobuf.GeneratedMessageV3.alwaysUseFieldBuilders ?
                    getEntryFieldBuilder() : null;
             } else {
               entryBuilder_.addAllMessages(other.entry_);
             }
           }
         }
-        this.mergeUnknownFields(other.getUnknownFields());
+        this.mergeUnknownFields(other.unknownFields);
+        onChanged();
         return this;
       }
 
+      @java.lang.Override
       public final boolean isInitialized() {
         for (int i = 0; i < getEntryCount(); i++) {
           if (!getEntry(i).isInitialized()) {
-            
             return false;
           }
         }
         return true;
       }
 
+      @java.lang.Override
       public Builder mergeFrom(
           com.google.protobuf.CodedInputStream input,
           com.google.protobuf.ExtensionRegistryLite extensionRegistry)
@@ -7578,7 +8595,7 @@ public final class PrefsProto {
           parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
         } catch (com.google.protobuf.InvalidProtocolBufferException e) {
           parsedMessage = (de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringArrayMap) e.getUnfinishedMessage();
-          throw e;
+          throw e.unwrapIOException();
         } finally {
           if (parsedMessage != null) {
             mergeFrom(parsedMessage);
@@ -7597,7 +8614,7 @@ public final class PrefsProto {
          }
       }
 
-      private com.google.protobuf.RepeatedFieldBuilder<
+      private com.google.protobuf.RepeatedFieldBuilderV3<
           de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringArrayMapEntry, de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringArrayMapEntry.Builder, de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringArrayMapEntryOrBuilder> entryBuilder_;
 
       /**
@@ -7813,11 +8830,11 @@ public final class PrefsProto {
            getEntryBuilderList() {
         return getEntryFieldBuilder().getBuilderList();
       }
-      private com.google.protobuf.RepeatedFieldBuilder<
+      private com.google.protobuf.RepeatedFieldBuilderV3<
           de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringArrayMapEntry, de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringArrayMapEntry.Builder, de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringArrayMapEntryOrBuilder> 
           getEntryFieldBuilder() {
         if (entryBuilder_ == null) {
-          entryBuilder_ = new com.google.protobuf.RepeatedFieldBuilder<
+          entryBuilder_ = new com.google.protobuf.RepeatedFieldBuilderV3<
               de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringArrayMapEntry, de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringArrayMapEntry.Builder, de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringArrayMapEntryOrBuilder>(
                   entry_,
                   ((bitField0_ & 0x00000001) == 0x00000001),
@@ -7827,16 +8844,57 @@ public final class PrefsProto {
         }
         return entryBuilder_;
       }
+      @java.lang.Override
+      public final Builder setUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.setUnknownFields(unknownFields);
+      }
+
+      @java.lang.Override
+      public final Builder mergeUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.mergeUnknownFields(unknownFields);
+      }
+
 
       // @@protoc_insertion_point(builder_scope:de.huxhorn.lilith.prefs.StringArrayMap)
     }
 
+    // @@protoc_insertion_point(class_scope:de.huxhorn.lilith.prefs.StringArrayMap)
+    private static final de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringArrayMap DEFAULT_INSTANCE;
     static {
-      defaultInstance = new StringArrayMap(true);
-      defaultInstance.initFields();
+      DEFAULT_INSTANCE = new de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringArrayMap();
     }
 
-    // @@protoc_insertion_point(class_scope:de.huxhorn.lilith.prefs.StringArrayMap)
+    public static de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringArrayMap getDefaultInstance() {
+      return DEFAULT_INSTANCE;
+    }
+
+    @java.lang.Deprecated public static final com.google.protobuf.Parser<StringArrayMap>
+        PARSER = new com.google.protobuf.AbstractParser<StringArrayMap>() {
+      @java.lang.Override
+      public StringArrayMap parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return new StringArrayMap(input, extensionRegistry);
+      }
+    };
+
+    public static com.google.protobuf.Parser<StringArrayMap> parser() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<StringArrayMap> getParserForType() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringArrayMap getDefaultInstanceForType() {
+      return DEFAULT_INSTANCE;
+    }
+
   }
 
   public interface StringArrayMapEntryOrBuilder extends
@@ -7884,37 +8942,33 @@ public final class PrefsProto {
   /**
    * Protobuf type {@code de.huxhorn.lilith.prefs.StringArrayMapEntry}
    */
-  public static final class StringArrayMapEntry extends
-      com.google.protobuf.GeneratedMessage implements
+  public  static final class StringArrayMapEntry extends
+      com.google.protobuf.GeneratedMessageV3 implements
       // @@protoc_insertion_point(message_implements:de.huxhorn.lilith.prefs.StringArrayMapEntry)
       StringArrayMapEntryOrBuilder {
+  private static final long serialVersionUID = 0L;
     // Use StringArrayMapEntry.newBuilder() to construct.
-    private StringArrayMapEntry(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
+    private StringArrayMapEntry(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
       super(builder);
-      this.unknownFields = builder.getUnknownFields();
     }
-    private StringArrayMapEntry(boolean noInit) { this.unknownFields = com.google.protobuf.UnknownFieldSet.getDefaultInstance(); }
-
-    private static final StringArrayMapEntry defaultInstance;
-    public static StringArrayMapEntry getDefaultInstance() {
-      return defaultInstance;
+    private StringArrayMapEntry() {
+      key_ = "";
+      value_ = java.util.Collections.emptyList();
     }
 
-    public StringArrayMapEntry getDefaultInstanceForType() {
-      return defaultInstance;
-    }
-
-    private final com.google.protobuf.UnknownFieldSet unknownFields;
     @java.lang.Override
     public final com.google.protobuf.UnknownFieldSet
-        getUnknownFields() {
+    getUnknownFields() {
       return this.unknownFields;
     }
     private StringArrayMapEntry(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
-      initFields();
+      this();
+      if (extensionRegistry == null) {
+        throw new java.lang.NullPointerException();
+      }
       int mutable_bitField0_ = 0;
       com.google.protobuf.UnknownFieldSet.Builder unknownFields =
           com.google.protobuf.UnknownFieldSet.newBuilder();
@@ -7926,13 +8980,6 @@ public final class PrefsProto {
             case 0:
               done = true;
               break;
-            default: {
-              if (!parseUnknownField(input, unknownFields,
-                                     extensionRegistry, tag)) {
-                done = true;
-              }
-              break;
-            }
             case 10: {
               com.google.protobuf.ByteString bs = input.readBytes();
               bitField0_ |= 0x00000001;
@@ -7944,7 +8991,15 @@ public final class PrefsProto {
                 value_ = new java.util.ArrayList<de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringArrayValue>();
                 mutable_bitField0_ |= 0x00000002;
               }
-              value_.add(input.readMessage(de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringArrayValue.PARSER, extensionRegistry));
+              value_.add(
+                  input.readMessage(de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringArrayValue.PARSER, extensionRegistry));
+              break;
+            }
+            default: {
+              if (!parseUnknownField(
+                  input, unknownFields, extensionRegistry, tag)) {
+                done = true;
+              }
               break;
             }
           }
@@ -7953,7 +9008,7 @@ public final class PrefsProto {
         throw e.setUnfinishedMessage(this);
       } catch (java.io.IOException e) {
         throw new com.google.protobuf.InvalidProtocolBufferException(
-            e.getMessage()).setUnfinishedMessage(this);
+            e).setUnfinishedMessage(this);
       } finally {
         if (((mutable_bitField0_ & 0x00000002) == 0x00000002)) {
           value_ = java.util.Collections.unmodifiableList(value_);
@@ -7967,31 +9022,17 @@ public final class PrefsProto {
       return de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.internal_static_de_huxhorn_lilith_prefs_StringArrayMapEntry_descriptor;
     }
 
-    protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+    @java.lang.Override
+    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
         internalGetFieldAccessorTable() {
       return de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.internal_static_de_huxhorn_lilith_prefs_StringArrayMapEntry_fieldAccessorTable
           .ensureFieldAccessorsInitialized(
               de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringArrayMapEntry.class, de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringArrayMapEntry.Builder.class);
     }
 
-    public static com.google.protobuf.Parser<StringArrayMapEntry> PARSER =
-        new com.google.protobuf.AbstractParser<StringArrayMapEntry>() {
-      public StringArrayMapEntry parsePartialFrom(
-          com.google.protobuf.CodedInputStream input,
-          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-          throws com.google.protobuf.InvalidProtocolBufferException {
-        return new StringArrayMapEntry(input, extensionRegistry);
-      }
-    };
-
-    @java.lang.Override
-    public com.google.protobuf.Parser<StringArrayMapEntry> getParserForType() {
-      return PARSER;
-    }
-
     private int bitField0_;
     public static final int KEY_FIELD_NUMBER = 1;
-    private java.lang.Object key_;
+    private volatile java.lang.Object key_;
     /**
      * <code>required string key = 1;</code>
      */
@@ -8067,11 +9108,8 @@ public final class PrefsProto {
       return value_.get(index);
     }
 
-    private void initFields() {
-      key_ = "";
-      value_ = java.util.Collections.emptyList();
-    }
     private byte memoizedIsInitialized = -1;
+    @java.lang.Override
     public final boolean isInitialized() {
       byte isInitialized = memoizedIsInitialized;
       if (isInitialized == 1) return true;
@@ -8085,44 +9123,89 @@ public final class PrefsProto {
       return true;
     }
 
+    @java.lang.Override
     public void writeTo(com.google.protobuf.CodedOutputStream output)
                         throws java.io.IOException {
-      getSerializedSize();
       if (((bitField0_ & 0x00000001) == 0x00000001)) {
-        output.writeBytes(1, getKeyBytes());
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 1, key_);
       }
       for (int i = 0; i < value_.size(); i++) {
         output.writeMessage(2, value_.get(i));
       }
-      getUnknownFields().writeTo(output);
+      unknownFields.writeTo(output);
     }
 
-    private int memoizedSerializedSize = -1;
+    @java.lang.Override
     public int getSerializedSize() {
-      int size = memoizedSerializedSize;
+      int size = memoizedSize;
       if (size != -1) return size;
 
       size = 0;
       if (((bitField0_ & 0x00000001) == 0x00000001)) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeBytesSize(1, getKeyBytes());
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(1, key_);
       }
       for (int i = 0; i < value_.size(); i++) {
         size += com.google.protobuf.CodedOutputStream
           .computeMessageSize(2, value_.get(i));
       }
-      size += getUnknownFields().getSerializedSize();
-      memoizedSerializedSize = size;
+      size += unknownFields.getSerializedSize();
+      memoizedSize = size;
       return size;
     }
 
-    private static final long serialVersionUID = 0L;
     @java.lang.Override
-    protected java.lang.Object writeReplace()
-        throws java.io.ObjectStreamException {
-      return super.writeReplace();
+    public boolean equals(final java.lang.Object obj) {
+      if (obj == this) {
+       return true;
+      }
+      if (!(obj instanceof de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringArrayMapEntry)) {
+        return super.equals(obj);
+      }
+      de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringArrayMapEntry other = (de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringArrayMapEntry) obj;
+
+      boolean result = true;
+      result = result && (hasKey() == other.hasKey());
+      if (hasKey()) {
+        result = result && getKey()
+            .equals(other.getKey());
+      }
+      result = result && getValueList()
+          .equals(other.getValueList());
+      result = result && unknownFields.equals(other.unknownFields);
+      return result;
     }
 
+    @java.lang.Override
+    public int hashCode() {
+      if (memoizedHashCode != 0) {
+        return memoizedHashCode;
+      }
+      int hash = 41;
+      hash = (19 * hash) + getDescriptor().hashCode();
+      if (hasKey()) {
+        hash = (37 * hash) + KEY_FIELD_NUMBER;
+        hash = (53 * hash) + getKey().hashCode();
+      }
+      if (getValueCount() > 0) {
+        hash = (37 * hash) + VALUE_FIELD_NUMBER;
+        hash = (53 * hash) + getValueList().hashCode();
+      }
+      hash = (29 * hash) + unknownFields.hashCode();
+      memoizedHashCode = hash;
+      return hash;
+    }
+
+    public static de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringArrayMapEntry parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringArrayMapEntry parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
     public static de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringArrayMapEntry parseFrom(
         com.google.protobuf.ByteString data)
         throws com.google.protobuf.InvalidProtocolBufferException {
@@ -8146,46 +9229,59 @@ public final class PrefsProto {
     }
     public static de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringArrayMapEntry parseFrom(java.io.InputStream input)
         throws java.io.IOException {
-      return PARSER.parseFrom(input);
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
     }
     public static de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringArrayMapEntry parseFrom(
         java.io.InputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
-      return PARSER.parseFrom(input, extensionRegistry);
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
     }
     public static de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringArrayMapEntry parseDelimitedFrom(java.io.InputStream input)
         throws java.io.IOException {
-      return PARSER.parseDelimitedFrom(input);
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input);
     }
     public static de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringArrayMapEntry parseDelimitedFrom(
         java.io.InputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
-      return PARSER.parseDelimitedFrom(input, extensionRegistry);
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
     }
     public static de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringArrayMapEntry parseFrom(
         com.google.protobuf.CodedInputStream input)
         throws java.io.IOException {
-      return PARSER.parseFrom(input);
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
     }
     public static de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringArrayMapEntry parseFrom(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
-      return PARSER.parseFrom(input, extensionRegistry);
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
     }
 
-    public static Builder newBuilder() { return Builder.create(); }
+    @java.lang.Override
     public Builder newBuilderForType() { return newBuilder(); }
-    public static Builder newBuilder(de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringArrayMapEntry prototype) {
-      return newBuilder().mergeFrom(prototype);
+    public static Builder newBuilder() {
+      return DEFAULT_INSTANCE.toBuilder();
     }
-    public Builder toBuilder() { return newBuilder(this); }
+    public static Builder newBuilder(de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringArrayMapEntry prototype) {
+      return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+    }
+    @java.lang.Override
+    public Builder toBuilder() {
+      return this == DEFAULT_INSTANCE
+          ? new Builder() : new Builder().mergeFrom(this);
+    }
 
     @java.lang.Override
     protected Builder newBuilderForType(
-        com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
       Builder builder = new Builder(parent);
       return builder;
     }
@@ -8193,7 +9289,7 @@ public final class PrefsProto {
      * Protobuf type {@code de.huxhorn.lilith.prefs.StringArrayMapEntry}
      */
     public static final class Builder extends
-        com.google.protobuf.GeneratedMessage.Builder<Builder> implements
+        com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
         // @@protoc_insertion_point(builder_implements:de.huxhorn.lilith.prefs.StringArrayMapEntry)
         de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringArrayMapEntryOrBuilder {
       public static final com.google.protobuf.Descriptors.Descriptor
@@ -8201,7 +9297,8 @@ public final class PrefsProto {
         return de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.internal_static_de_huxhorn_lilith_prefs_StringArrayMapEntry_descriptor;
       }
 
-      protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+      @java.lang.Override
+      protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
           internalGetFieldAccessorTable() {
         return de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.internal_static_de_huxhorn_lilith_prefs_StringArrayMapEntry_fieldAccessorTable
             .ensureFieldAccessorsInitialized(
@@ -8214,19 +9311,17 @@ public final class PrefsProto {
       }
 
       private Builder(
-          com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+          com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
         super(parent);
         maybeForceBuilderInitialization();
       }
       private void maybeForceBuilderInitialization() {
-        if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
+        if (com.google.protobuf.GeneratedMessageV3
+                .alwaysUseFieldBuilders) {
           getValueFieldBuilder();
         }
       }
-      private static Builder create() {
-        return new Builder();
-      }
-
+      @java.lang.Override
       public Builder clear() {
         super.clear();
         key_ = "";
@@ -8240,19 +9335,18 @@ public final class PrefsProto {
         return this;
       }
 
-      public Builder clone() {
-        return create().mergeFrom(buildPartial());
-      }
-
+      @java.lang.Override
       public com.google.protobuf.Descriptors.Descriptor
           getDescriptorForType() {
         return de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.internal_static_de_huxhorn_lilith_prefs_StringArrayMapEntry_descriptor;
       }
 
+      @java.lang.Override
       public de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringArrayMapEntry getDefaultInstanceForType() {
         return de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringArrayMapEntry.getDefaultInstance();
       }
 
+      @java.lang.Override
       public de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringArrayMapEntry build() {
         de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringArrayMapEntry result = buildPartial();
         if (!result.isInitialized()) {
@@ -8261,6 +9355,7 @@ public final class PrefsProto {
         return result;
       }
 
+      @java.lang.Override
       public de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringArrayMapEntry buildPartial() {
         de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringArrayMapEntry result = new de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringArrayMapEntry(this);
         int from_bitField0_ = bitField0_;
@@ -8283,6 +9378,39 @@ public final class PrefsProto {
         return result;
       }
 
+      @java.lang.Override
+      public Builder clone() {
+        return (Builder) super.clone();
+      }
+      @java.lang.Override
+      public Builder setField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return (Builder) super.setField(field, value);
+      }
+      @java.lang.Override
+      public Builder clearField(
+          com.google.protobuf.Descriptors.FieldDescriptor field) {
+        return (Builder) super.clearField(field);
+      }
+      @java.lang.Override
+      public Builder clearOneof(
+          com.google.protobuf.Descriptors.OneofDescriptor oneof) {
+        return (Builder) super.clearOneof(oneof);
+      }
+      @java.lang.Override
+      public Builder setRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          int index, java.lang.Object value) {
+        return (Builder) super.setRepeatedField(field, index, value);
+      }
+      @java.lang.Override
+      public Builder addRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return (Builder) super.addRepeatedField(field, value);
+      }
+      @java.lang.Override
       public Builder mergeFrom(com.google.protobuf.Message other) {
         if (other instanceof de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringArrayMapEntry) {
           return mergeFrom((de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringArrayMapEntry)other);
@@ -8318,25 +9446,27 @@ public final class PrefsProto {
               value_ = other.value_;
               bitField0_ = (bitField0_ & ~0x00000002);
               valueBuilder_ = 
-                com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders ?
+                com.google.protobuf.GeneratedMessageV3.alwaysUseFieldBuilders ?
                    getValueFieldBuilder() : null;
             } else {
               valueBuilder_.addAllMessages(other.value_);
             }
           }
         }
-        this.mergeUnknownFields(other.getUnknownFields());
+        this.mergeUnknownFields(other.unknownFields);
+        onChanged();
         return this;
       }
 
+      @java.lang.Override
       public final boolean isInitialized() {
         if (!hasKey()) {
-          
           return false;
         }
         return true;
       }
 
+      @java.lang.Override
       public Builder mergeFrom(
           com.google.protobuf.CodedInputStream input,
           com.google.protobuf.ExtensionRegistryLite extensionRegistry)
@@ -8346,7 +9476,7 @@ public final class PrefsProto {
           parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
         } catch (com.google.protobuf.InvalidProtocolBufferException e) {
           parsedMessage = (de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringArrayMapEntry) e.getUnfinishedMessage();
-          throw e;
+          throw e.unwrapIOException();
         } finally {
           if (parsedMessage != null) {
             mergeFrom(parsedMessage);
@@ -8441,7 +9571,7 @@ public final class PrefsProto {
          }
       }
 
-      private com.google.protobuf.RepeatedFieldBuilder<
+      private com.google.protobuf.RepeatedFieldBuilderV3<
           de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringArrayValue, de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringArrayValue.Builder, de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringArrayValueOrBuilder> valueBuilder_;
 
       /**
@@ -8657,11 +9787,11 @@ public final class PrefsProto {
            getValueBuilderList() {
         return getValueFieldBuilder().getBuilderList();
       }
-      private com.google.protobuf.RepeatedFieldBuilder<
+      private com.google.protobuf.RepeatedFieldBuilderV3<
           de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringArrayValue, de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringArrayValue.Builder, de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringArrayValueOrBuilder> 
           getValueFieldBuilder() {
         if (valueBuilder_ == null) {
-          valueBuilder_ = new com.google.protobuf.RepeatedFieldBuilder<
+          valueBuilder_ = new com.google.protobuf.RepeatedFieldBuilderV3<
               de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringArrayValue, de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringArrayValue.Builder, de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringArrayValueOrBuilder>(
                   value_,
                   ((bitField0_ & 0x00000002) == 0x00000002),
@@ -8671,16 +9801,57 @@ public final class PrefsProto {
         }
         return valueBuilder_;
       }
+      @java.lang.Override
+      public final Builder setUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.setUnknownFields(unknownFields);
+      }
+
+      @java.lang.Override
+      public final Builder mergeUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.mergeUnknownFields(unknownFields);
+      }
+
 
       // @@protoc_insertion_point(builder_scope:de.huxhorn.lilith.prefs.StringArrayMapEntry)
     }
 
+    // @@protoc_insertion_point(class_scope:de.huxhorn.lilith.prefs.StringArrayMapEntry)
+    private static final de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringArrayMapEntry DEFAULT_INSTANCE;
     static {
-      defaultInstance = new StringArrayMapEntry(true);
-      defaultInstance.initFields();
+      DEFAULT_INSTANCE = new de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringArrayMapEntry();
     }
 
-    // @@protoc_insertion_point(class_scope:de.huxhorn.lilith.prefs.StringArrayMapEntry)
+    public static de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringArrayMapEntry getDefaultInstance() {
+      return DEFAULT_INSTANCE;
+    }
+
+    @java.lang.Deprecated public static final com.google.protobuf.Parser<StringArrayMapEntry>
+        PARSER = new com.google.protobuf.AbstractParser<StringArrayMapEntry>() {
+      @java.lang.Override
+      public StringArrayMapEntry parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return new StringArrayMapEntry(input, extensionRegistry);
+      }
+    };
+
+    public static com.google.protobuf.Parser<StringArrayMapEntry> parser() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<StringArrayMapEntry> getParserForType() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringArrayMapEntry getDefaultInstanceForType() {
+      return DEFAULT_INSTANCE;
+    }
+
   }
 
   public interface StringArrayValueOrBuilder extends
@@ -8702,43 +9873,38 @@ public final class PrefsProto {
         getValueBytes();
   }
   /**
-   * Protobuf type {@code de.huxhorn.lilith.prefs.StringArrayValue}
-   *
    * <pre>
    * this is necessary to support null values
    * </pre>
+   *
+   * Protobuf type {@code de.huxhorn.lilith.prefs.StringArrayValue}
    */
-  public static final class StringArrayValue extends
-      com.google.protobuf.GeneratedMessage implements
+  public  static final class StringArrayValue extends
+      com.google.protobuf.GeneratedMessageV3 implements
       // @@protoc_insertion_point(message_implements:de.huxhorn.lilith.prefs.StringArrayValue)
       StringArrayValueOrBuilder {
+  private static final long serialVersionUID = 0L;
     // Use StringArrayValue.newBuilder() to construct.
-    private StringArrayValue(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
+    private StringArrayValue(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
       super(builder);
-      this.unknownFields = builder.getUnknownFields();
     }
-    private StringArrayValue(boolean noInit) { this.unknownFields = com.google.protobuf.UnknownFieldSet.getDefaultInstance(); }
-
-    private static final StringArrayValue defaultInstance;
-    public static StringArrayValue getDefaultInstance() {
-      return defaultInstance;
+    private StringArrayValue() {
+      value_ = "";
     }
 
-    public StringArrayValue getDefaultInstanceForType() {
-      return defaultInstance;
-    }
-
-    private final com.google.protobuf.UnknownFieldSet unknownFields;
     @java.lang.Override
     public final com.google.protobuf.UnknownFieldSet
-        getUnknownFields() {
+    getUnknownFields() {
       return this.unknownFields;
     }
     private StringArrayValue(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
-      initFields();
+      this();
+      if (extensionRegistry == null) {
+        throw new java.lang.NullPointerException();
+      }
       int mutable_bitField0_ = 0;
       com.google.protobuf.UnknownFieldSet.Builder unknownFields =
           com.google.protobuf.UnknownFieldSet.newBuilder();
@@ -8750,17 +9916,17 @@ public final class PrefsProto {
             case 0:
               done = true;
               break;
-            default: {
-              if (!parseUnknownField(input, unknownFields,
-                                     extensionRegistry, tag)) {
-                done = true;
-              }
-              break;
-            }
             case 10: {
               com.google.protobuf.ByteString bs = input.readBytes();
               bitField0_ |= 0x00000001;
               value_ = bs;
+              break;
+            }
+            default: {
+              if (!parseUnknownField(
+                  input, unknownFields, extensionRegistry, tag)) {
+                done = true;
+              }
               break;
             }
           }
@@ -8769,7 +9935,7 @@ public final class PrefsProto {
         throw e.setUnfinishedMessage(this);
       } catch (java.io.IOException e) {
         throw new com.google.protobuf.InvalidProtocolBufferException(
-            e.getMessage()).setUnfinishedMessage(this);
+            e).setUnfinishedMessage(this);
       } finally {
         this.unknownFields = unknownFields.build();
         makeExtensionsImmutable();
@@ -8780,31 +9946,17 @@ public final class PrefsProto {
       return de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.internal_static_de_huxhorn_lilith_prefs_StringArrayValue_descriptor;
     }
 
-    protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+    @java.lang.Override
+    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
         internalGetFieldAccessorTable() {
       return de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.internal_static_de_huxhorn_lilith_prefs_StringArrayValue_fieldAccessorTable
           .ensureFieldAccessorsInitialized(
               de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringArrayValue.class, de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringArrayValue.Builder.class);
     }
 
-    public static com.google.protobuf.Parser<StringArrayValue> PARSER =
-        new com.google.protobuf.AbstractParser<StringArrayValue>() {
-      public StringArrayValue parsePartialFrom(
-          com.google.protobuf.CodedInputStream input,
-          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-          throws com.google.protobuf.InvalidProtocolBufferException {
-        return new StringArrayValue(input, extensionRegistry);
-      }
-    };
-
-    @java.lang.Override
-    public com.google.protobuf.Parser<StringArrayValue> getParserForType() {
-      return PARSER;
-    }
-
     private int bitField0_;
     public static final int VALUE_FIELD_NUMBER = 1;
-    private java.lang.Object value_;
+    private volatile java.lang.Object value_;
     /**
      * <code>optional string value = 1;</code>
      */
@@ -8845,10 +9997,8 @@ public final class PrefsProto {
       }
     }
 
-    private void initFields() {
-      value_ = "";
-    }
     private byte memoizedIsInitialized = -1;
+    @java.lang.Override
     public final boolean isInitialized() {
       byte isInitialized = memoizedIsInitialized;
       if (isInitialized == 1) return true;
@@ -8858,37 +10008,76 @@ public final class PrefsProto {
       return true;
     }
 
+    @java.lang.Override
     public void writeTo(com.google.protobuf.CodedOutputStream output)
                         throws java.io.IOException {
-      getSerializedSize();
       if (((bitField0_ & 0x00000001) == 0x00000001)) {
-        output.writeBytes(1, getValueBytes());
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 1, value_);
       }
-      getUnknownFields().writeTo(output);
+      unknownFields.writeTo(output);
     }
 
-    private int memoizedSerializedSize = -1;
+    @java.lang.Override
     public int getSerializedSize() {
-      int size = memoizedSerializedSize;
+      int size = memoizedSize;
       if (size != -1) return size;
 
       size = 0;
       if (((bitField0_ & 0x00000001) == 0x00000001)) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeBytesSize(1, getValueBytes());
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(1, value_);
       }
-      size += getUnknownFields().getSerializedSize();
-      memoizedSerializedSize = size;
+      size += unknownFields.getSerializedSize();
+      memoizedSize = size;
       return size;
     }
 
-    private static final long serialVersionUID = 0L;
     @java.lang.Override
-    protected java.lang.Object writeReplace()
-        throws java.io.ObjectStreamException {
-      return super.writeReplace();
+    public boolean equals(final java.lang.Object obj) {
+      if (obj == this) {
+       return true;
+      }
+      if (!(obj instanceof de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringArrayValue)) {
+        return super.equals(obj);
+      }
+      de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringArrayValue other = (de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringArrayValue) obj;
+
+      boolean result = true;
+      result = result && (hasValue() == other.hasValue());
+      if (hasValue()) {
+        result = result && getValue()
+            .equals(other.getValue());
+      }
+      result = result && unknownFields.equals(other.unknownFields);
+      return result;
     }
 
+    @java.lang.Override
+    public int hashCode() {
+      if (memoizedHashCode != 0) {
+        return memoizedHashCode;
+      }
+      int hash = 41;
+      hash = (19 * hash) + getDescriptor().hashCode();
+      if (hasValue()) {
+        hash = (37 * hash) + VALUE_FIELD_NUMBER;
+        hash = (53 * hash) + getValue().hashCode();
+      }
+      hash = (29 * hash) + unknownFields.hashCode();
+      memoizedHashCode = hash;
+      return hash;
+    }
+
+    public static de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringArrayValue parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringArrayValue parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
     public static de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringArrayValue parseFrom(
         com.google.protobuf.ByteString data)
         throws com.google.protobuf.InvalidProtocolBufferException {
@@ -8912,58 +10101,71 @@ public final class PrefsProto {
     }
     public static de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringArrayValue parseFrom(java.io.InputStream input)
         throws java.io.IOException {
-      return PARSER.parseFrom(input);
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
     }
     public static de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringArrayValue parseFrom(
         java.io.InputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
-      return PARSER.parseFrom(input, extensionRegistry);
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
     }
     public static de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringArrayValue parseDelimitedFrom(java.io.InputStream input)
         throws java.io.IOException {
-      return PARSER.parseDelimitedFrom(input);
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input);
     }
     public static de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringArrayValue parseDelimitedFrom(
         java.io.InputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
-      return PARSER.parseDelimitedFrom(input, extensionRegistry);
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
     }
     public static de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringArrayValue parseFrom(
         com.google.protobuf.CodedInputStream input)
         throws java.io.IOException {
-      return PARSER.parseFrom(input);
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
     }
     public static de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringArrayValue parseFrom(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
-      return PARSER.parseFrom(input, extensionRegistry);
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
     }
 
-    public static Builder newBuilder() { return Builder.create(); }
+    @java.lang.Override
     public Builder newBuilderForType() { return newBuilder(); }
-    public static Builder newBuilder(de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringArrayValue prototype) {
-      return newBuilder().mergeFrom(prototype);
+    public static Builder newBuilder() {
+      return DEFAULT_INSTANCE.toBuilder();
     }
-    public Builder toBuilder() { return newBuilder(this); }
+    public static Builder newBuilder(de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringArrayValue prototype) {
+      return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+    }
+    @java.lang.Override
+    public Builder toBuilder() {
+      return this == DEFAULT_INSTANCE
+          ? new Builder() : new Builder().mergeFrom(this);
+    }
 
     @java.lang.Override
     protected Builder newBuilderForType(
-        com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
       Builder builder = new Builder(parent);
       return builder;
     }
     /**
-     * Protobuf type {@code de.huxhorn.lilith.prefs.StringArrayValue}
-     *
      * <pre>
      * this is necessary to support null values
      * </pre>
+     *
+     * Protobuf type {@code de.huxhorn.lilith.prefs.StringArrayValue}
      */
     public static final class Builder extends
-        com.google.protobuf.GeneratedMessage.Builder<Builder> implements
+        com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
         // @@protoc_insertion_point(builder_implements:de.huxhorn.lilith.prefs.StringArrayValue)
         de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringArrayValueOrBuilder {
       public static final com.google.protobuf.Descriptors.Descriptor
@@ -8971,7 +10173,8 @@ public final class PrefsProto {
         return de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.internal_static_de_huxhorn_lilith_prefs_StringArrayValue_descriptor;
       }
 
-      protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+      @java.lang.Override
+      protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
           internalGetFieldAccessorTable() {
         return de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.internal_static_de_huxhorn_lilith_prefs_StringArrayValue_fieldAccessorTable
             .ensureFieldAccessorsInitialized(
@@ -8984,18 +10187,16 @@ public final class PrefsProto {
       }
 
       private Builder(
-          com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+          com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
         super(parent);
         maybeForceBuilderInitialization();
       }
       private void maybeForceBuilderInitialization() {
-        if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
+        if (com.google.protobuf.GeneratedMessageV3
+                .alwaysUseFieldBuilders) {
         }
       }
-      private static Builder create() {
-        return new Builder();
-      }
-
+      @java.lang.Override
       public Builder clear() {
         super.clear();
         value_ = "";
@@ -9003,19 +10204,18 @@ public final class PrefsProto {
         return this;
       }
 
-      public Builder clone() {
-        return create().mergeFrom(buildPartial());
-      }
-
+      @java.lang.Override
       public com.google.protobuf.Descriptors.Descriptor
           getDescriptorForType() {
         return de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.internal_static_de_huxhorn_lilith_prefs_StringArrayValue_descriptor;
       }
 
+      @java.lang.Override
       public de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringArrayValue getDefaultInstanceForType() {
         return de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringArrayValue.getDefaultInstance();
       }
 
+      @java.lang.Override
       public de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringArrayValue build() {
         de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringArrayValue result = buildPartial();
         if (!result.isInitialized()) {
@@ -9024,6 +10224,7 @@ public final class PrefsProto {
         return result;
       }
 
+      @java.lang.Override
       public de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringArrayValue buildPartial() {
         de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringArrayValue result = new de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringArrayValue(this);
         int from_bitField0_ = bitField0_;
@@ -9037,6 +10238,39 @@ public final class PrefsProto {
         return result;
       }
 
+      @java.lang.Override
+      public Builder clone() {
+        return (Builder) super.clone();
+      }
+      @java.lang.Override
+      public Builder setField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return (Builder) super.setField(field, value);
+      }
+      @java.lang.Override
+      public Builder clearField(
+          com.google.protobuf.Descriptors.FieldDescriptor field) {
+        return (Builder) super.clearField(field);
+      }
+      @java.lang.Override
+      public Builder clearOneof(
+          com.google.protobuf.Descriptors.OneofDescriptor oneof) {
+        return (Builder) super.clearOneof(oneof);
+      }
+      @java.lang.Override
+      public Builder setRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          int index, java.lang.Object value) {
+        return (Builder) super.setRepeatedField(field, index, value);
+      }
+      @java.lang.Override
+      public Builder addRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return (Builder) super.addRepeatedField(field, value);
+      }
+      @java.lang.Override
       public Builder mergeFrom(com.google.protobuf.Message other) {
         if (other instanceof de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringArrayValue) {
           return mergeFrom((de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringArrayValue)other);
@@ -9053,14 +10287,17 @@ public final class PrefsProto {
           value_ = other.value_;
           onChanged();
         }
-        this.mergeUnknownFields(other.getUnknownFields());
+        this.mergeUnknownFields(other.unknownFields);
+        onChanged();
         return this;
       }
 
+      @java.lang.Override
       public final boolean isInitialized() {
         return true;
       }
 
+      @java.lang.Override
       public Builder mergeFrom(
           com.google.protobuf.CodedInputStream input,
           com.google.protobuf.ExtensionRegistryLite extensionRegistry)
@@ -9070,7 +10307,7 @@ public final class PrefsProto {
           parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
         } catch (com.google.protobuf.InvalidProtocolBufferException e) {
           parsedMessage = (de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringArrayValue) e.getUnfinishedMessage();
-          throw e;
+          throw e.unwrapIOException();
         } finally {
           if (parsedMessage != null) {
             mergeFrom(parsedMessage);
@@ -9155,69 +10392,110 @@ public final class PrefsProto {
         onChanged();
         return this;
       }
+      @java.lang.Override
+      public final Builder setUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.setUnknownFields(unknownFields);
+      }
+
+      @java.lang.Override
+      public final Builder mergeUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.mergeUnknownFields(unknownFields);
+      }
+
 
       // @@protoc_insertion_point(builder_scope:de.huxhorn.lilith.prefs.StringArrayValue)
     }
 
+    // @@protoc_insertion_point(class_scope:de.huxhorn.lilith.prefs.StringArrayValue)
+    private static final de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringArrayValue DEFAULT_INSTANCE;
     static {
-      defaultInstance = new StringArrayValue(true);
-      defaultInstance.initFields();
+      DEFAULT_INSTANCE = new de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringArrayValue();
     }
 
-    // @@protoc_insertion_point(class_scope:de.huxhorn.lilith.prefs.StringArrayValue)
+    public static de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringArrayValue getDefaultInstance() {
+      return DEFAULT_INSTANCE;
+    }
+
+    @java.lang.Deprecated public static final com.google.protobuf.Parser<StringArrayValue>
+        PARSER = new com.google.protobuf.AbstractParser<StringArrayValue>() {
+      @java.lang.Override
+      public StringArrayValue parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return new StringArrayValue(input, extensionRegistry);
+      }
+    };
+
+    public static com.google.protobuf.Parser<StringArrayValue> parser() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<StringArrayValue> getParserForType() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto.StringArrayValue getDefaultInstanceForType() {
+      return DEFAULT_INSTANCE;
+    }
+
   }
 
   private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_de_huxhorn_lilith_prefs_LilithPreferences_descriptor;
-  private static
-    com.google.protobuf.GeneratedMessage.FieldAccessorTable
+  private static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_de_huxhorn_lilith_prefs_LilithPreferences_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_de_huxhorn_lilith_prefs_DirectoryContent_descriptor;
-  private static
-    com.google.protobuf.GeneratedMessage.FieldAccessorTable
+  private static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_de_huxhorn_lilith_prefs_DirectoryContent_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_de_huxhorn_lilith_prefs_ByteArrayMapEntry_descriptor;
-  private static
-    com.google.protobuf.GeneratedMessage.FieldAccessorTable
+  private static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_de_huxhorn_lilith_prefs_ByteArrayMapEntry_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_de_huxhorn_lilith_prefs_StringMap_descriptor;
-  private static
-    com.google.protobuf.GeneratedMessage.FieldAccessorTable
+  private static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_de_huxhorn_lilith_prefs_StringMap_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_de_huxhorn_lilith_prefs_StringMapEntry_descriptor;
-  private static
-    com.google.protobuf.GeneratedMessage.FieldAccessorTable
+  private static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_de_huxhorn_lilith_prefs_StringMapEntry_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_de_huxhorn_lilith_prefs_StringArrayMap_descriptor;
-  private static
-    com.google.protobuf.GeneratedMessage.FieldAccessorTable
+  private static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_de_huxhorn_lilith_prefs_StringArrayMap_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_de_huxhorn_lilith_prefs_StringArrayMapEntry_descriptor;
-  private static
-    com.google.protobuf.GeneratedMessage.FieldAccessorTable
+  private static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_de_huxhorn_lilith_prefs_StringArrayMapEntry_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_de_huxhorn_lilith_prefs_StringArrayValue_descriptor;
-  private static
-    com.google.protobuf.GeneratedMessage.FieldAccessorTable
+  private static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_de_huxhorn_lilith_prefs_StringArrayValue_fieldAccessorTable;
 
   public static com.google.protobuf.Descriptors.FileDescriptor
       getDescriptor() {
     return descriptor;
   }
-  private static com.google.protobuf.Descriptors.FileDescriptor
+  private static  com.google.protobuf.Descriptors.FileDescriptor
       descriptor;
   static {
     java.lang.String[] descriptorData = {
       "\n\"src/main/protobuf/PrefsProto.proto\022\027de" +
-      ".huxhorn.lilith.prefs\"\245\t\n\021LilithPreferen" +
+      ".huxhorn.lilith.prefs\"\231\n\n\021LilithPreferen" +
       "ces\022D\n\021groovy_conditions\030\001 \001(\0132).de.huxh" +
       "orn.lilith.prefs.DirectoryContent\022?\n\014det" +
       "ails_view\030\002 \001(\0132).de.huxhorn.lilith.pref" +
@@ -9225,45 +10503,48 @@ public final class PrefsProto {
       ".de.huxhorn.lilith.prefs.DirectoryConten" +
       "t\022\026\n\016blacklist_name\030\004 \001(\t\022\026\n\016whitelist_n" +
       "ame\030\005 \001(\t\022\025\n\rlook_and_feel\030\006 \001(\t\022\032\n\022aski" +
-      "ng_before_quit\030\007 \001(\010\022\024\n\014auto_closing\030\010 \001",
+      "ng_before_quit\030\007 \001(\010\022\024\n\014auto_closing\030\010 \001" +
       "(\010\022\034\n\024auto_focusing_window\030\t \001(\010\022\024\n\014auto" +
       "_opening\030\n \001(\010\022\033\n\023checking_for_update\030\013 " +
       "\001(\010\022\035\n\025cleaning_logs_on_exit\030\014 \001(\010\022\032\n\022co" +
       "loring_whole_row\030\r \001(\010\022\036\n\026global_logging" +
-      "_enabled\030\016 \001(\010\022!\n\031logging_statistic_enab" +
-      "led\030\020 \001(\010\022\"\n\032maximizing_internal_frames\030" +
-      "\021 \001(\010\022\014\n\004mute\030\022 \001(\010\022\033\n\023scrolling_to_bott" +
-      "om\030\023 \001(\010\022\036\n\026showing_full_callstack\030\024 \001(\010" +
-      "\022\032\n\022showing_identifier\030\025 \001(\010\022\031\n\021showing_" +
-      "statusbar\030\026 \001(\010\022\032\n\022showing_stacktrace\030\027 ",
-      "\001(\010\022\036\n\026showing_tip_of_the_day\030\030 \001(\010\022\027\n\017s" +
-      "howing_toolbar\030\031 \001(\010\022\036\n\026splash_screen_di" +
-      "sabled\030\032 \001(\010\022\035\n\025using_internal_frames\030\033 " +
-      "\001(\010\022B\n\020source_filtering\030\034 \001(\0162(.de.huxho" +
-      "rn.lilith.prefs.SourceFiltering\022\036\n\026defau" +
-      "lt_condition_name\030\035 \001(\t\022\035\n\025checking_for_" +
-      "snapshot\030\036 \001(\010\022N\n\033groovy_clipboard_forma" +
-      "tters\030\037 \001(\0132).de.huxhorn.lilith.prefs.Di" +
-      "rectoryContent\022\023\n\013tray_active\030  \001(\010\022 \n\030s" +
-      "howing_full_recent_path\030! \001(\010\022\027\n\017hiding_",
-      "on_close\030\" \001(\010\022%\n\035using_wrapped_exceptio" +
-      "n_style\030# \001(\010\"\231\001\n\020DirectoryContent\022\014\n\004na" +
-      "me\030\001 \001(\t\0229\n\005entry\030\002 \003(\0132*.de.huxhorn.lil" +
-      "ith.prefs.ByteArrayMapEntry\022<\n\tdirectory" +
-      "\030\003 \003(\0132).de.huxhorn.lilith.prefs.Directo" +
-      "ryContent\"/\n\021ByteArrayMapEntry\022\013\n\003key\030\001 " +
-      "\002(\t\022\r\n\005value\030\002 \001(\014\"C\n\tStringMap\0226\n\005entry" +
-      "\030\001 \003(\0132\'.de.huxhorn.lilith.prefs.StringM" +
-      "apEntry\",\n\016StringMapEntry\022\013\n\003key\030\001 \002(\t\022\r" +
-      "\n\005value\030\002 \001(\t\"M\n\016StringArrayMap\022;\n\005entry",
-      "\030\001 \003(\0132,.de.huxhorn.lilith.prefs.StringA" +
-      "rrayMapEntry\"\\\n\023StringArrayMapEntry\022\013\n\003k" +
-      "ey\030\001 \002(\t\0228\n\005value\030\002 \003(\0132).de.huxhorn.lil" +
-      "ith.prefs.StringArrayValue\"!\n\020StringArra" +
-      "yValue\022\r\n\005value\030\001 \001(\t*9\n\017SourceFiltering" +
-      "\022\010\n\004NONE\020\000\022\r\n\tBLACKLIST\020\001\022\r\n\tWHITELIST\020\002" +
-      "B.\n*de.huxhorn.lilith.prefs.protobuf.gen" +
-      "eratedH\001"
+      "_enabled\030\016 \001(\010\022\"\n\032maximizing_internal_fr" +
+      "ames\030\021 \001(\010\022\014\n\004mute\030\022 \001(\010\022\033\n\023scrolling_to" +
+      "_bottom\030\023 \001(\010\022\037\n\027showing_full_call_stack" +
+      "\030\024 \001(\010\022\032\n\022showing_status_bar\030\026 \001(\010\022\032\n\022sh" +
+      "owing_stacktrace\030\027 \001(\010\022\036\n\026showing_tip_of" +
+      "_the_day\030\030 \001(\010\022\027\n\017showing_toolbar\030\031 \001(\010\022" +
+      "\036\n\026splash_screen_disabled\030\032 \001(\010\022\035\n\025using" +
+      "_internal_frames\030\033 \001(\010\022B\n\020source_filteri" +
+      "ng\030\034 \001(\0162(.de.huxhorn.lilith.prefs.Sourc" +
+      "eFiltering\022\036\n\026default_condition_name\030\035 \001" +
+      "(\t\022\035\n\025checking_for_snapshot\030\036 \001(\010\022N\n\033gro" +
+      "ovy_clipboard_formatters\030\037 \001(\0132).de.huxh" +
+      "orn.lilith.prefs.DirectoryContent\022\023\n\013tra" +
+      "y_active\030  \001(\010\022 \n\030showing_full_recent_pa" +
+      "th\030! \001(\010\022\027\n\017hiding_on_close\030\" \001(\010\022%\n\035usi" +
+      "ng_wrapped_exception_style\030# \001(\010\022\"\n\032show" +
+      "ing_primary_identifier\030$ \001(\010\022$\n\034showing_" +
+      "secondary_identifier\030% \001(\010\022\032\n\022scrolling_" +
+      "smoothly\030& \001(\010J\004\010\017\020\020J\004\010\020\020\021J\004\010\025\020\026R\010licens" +
+      "edR\031logging_statistic_enabledR\022showing_i" +
+      "dentifier\"\231\001\n\020DirectoryContent\022\014\n\004name\030\001" +
+      " \001(\t\0229\n\005entry\030\002 \003(\0132*.de.huxhorn.lilith." +
+      "prefs.ByteArrayMapEntry\022<\n\tdirectory\030\003 \003" +
+      "(\0132).de.huxhorn.lilith.prefs.DirectoryCo" +
+      "ntent\"/\n\021ByteArrayMapEntry\022\013\n\003key\030\001 \002(\t\022" +
+      "\r\n\005value\030\002 \001(\014\"C\n\tStringMap\0226\n\005entry\030\001 \003" +
+      "(\0132\'.de.huxhorn.lilith.prefs.StringMapEn" +
+      "try\",\n\016StringMapEntry\022\013\n\003key\030\001 \002(\t\022\r\n\005va" +
+      "lue\030\002 \001(\t\"M\n\016StringArrayMap\022;\n\005entry\030\001 \003" +
+      "(\0132,.de.huxhorn.lilith.prefs.StringArray" +
+      "MapEntry\"\\\n\023StringArrayMapEntry\022\013\n\003key\030\001" +
+      " \002(\t\0228\n\005value\030\002 \003(\0132).de.huxhorn.lilith." +
+      "prefs.StringArrayValue\"!\n\020StringArrayVal" +
+      "ue\022\r\n\005value\030\001 \001(\t*9\n\017SourceFiltering\022\010\n\004" +
+      "NONE\020\000\022\r\n\tBLACKLIST\020\001\022\r\n\tWHITELIST\020\002B.\n*" +
+      "de.huxhorn.lilith.prefs.protobuf.generat" +
+      "edH\001"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
         new com.google.protobuf.Descriptors.FileDescriptor.    InternalDescriptorAssigner() {
@@ -9280,49 +10561,49 @@ public final class PrefsProto {
     internal_static_de_huxhorn_lilith_prefs_LilithPreferences_descriptor =
       getDescriptor().getMessageTypes().get(0);
     internal_static_de_huxhorn_lilith_prefs_LilithPreferences_fieldAccessorTable = new
-      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_de_huxhorn_lilith_prefs_LilithPreferences_descriptor,
-        new java.lang.String[] { "GroovyConditions", "DetailsView", "RootFiles", "BlacklistName", "WhitelistName", "LookAndFeel", "AskingBeforeQuit", "AutoClosing", "AutoFocusingWindow", "AutoOpening", "CheckingForUpdate", "CleaningLogsOnExit", "ColoringWholeRow", "GlobalLoggingEnabled", "LoggingStatisticEnabled", "MaximizingInternalFrames", "Mute", "ScrollingToBottom", "ShowingFullCallstack", "ShowingIdentifier", "ShowingStatusbar", "ShowingStacktrace", "ShowingTipOfTheDay", "ShowingToolbar", "SplashScreenDisabled", "UsingInternalFrames", "SourceFiltering", "DefaultConditionName", "CheckingForSnapshot", "GroovyClipboardFormatters", "TrayActive", "ShowingFullRecentPath", "HidingOnClose", "UsingWrappedExceptionStyle", });
+        new java.lang.String[] { "GroovyConditions", "DetailsView", "RootFiles", "BlacklistName", "WhitelistName", "LookAndFeel", "AskingBeforeQuit", "AutoClosing", "AutoFocusingWindow", "AutoOpening", "CheckingForUpdate", "CleaningLogsOnExit", "ColoringWholeRow", "GlobalLoggingEnabled", "MaximizingInternalFrames", "Mute", "ScrollingToBottom", "ShowingFullCallStack", "ShowingStatusBar", "ShowingStacktrace", "ShowingTipOfTheDay", "ShowingToolbar", "SplashScreenDisabled", "UsingInternalFrames", "SourceFiltering", "DefaultConditionName", "CheckingForSnapshot", "GroovyClipboardFormatters", "TrayActive", "ShowingFullRecentPath", "HidingOnClose", "UsingWrappedExceptionStyle", "ShowingPrimaryIdentifier", "ShowingSecondaryIdentifier", "ScrollingSmoothly", });
     internal_static_de_huxhorn_lilith_prefs_DirectoryContent_descriptor =
       getDescriptor().getMessageTypes().get(1);
     internal_static_de_huxhorn_lilith_prefs_DirectoryContent_fieldAccessorTable = new
-      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_de_huxhorn_lilith_prefs_DirectoryContent_descriptor,
         new java.lang.String[] { "Name", "Entry", "Directory", });
     internal_static_de_huxhorn_lilith_prefs_ByteArrayMapEntry_descriptor =
       getDescriptor().getMessageTypes().get(2);
     internal_static_de_huxhorn_lilith_prefs_ByteArrayMapEntry_fieldAccessorTable = new
-      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_de_huxhorn_lilith_prefs_ByteArrayMapEntry_descriptor,
         new java.lang.String[] { "Key", "Value", });
     internal_static_de_huxhorn_lilith_prefs_StringMap_descriptor =
       getDescriptor().getMessageTypes().get(3);
     internal_static_de_huxhorn_lilith_prefs_StringMap_fieldAccessorTable = new
-      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_de_huxhorn_lilith_prefs_StringMap_descriptor,
         new java.lang.String[] { "Entry", });
     internal_static_de_huxhorn_lilith_prefs_StringMapEntry_descriptor =
       getDescriptor().getMessageTypes().get(4);
     internal_static_de_huxhorn_lilith_prefs_StringMapEntry_fieldAccessorTable = new
-      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_de_huxhorn_lilith_prefs_StringMapEntry_descriptor,
         new java.lang.String[] { "Key", "Value", });
     internal_static_de_huxhorn_lilith_prefs_StringArrayMap_descriptor =
       getDescriptor().getMessageTypes().get(5);
     internal_static_de_huxhorn_lilith_prefs_StringArrayMap_fieldAccessorTable = new
-      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_de_huxhorn_lilith_prefs_StringArrayMap_descriptor,
         new java.lang.String[] { "Entry", });
     internal_static_de_huxhorn_lilith_prefs_StringArrayMapEntry_descriptor =
       getDescriptor().getMessageTypes().get(6);
     internal_static_de_huxhorn_lilith_prefs_StringArrayMapEntry_fieldAccessorTable = new
-      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_de_huxhorn_lilith_prefs_StringArrayMapEntry_descriptor,
         new java.lang.String[] { "Key", "Value", });
     internal_static_de_huxhorn_lilith_prefs_StringArrayValue_descriptor =
       getDescriptor().getMessageTypes().get(7);
     internal_static_de_huxhorn_lilith_prefs_StringArrayValue_fieldAccessorTable = new
-      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_de_huxhorn_lilith_prefs_StringArrayValue_descriptor,
         new java.lang.String[] { "Value", });
   }

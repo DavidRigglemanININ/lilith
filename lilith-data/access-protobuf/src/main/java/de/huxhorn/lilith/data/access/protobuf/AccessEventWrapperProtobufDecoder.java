@@ -1,6 +1,6 @@
 /*
  * Lilith - a log event viewer.
- * Copyright (C) 2007-2011 Joern Huxhorn
+ * Copyright (C) 2007-2017 Joern Huxhorn
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -17,7 +17,7 @@
  */
 
 /*
- * Copyright 2007-2011 Joern Huxhorn
+ * Copyright 2007-2017 Joern Huxhorn
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,15 +34,13 @@
 
 package de.huxhorn.lilith.data.access.protobuf;
 
+import com.google.protobuf.InvalidProtocolBufferException;
+import de.huxhorn.lilith.data.access.AccessEvent;
+import de.huxhorn.lilith.data.access.protobuf.generated.AccessProto;
 import de.huxhorn.lilith.data.eventsource.EventIdentifier;
 import de.huxhorn.lilith.data.eventsource.EventWrapper;
 import de.huxhorn.lilith.data.eventsource.SourceIdentifier;
-import de.huxhorn.lilith.data.access.AccessEvent;
-import de.huxhorn.lilith.data.access.protobuf.generated.AccessProto;
 import de.huxhorn.sulky.codec.Decoder;
-
-import com.google.protobuf.InvalidProtocolBufferException;
-
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.zip.GZIPInputStream;
@@ -50,7 +48,7 @@ import java.util.zip.GZIPInputStream;
 public class AccessEventWrapperProtobufDecoder
 	implements Decoder<EventWrapper<AccessEvent>>
 {
-	private boolean compressing;
+	private final boolean compressing;
 
 	public AccessEventWrapperProtobufDecoder(boolean compressing)
 	{
@@ -62,11 +60,7 @@ public class AccessEventWrapperProtobufDecoder
 		return compressing;
 	}
 
-	public void setCompressing(boolean compressing)
-	{
-		this.compressing = compressing;
-	}
-
+	@Override
 	public EventWrapper<AccessEvent> decode(byte[] bytes)
 	{
 		if(bytes == null)
@@ -109,7 +103,7 @@ public class AccessEventWrapperProtobufDecoder
 			return null;
 		}
 
-		EventWrapper<AccessEvent> result = new EventWrapper<AccessEvent>();
+		EventWrapper<AccessEvent> result = new EventWrapper<>();
 		if(parsedEvent.hasEventIdentifier())
 		{
 			result.setEventIdentifier(convert(parsedEvent.getEventIdentifier()));

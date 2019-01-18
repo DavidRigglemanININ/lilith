@@ -1,23 +1,23 @@
 /*
  * Lilith - a log event viewer.
- * Copyright (C) 2007-2011 Joern Huxhorn
- * 
+ * Copyright (C) 2007-2017 Joern Huxhorn
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 /*
- * Copyright 2007-2011 Joern Huxhorn
+ * Copyright 2007-2017 Joern Huxhorn
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,15 +39,13 @@ import ch.qos.logback.core.status.Status;
 import ch.qos.logback.core.status.StatusManager;
 import ch.qos.logback.core.status.StatusUtil;
 import de.huxhorn.lilith.logback.tools.ContextHelper;
-import org.slf4j.ILoggerFactory;
-import org.slf4j.LoggerFactory;
-
 import java.util.Iterator;
 import java.util.List;
-
 import javax.servlet.ServletContext;
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
+import org.slf4j.ILoggerFactory;
+import org.slf4j.LoggerFactory;
 
 /**
  * See also: ch.qos.logback.classic.selector.servlet.ContextDetachingSCL
@@ -55,15 +53,24 @@ import javax.servlet.ServletContextListener;
 public class LogbackShutdownServletContextListener
 	implements ServletContextListener
 {
-	public static final String LOGBACK_SHUTDOWN_DEBUG = "LogbackShutdownDebug";
+	private static final String LOGBACK_SHUTDOWN_DEBUG = "LogbackShutdownDebug";
+
+	private static final String[] STATUS_TEXT=
+			{
+					"INFO : ",
+					"WARN : ",
+					"ERROR: ",
+			};
 
 	private boolean debug=false;
 
+	@Override
 	public void contextDestroyed(ServletContextEvent sce)
 	{
 		shutdownLogback();
 	}
 
+	@Override
 	public void contextInitialized(ServletContextEvent sce)
 	{
 		ServletContext c = sce.getServletContext();
@@ -77,13 +84,6 @@ public class LogbackShutdownServletContextListener
 		}
 	}
 
-	private static final String[] STATUS_TEXT=
-		{
-			"INFO : ",
-			"WARN : ",
-			"ERROR: "
-		};
-
 	private void shutdownLogback()
 	{
 		ILoggerFactory loggerFactory = LoggerFactory.getILoggerFactory();
@@ -91,11 +91,11 @@ public class LogbackShutdownServletContextListener
 		{
 			LoggerContext context = (LoggerContext) loggerFactory;
 			context.stop();
-			System.err.println("Logback has been shut down.");
+			System.err.println("Logback has been shut down."); // NOPMD
 			String message = retrieveLogbackStatus(context);
 			if(message != null)
 			{
-				System.err.println(message);
+				System.err.println(message); // NOPMD
 			}
 		}
 	}
@@ -114,7 +114,6 @@ public class LogbackShutdownServletContextListener
 			List<Status> statusList = StatusUtil.filterStatusListByTimeThreshold(statusManager.getCopyOfStatusList(), threshold);
 			if(statusList != null)
 			{
-				System.err.println("Logback-Status:");
 				StringBuilder statusBuilder=new StringBuilder();
 				for(Status current : statusList)
 				{
@@ -135,12 +134,12 @@ public class LogbackShutdownServletContextListener
 		{
 			builder.append(STATUS_TEXT[levelCode]);
 		}
-		builder.append(status.getMessage()).append("\n");
+		builder.append(status.getMessage()).append('\n');
 		Throwable t = status.getThrowable();
 		if(t != null)
 		{
 			appendIndent(builder, indent+1);
-			builder.append(t.getMessage()).append("\n");
+			builder.append(t.getMessage()).append('\n');
 		}
 		if(status.hasChildren())
 		{
@@ -159,5 +158,4 @@ public class LogbackShutdownServletContextListener
 			builder.append("       ");
 		}
 	}
-
 }

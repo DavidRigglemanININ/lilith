@@ -1,6 +1,6 @@
 /*
  * Lilith - a log event viewer.
- * Copyright (C) 2007-2014 Joern Huxhorn
+ * Copyright (C) 2007-2017 Joern Huxhorn
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,6 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package de.huxhorn.lilith.tools.formatters;
 
 import ch.qos.logback.access.spi.AccessContext;
@@ -26,18 +27,18 @@ import ch.qos.logback.core.status.StatusManager;
 import de.huxhorn.lilith.data.access.AccessEvent;
 import de.huxhorn.lilith.data.eventsource.EventWrapper;
 import de.huxhorn.lilith.logback.tools.ContextHelper;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.Vector;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class AccessFormatter
 		implements Formatter<EventWrapper<AccessEvent>>
@@ -45,7 +46,7 @@ public class AccessFormatter
 	private final Logger logger = LoggerFactory.getLogger(AccessFormatter.class);
 
 	private static final String DEFAULT_PATTERN="common";
-	
+
 	private ch.qos.logback.access.PatternLayout layout;
 	private String pattern;
 
@@ -59,6 +60,7 @@ public class AccessFormatter
 		this.pattern = pattern;
 	}
 
+	@Override
 	public String format(EventWrapper<AccessEvent> wrapper)
 	{
 		initLayout();
@@ -162,16 +164,19 @@ public class AccessFormatter
 		private static final String[] NA_STRING_ARRAY = new String[0];
 		private static final String EMPTY = "";
 
+		@Override
 		public HttpServletRequest getRequest()
 		{
 			return null;
 		}
 
+		@Override
 		public HttpServletResponse getResponse()
 		{
 			return null;
 		}
 
+		@Override
 		public long getTimeStamp()
 		{
 			return timeStamp;
@@ -182,9 +187,16 @@ public class AccessFormatter
 			this.elapsedTime = elapsedTime;
 		}
 
+		@Override
 		public long getElapsedTime()
 		{
 			return elapsedTime;
+		}
+
+		@Override
+		public long getElapsedSeconds()
+		{
+			return 0;
 		}
 
 		public void setTimeStamp(long timeStamp)
@@ -197,6 +209,7 @@ public class AccessFormatter
 			this.requestURI = requestURI;
 		}
 
+		@Override
 		public String getRequestURI()
 		{
 			if(requestURI == null)
@@ -211,6 +224,7 @@ public class AccessFormatter
 			this.requestURL = requestURL;
 		}
 
+		@Override
 		public String getRequestURL()
 		{
 			if(requestURL == null)
@@ -225,6 +239,7 @@ public class AccessFormatter
 			this.remoteHost = remoteHost;
 		}
 
+		@Override
 		public String getRemoteHost()
 		{
 			if(remoteHost == null)
@@ -239,6 +254,7 @@ public class AccessFormatter
 			this.remoteUser = remoteUser;
 		}
 
+		@Override
 		public String getRemoteUser()
 		{
 			if(remoteUser == null)
@@ -253,6 +269,7 @@ public class AccessFormatter
 			this.protocol = protocol;
 		}
 
+		@Override
 		public String getProtocol()
 		{
 			if(protocol == null)
@@ -267,6 +284,7 @@ public class AccessFormatter
 			this.method = method;
 		}
 
+		@Override
 		public String getMethod()
 		{
 			if(method == null)
@@ -281,6 +299,7 @@ public class AccessFormatter
 			this.serverName = serverName;
 		}
 
+		@Override
 		public String getServerName()
 		{
 			if(serverName == null)
@@ -290,11 +309,32 @@ public class AccessFormatter
 			return serverName;
 		}
 
+		@Override
+		public String getSessionID() {
+			return null;
+		}
+
+		@Override
+		public void setThreadName(String threadName) {
+			// no-op
+		}
+
+		@Override
+		public String getThreadName() {
+			return null;
+		}
+
+		@Override
+		public String getQueryString() {
+			return null;
+		}
+
 		public void setRemoteAddr(String remoteAddr)
 		{
 			this.remoteAddr = remoteAddr;
 		}
 
+		@Override
 		public String getRemoteAddr()
 		{
 			if(remoteAddr == null)
@@ -309,10 +349,11 @@ public class AccessFormatter
 			this.requestHeaderMap = requestHeaderMap;
 		}
 
+		@Override
 		public String getRequestHeader(String key)
 		{
 			String result = null;
-			key = key.toLowerCase();
+			key = key.toLowerCase(Locale.US);
 			if(requestHeaderMap != null)
 			{
 				result = requestHeaderMap.get(key);
@@ -325,21 +366,23 @@ public class AccessFormatter
 			return NA;
 		}
 
-		public Enumeration getRequestHeaderNames()
+		@Override
+		public Enumeration<String> getRequestHeaderNames()
 		{
 			if(requestHeaderMap == null)
 			{
-				requestHeaderMap = new TreeMap<String, String>(String.CASE_INSENSITIVE_ORDER);
+				requestHeaderMap = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
 			}
-			Vector<String> list = new Vector<String>(requestHeaderMap.keySet());
+			Vector<String> list = new Vector<>(requestHeaderMap.keySet()); // NOPMD
 			return list.elements();
 		}
 
+		@Override
 		public Map<String, String> getRequestHeaderMap()
 		{
 			if(requestHeaderMap == null)
 			{
-				requestHeaderMap = new TreeMap<String, String>(String.CASE_INSENSITIVE_ORDER);
+				requestHeaderMap = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
 			}
 			return requestHeaderMap;
 		}
@@ -349,25 +392,28 @@ public class AccessFormatter
 			this.requestParameterMap = requestParameterMap;
 		}
 
+		@Override
 		public Map<String, String[]> getRequestParameterMap()
 		{
 			if(requestParameterMap == null)
 			{
-				requestParameterMap = new HashMap<String, String[]>();
+				requestParameterMap = new HashMap<>();
 			}
 			return requestParameterMap;
 		}
 
+		@Override
 		public String getAttribute(String key)
 		{
 			return NA;
 		}
 
+		@Override
 		public String[] getRequestParameter(String key)
 		{
 			if(requestParameterMap == null)
 			{
-				requestParameterMap = new HashMap<String, String[]>();
+				requestParameterMap = new HashMap<>();
 			}
 			String[] value = requestParameterMap.get(key);
 			if(value == null)
@@ -380,11 +426,13 @@ public class AccessFormatter
 			}
 		}
 
+		@Override
 		public String getCookie(String key)
 		{
 			return NA;
 		}
 
+		@Override
 		public long getContentLength()
 		{
 			return SENTINEL;
@@ -395,16 +443,19 @@ public class AccessFormatter
 			this.statusCode = statusCode;
 		}
 
+		@Override
 		public int getStatusCode()
 		{
 			return statusCode;
 		}
 
+		@Override
 		public String getRequestContent()
 		{
 			return EMPTY;
 		}
 
+		@Override
 		public String getResponseContent()
 		{
 			return EMPTY;
@@ -415,11 +466,13 @@ public class AccessFormatter
 			this.localPort = localPort;
 		}
 
+		@Override
 		public int getLocalPort()
 		{
 			return localPort;
 		}
 
+		@Override
 		public ServerAdapter getServerAdapter()
 		{
 			return null;
@@ -430,36 +483,40 @@ public class AccessFormatter
 			this.responseHeaderMap = responseHeaderMap;
 		}
 
+		@Override
 		public String getResponseHeader(String key)
 		{
 			if(responseHeaderMap == null)
 			{
-				responseHeaderMap = new HashMap<String, String>();
+				responseHeaderMap = new HashMap<>();
 			}
 			return responseHeaderMap.get(key);
 		}
 
+		@Override
 		public Map<String, String> getResponseHeaderMap()
 		{
 			if(responseHeaderMap == null)
 			{
-				responseHeaderMap = new HashMap<String, String>();
+				responseHeaderMap = new HashMap<>();
 			}
 			return responseHeaderMap;
 		}
 
+		@Override
 		public List<String> getResponseHeaderNameList()
 		{
 			if(responseHeaderMap == null)
 			{
-				responseHeaderMap = new HashMap<String, String>();
+				responseHeaderMap = new HashMap<>();
 			}
-			return new ArrayList<String>(responseHeaderMap.keySet());
+			return new ArrayList<>(responseHeaderMap.keySet());
 		}
 
+		@Override
 		public void prepareForDeferredProcessing()
 		{
+			// no-op
 		}
-
 	}
 }

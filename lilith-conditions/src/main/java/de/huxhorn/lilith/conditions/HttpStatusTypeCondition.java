@@ -1,6 +1,6 @@
 /*
  * Lilith - a log event viewer.
- * Copyright (C) 2007-2013 Joern Huxhorn
+ * Copyright (C) 2007-2017 Joern Huxhorn
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,23 +15,24 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package de.huxhorn.lilith.conditions;
 
 import de.huxhorn.lilith.data.access.AccessEvent;
 import de.huxhorn.lilith.data.access.HttpStatus;
 import de.huxhorn.lilith.data.eventsource.EventWrapper;
-
 import java.io.ObjectStreamException;
+import java.util.Locale;
 
-public class HttpStatusTypeCondition
-	implements LilithCondition, SearchStringCondition
+public final class HttpStatusTypeCondition
+	implements LilithCondition, SearchStringCondition, Cloneable
 {
 	private static final long serialVersionUID = -3335718950761221210L;
 
 	public static final String DESCRIPTION = "HttpStatusType==";
 
 	private String searchString;
-	private transient HttpStatus.Type type;
+	private transient HttpStatus.Type statusType;
 
 	public HttpStatusTypeCondition()
 	{
@@ -46,37 +47,65 @@ public class HttpStatusTypeCondition
 	public void setSearchString(String searchString)
 	{
 		this.searchString = searchString;
+		if(searchString == null)
+		{
+			statusType = null;
+			return;
+		}
+
+		String actualString = searchString.trim();
+		if("".equals(actualString))
+		{
+			statusType = null;
+			return;
+		}
 		try
 		{
-			type = HttpStatus.Type.valueOf(searchString);
+			statusType = HttpStatus.Type.valueOf(searchString);
+			return;
 		}
-		catch(Throwable e)
+		catch (Throwable t)
 		{
-			type = null;
+			// ignore
 		}
+		actualString = actualString.toLowerCase(Locale.ENGLISH);
+		for(HttpStatus.Type current : HttpStatus.Type.values())
+		{
+			if(current.toString().toLowerCase(Locale.ENGLISH).startsWith(actualString))
+			{
+				statusType = current;
+				return;
+			}
+			if(current.getRange().startsWith(actualString))
+			{
+				statusType = current;
+				return;
+			}
+		}
+		statusType = null;
 	}
 
+	@Override
 	public String getSearchString()
 	{
 		return searchString;
 	}
 
+	@Override
 	public String getDescription()
 	{
 		return DESCRIPTION;
 	}
 
+	public HttpStatus.Type getStatusType()
+	{
+		return statusType;
+	}
+
+	@Override
 	public boolean isTrue(Object value)
 	{
-		if(searchString == null)
-		{
-			return false;
-		}
-		if(searchString.length() == 0)
-		{
-			return true;
-		}
-		if(type == null)
+		if(statusType == null)
 		{
 			return false;
 		}
@@ -89,12 +118,13 @@ public class HttpStatusTypeCondition
 				AccessEvent event = (AccessEvent) eventObj;
 
 				HttpStatus.Type eventType = HttpStatus.getType(event.getStatusCode());
-				return eventType == type;
+				return eventType == statusType;
 			}
 		}
 		return false;
 	}
 
+	@Override
 	public boolean equals(Object o)
 	{
 		if(this == o) return true;
@@ -102,14 +132,16 @@ public class HttpStatusTypeCondition
 
 		HttpStatusTypeCondition that = (HttpStatusTypeCondition) o;
 
-		return type == that.type;
+		return statusType == that.statusType;
 	}
 
+	@Override
 	public int hashCode()
 	{
-		return (type != null ? type.hashCode() : 0);
+		return (statusType != null ? statusType.hashCode() : 0);
 	}
 
+	@Override
 	public HttpStatusTypeCondition clone()
 		throws CloneNotSupportedException
 	{
@@ -128,9 +160,6 @@ public class HttpStatusTypeCondition
 	@Override
 	public String toString()
 	{
-		StringBuilder result = new StringBuilder();
-		result.append(getDescription());
-		result.append(type);
-		return result.toString();
+		return getDescription() + statusType;
 	}
 }

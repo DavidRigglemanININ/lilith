@@ -1,6 +1,6 @@
 /*
  * Lilith - a log event viewer.
- * Copyright (C) 2007-2011 Joern Huxhorn
+ * Copyright (C) 2007-2017 Joern Huxhorn
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,41 +15,43 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package de.huxhorn.lilith.swing.preferences;
 
 import de.huxhorn.lilith.swing.preferences.table.ConditionPreviewRenderer;
 import de.huxhorn.lilith.swing.table.ColorScheme;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.awt.*;
-
-import javax.swing.*;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.GridLayout;
+import javax.swing.JColorChooser;
+import javax.swing.JPanel;
+import javax.swing.JTabbedPane;
 import javax.swing.border.EtchedBorder;
 import javax.swing.border.TitledBorder;
 import javax.swing.colorchooser.AbstractColorChooserPanel;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class ColorSchemeEditorPanel
 	extends JPanel
 {
+	private static final long serialVersionUID = 690249778400719052L;
+
 	private final Logger logger = LoggerFactory.getLogger(ColorSchemeEditorPanel.class);
 
-	private ColorChangeListener colorChangeListener;
-	private ConditionPreviewRenderer previewDummyRenderer;
+	private final ColorChangeListener colorChangeListener;
+	private final ConditionPreviewRenderer previewDummyRenderer;
+	private final ColorChooserPanel textChooserPanel;
+	private final ColorChooserPanel backgroundChooserPanel;
+	private final ColorChooserPanel borderChooserPanel;
+
 	private ColorScheme colorScheme;
-	private ColorChooserPanel textChooserPanel;
-	private ColorChooserPanel backgroundChooserPanel;
-	private ColorChooserPanel borderChooserPanel;
 
-	public ColorSchemeEditorPanel()
-	{
-		createUI();
-	}
-
-	private void createUI()
+	ColorSchemeEditorPanel()
 	{
 		colorChangeListener = new ColorChangeListener();
 		textChooserPanel = new ColorChooserPanel(Color.BLACK);
@@ -94,7 +96,7 @@ public class ColorSchemeEditorPanel
 	/**
 	 * Saves the colors of the editors into the colorScheme property.
 	 */
-	public void saveColors()
+	void saveColors()
 	{
 		this.colorScheme = new ColorScheme(textChooserPanel.getColor(), backgroundChooserPanel.getColor(), borderChooserPanel.getColor());
 	}
@@ -102,7 +104,7 @@ public class ColorSchemeEditorPanel
 	/**
 	 * Initializes the editors with the colorScheme values.
 	 */
-	public void resetColors()
+	private void resetColors()
 	{
 		if(colorScheme == null)
 		{
@@ -120,7 +122,7 @@ public class ColorSchemeEditorPanel
 	}
 
 
-	public void setColorScheme(ColorScheme colorScheme)
+	void setColorScheme(ColorScheme colorScheme)
 	{
 		if(colorScheme == null)
 		{
@@ -149,14 +151,15 @@ public class ColorSchemeEditorPanel
 	private class ColorChangeListener
 		implements ChangeListener
 	{
-		private SavedCondition dummyCondition;
+		private final SavedCondition dummyCondition;
 
-		private ColorChangeListener()
+		ColorChangeListener()
 		{
 			dummyCondition = new SavedCondition();
 			dummyCondition.setColorScheme(new ColorScheme().initDefaults());
 		}
 
+		@Override
 		public void stateChanged(ChangeEvent e)
 		{
 			// update preview component...

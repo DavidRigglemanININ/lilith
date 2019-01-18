@@ -1,23 +1,23 @@
 /*
  * Lilith - a log event viewer.
- * Copyright (C) 2007-2011 Joern Huxhorn
- * 
+ * Copyright (C) 2007-2016 Joern Huxhorn
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 /*
- * Copyright 2007-2011 Joern Huxhorn
+ * Copyright 2007-2016 Joern Huxhorn
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,14 +35,11 @@
 package de.huxhorn.lilith.data.logging.json;
 
 import de.huxhorn.lilith.data.logging.LoggingEvent;
-
 import de.huxhorn.lilith.data.logging.test.LoggingEventIOTestBase;
+import java.nio.charset.StandardCharsets;
+import javax.xml.stream.XMLStreamException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.UnsupportedEncodingException;
-
-import javax.xml.stream.XMLStreamException;
 
 public class LoggingEventIOTest
 	extends LoggingEventIOTestBase
@@ -59,29 +56,24 @@ public class LoggingEventIOTest
 	{
 		if(logger.isDebugEnabled())
 		{
-			try
-			{
-				String data = new String(bytes, "UTF-8");
-				logger.debug("Data: {}", data);
-			}
-			catch(UnsupportedEncodingException ex)
-			{
-				if(logger.isErrorEnabled()) logger.error("Exception while converting data to string!", ex);
-			}
+			String data = bytes == null ? null : new String(bytes, StandardCharsets.UTF_8);
+			logger.debug("Data: {}", data);
 		}
 	}
 
+	@Override
 	public byte[] write(LoggingEvent event, boolean compressing)
-		throws XMLStreamException, UnsupportedEncodingException
+		throws XMLStreamException
 	{
-		LoggingJsonEncoder ser = new LoggingJsonEncoder(compressing);
+		LoggingJsonCodec ser = new LoggingJsonCodec(compressing);
 		return ser.encode(event);
 	}
 
+	@Override
 	public LoggingEvent read(byte[] bytes, boolean compressing)
-		throws XMLStreamException, UnsupportedEncodingException
+		throws XMLStreamException
 	{
-		LoggingJsonDecoder des = new LoggingJsonDecoder(compressing);
+		LoggingJsonCodec des = new LoggingJsonCodec(compressing);
 		return des.decode(bytes);
 	}
 }

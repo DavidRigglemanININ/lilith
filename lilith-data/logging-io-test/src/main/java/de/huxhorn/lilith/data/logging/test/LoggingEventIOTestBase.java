@@ -1,23 +1,23 @@
 /*
  * Lilith - a log event viewer.
- * Copyright (C) 2007-2011 Joern Huxhorn
- * 
+ * Copyright (C) 2007-2018 Joern Huxhorn
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 /*
- * Copyright 2007-2011 Joern Huxhorn
+ * Copyright 2007-2018 Joern Huxhorn
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,23 +34,21 @@
 
 package de.huxhorn.lilith.data.logging.test;
 
+import de.huxhorn.lilith.data.eventsource.LoggerContext;
 import de.huxhorn.lilith.data.logging.ExtendedStackTraceElement;
 import de.huxhorn.lilith.data.logging.LoggingEvent;
 import de.huxhorn.lilith.data.logging.Marker;
 import de.huxhorn.lilith.data.logging.Message;
 import de.huxhorn.lilith.data.logging.ThreadInfo;
 import de.huxhorn.lilith.data.logging.ThrowableInfo;
-import de.huxhorn.lilith.data.eventsource.LoggerContext;
-
-import static org.junit.Assert.assertEquals;
-
 import de.huxhorn.sulky.junit.LoggingTestBase;
+import java.util.HashMap;
+import java.util.Map;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.HashMap;
-import java.util.Map;
+import static org.junit.Assert.assertEquals;
 
 
 public abstract class LoggingEventIOTestBase
@@ -78,8 +76,8 @@ public abstract class LoggingEventIOTestBase
 		LoggingEvent event = createMinimalEvent();
 		LoggerContext value = new LoggerContext();
 		value.setName("ContextName");
-		value.setBirthTime(1234567890000L);
-		Map<String, String> properties = new HashMap<String, String>();
+		value.setBirthTime(1_234_567_890_000L);
+		Map<String, String> properties = new HashMap<>();
 		properties.put("foo", "bar");
 		value.setProperties(properties);
 		event.setLoggerContext(value);
@@ -102,6 +100,7 @@ public abstract class LoggingEventIOTestBase
 	{
 		LoggingEvent event = createMinimalEvent();
 		ThreadInfo threadInfo = new ThreadInfo(17L, "Thread-Name", 42L, "ThreadGroup-Name");
+		threadInfo.setPriority(1337);
 		event.setThreadInfo(threadInfo);
 		check(event);
 	}
@@ -155,7 +154,7 @@ public abstract class LoggingEventIOTestBase
 		throws Throwable
 	{
 		LoggingEvent event = createMinimalEvent();
-		Map<String, String> mdc = new HashMap<String, String>();
+		Map<String, String> mdc = new HashMap<>();
 		mdc.put("key1", "value1");
 		mdc.put("key2", "value2");
 		mdc.put("key3", "value3");
@@ -170,7 +169,7 @@ public abstract class LoggingEventIOTestBase
 		LoggingEvent event = createMinimalEvent();
 		Message[] ndc = new Message[]{
 			new Message("message"),
-			new Message("messagePattern {}", new String[]{"foo"})
+			new Message("messagePattern {}", new String[]{"foo"}),
 		};
 		event.setNdc(ndc);
 		check(event);
@@ -192,10 +191,10 @@ public abstract class LoggingEventIOTestBase
 	{
 		LoggingEvent event = createMinimalEvent();
 		Marker marker = new Marker("marker");
-		Marker marker2_1 = new Marker("marker2-1");
-		Marker marker2_2 = new Marker("marker2-2");
-		marker.add(marker2_1);
-		marker.add(marker2_2);
+		Marker markerTwo1 = new Marker("markerTwo1");
+		Marker markerTwo2 = new Marker("markerTwo2");
+		marker.add(markerTwo1);
+		marker.add(markerTwo2);
 		event.setMarker(marker);
 		check(event);
 	}
@@ -206,13 +205,13 @@ public abstract class LoggingEventIOTestBase
 	{
 		LoggingEvent event = createMinimalEvent();
 		Marker marker = new Marker("marker");
-		Marker marker2_1 = new Marker("marker2-1");
-		Marker marker2_2 = new Marker("marker2-2");
-		Marker marker3_1 = new Marker("marker3-1");
-		marker.add(marker2_1);
-		marker.add(marker2_2);
-		marker2_2.add(marker3_1);
-		marker3_1.add(marker2_1);
+		Marker markerTwo1 = new Marker("markerTwo1");
+		Marker markerTwo2 = new Marker("markerTwo2");
+		Marker markerThree = new Marker("markerThree");
+		marker.add(markerTwo1);
+		marker.add(markerTwo2);
+		markerTwo2.add(markerThree);
+		markerThree.add(markerTwo1);
 		event.setMarker(marker);
 		check(event);
 	}
@@ -240,8 +239,8 @@ public abstract class LoggingEventIOTestBase
 
 		LoggerContext value = new LoggerContext();
 		value.setName("ContextName");
-		value.setBirthTime(1234567890000L);
-		Map<String, String> propperties = new HashMap<String, String>();
+		value.setBirthTime(1_234_567_890_000L);
+		Map<String, String> propperties = new HashMap<>();
 		propperties.put("foo", "bar");
 		value.setProperties(propperties);
 		event.setLoggerContext(value);
@@ -267,7 +266,7 @@ public abstract class LoggingEventIOTestBase
 		ti2.setCause(ti3);
 		event.setThrowable(ti);
 
-		Map<String, String> mdc = new HashMap<String, String>();
+		Map<String, String> mdc = new HashMap<>();
 		mdc.put("key1", "value1");
 		mdc.put("key2", "value2");
 		mdc.put("key3", "value3");
@@ -275,34 +274,34 @@ public abstract class LoggingEventIOTestBase
 
 		Message[] ndc = new Message[]{
 			new Message("message"),
-			new Message("messagePattern {}", new String[]{"foo"})
+			new Message("messagePattern {}", new String[]{"foo"}),
 		};
 		event.setNdc(ndc);
 
 		Marker marker = new Marker("marker");
-		Marker marker2_1 = new Marker("marker2-1");
-		Marker marker2_2 = new Marker("marker2-2");
-		Marker marker3_1 = new Marker("marker3-1");
-		marker.add(marker2_1);
-		marker.add(marker2_2);
-		marker2_2.add(marker3_1);
-		marker3_1.add(marker2_1);
+		Marker markerTwo1 = new Marker("markerTwo1");
+		Marker markerTwo2 = new Marker("markerTwo2");
+		Marker markerThree = new Marker("markerThree");
+		marker.add(markerTwo1);
+		marker.add(markerTwo2);
+		markerTwo2.add(markerThree);
+		markerThree.add(markerTwo1);
 		event.setMarker(marker);
 
 		event.setCallStack(createStackTraceElements());
 		check(event);
 	}
 
-	public LoggingEvent createMinimalEvent()
+	private static LoggingEvent createMinimalEvent()
 	{
 		LoggingEvent event = new LoggingEvent();
 		event.setLogger("Logger");
 		event.setLevel(LoggingEvent.Level.INFO);
-		event.setTimeStamp(1234567890000L);
+		event.setTimeStamp(1_234_567_890_000L);
 		return event;
 	}
 
-	public ThrowableInfo createThrowableInfo(String className, String message)
+	private static ThrowableInfo createThrowableInfo(String className, String message)
 	{
 		ThrowableInfo ti = new ThrowableInfo();
 		ti.setName(className);
@@ -311,7 +310,7 @@ public abstract class LoggingEventIOTestBase
 		return ti;
 	}
 
-	public ExtendedStackTraceElement[] createStackTraceElements()
+	private static ExtendedStackTraceElement[] createStackTraceElements()
 	{
 		//noinspection ThrowableInstanceNeverThrown
 		Throwable t = new Throwable();
@@ -321,7 +320,7 @@ public abstract class LoggingEventIOTestBase
 		for(int i = 0; i < original.length; i++)
 		{
 			StackTraceElement current = original[i];
-			result[i] = new ExtendedStackTraceElement(current);
+			result[i] = new ExtendedStackTraceElement(current); // NOPMD - AvoidInstantiatingObjectsInLoops
 
 			if(i == 0)
 			{
@@ -337,12 +336,18 @@ public abstract class LoggingEventIOTestBase
 				result[i].setVersion("Version");
 				result[i].setExact(false);
 			}
+			else if(i == 2)
+			{
+				result[i].setClassLoaderName("ClassLoaderName");
+				result[i].setModuleName("ModuleName");
+				result[i].setModuleVersion("ModuleVersion");
+			}
 		}
 
 		return result;
 	}
 
-	public void check(LoggingEvent event)
+	private void check(LoggingEvent event)
 		throws Throwable
 	{
 		if(logger.isDebugEnabled()) logger.debug("Processing LoggingEvent:\n{}", event);
@@ -366,19 +371,19 @@ public abstract class LoggingEventIOTestBase
 
 	protected abstract void logUncompressedData(byte[] bytes);
 
-	protected String toString(Marker marker)
+	private static String toString(Marker marker)
 	{
 		if(marker == null)
 		{
 			return null;
 		}
 		StringBuilder result = new StringBuilder();
-		Map<String, Marker> processedMarkers = new HashMap<String, Marker>();
+		Map<String, Marker> processedMarkers = new HashMap<>();
 		recursiveToString(result, processedMarkers, marker);
 		return result.toString();
 	}
 
-	protected void recursiveToString(StringBuilder result, Map<String, Marker> processedMarkers, Marker marker)
+	private static void recursiveToString(StringBuilder result, Map<String, Marker> processedMarkers, Marker marker)
 	{
 		if(processedMarkers.containsKey(marker.getName()))
 		{
@@ -392,22 +397,25 @@ public abstract class LoggingEventIOTestBase
 			{
 				result.append(", children={");
 				Map<String, Marker> children = marker.getReferences();
-				boolean first = true;
-				for(Map.Entry<String, Marker> current : children.entrySet())
+				if(children != null)
 				{
-					if(first)
+					boolean first = true;
+					for (Map.Entry<String, Marker> current : children.entrySet())
 					{
-						first = false;
+						if (first)
+						{
+							first = false;
+						}
+						else
+						{
+							result.append(", ");
+						}
+						recursiveToString(result, processedMarkers, current.getValue());
 					}
-					else
-					{
-						result.append(", ");
-					}
-					recursiveToString(result, processedMarkers, current.getValue());
 				}
-				result.append("}");
+				result.append('}');
 			}
-			result.append("]");
+			result.append(']');
 		}
 	}
 

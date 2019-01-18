@@ -1,77 +1,89 @@
 /*
  * Lilith - a log event viewer.
- * Copyright (C) 2007-2011 Joern Huxhorn
- * 
+ * Copyright (C) 2007-2018 Joern Huxhorn
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package de.huxhorn.lilith.swing.preferences;
 
 import de.huxhorn.lilith.swing.ApplicationPreferences;
-import de.huxhorn.lilith.swing.EventWrapperViewPanel;
+import de.huxhorn.lilith.swing.Icons;
+import de.huxhorn.lilith.swing.LilithActionId;
 import de.huxhorn.lilith.tray.TraySupport;
-
-import java.awt.*;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.io.File;
-import java.net.URL;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
-
-import javax.swing.*;
+import javax.swing.AbstractAction;
+import javax.swing.Action;
+import javax.swing.DefaultComboBoxModel;
+import javax.swing.JButton;
+import javax.swing.JCheckBox;
+import javax.swing.JComboBox;
+import javax.swing.JFileChooser;
+import javax.swing.JPanel;
+import javax.swing.JTextField;
+import javax.swing.UIManager;
 import javax.swing.border.EtchedBorder;
 import javax.swing.border.TitledBorder;
 
 public class GeneralPanel
 	extends JPanel
 {
-	private PreferencesDialog preferencesDialog;
-	private ApplicationPreferences applicationPreferences;
+	private static final long serialVersionUID = -3070943109124678227L;
+
+	private static final String[] EMPTY_STRING_ARRAY = new String[0];
+
+	private final PreferencesDialog preferencesDialog;
+	private final ApplicationPreferences applicationPreferences;
 
 	// Views
-	private JCheckBox scrollingToBottomCheckbox;
-	private JCheckBox coloringWholeRowCheckbox;
+	private final JCheckBox scrollingSmoothlyCheckbox;
+	private final JCheckBox scrollingToBottomCheckbox;
+	private final JCheckBox coloringWholeRowCheckbox;
 
 	// Details view
-	private JCheckBox showFullCallstackCheckbox;
-	private JCheckBox showStackTraceCheckbox;
-	private JCheckBox usingWrappedExceptionStyleCheckbox;
+	private final JCheckBox showFullCallStackCheckbox;
+	private final JCheckBox showStackTraceCheckbox;
+	private final JCheckBox usingWrappedExceptionStyleCheckbox;
 
 	// ???
-	private JFileChooser applicationPathFileChooser;
-	private JTextField appPathTextField;
-	private JComboBox lookAndFeelCombo;
-	private JComboBox defaultConditionCombo;
+	private final JFileChooser applicationPathFileChooser;
+	private final JTextField appPathTextField;
+	private final JComboBox<String> lookAndFeelCombo;
+	private final JComboBox<String> defaultConditionCombo;
 
-	private JCheckBox globalLoggingEnabledCheckbox;
-	private JCheckBox loggingStatsEnabledCheckbox;
-	private JCheckBox trayActiveCheckbox;
-	private JCheckBox hidingOnCloseCheckbox;
+	private final JCheckBox globalLoggingEnabledCheckbox;
+	private final JCheckBox trayActiveCheckbox;
+	private final JCheckBox hidingOnCloseCheckbox;
 
-	public GeneralPanel(PreferencesDialog preferencesDialog)
+	GeneralPanel(PreferencesDialog preferencesDialog)
 	{
 		this.preferencesDialog = preferencesDialog;
 		applicationPreferences = preferencesDialog.getApplicationPreferences();
-		createUI();
-	}
 
-	private void createUI()
-	{
 		// General
+		scrollingSmoothlyCheckbox = new JCheckBox("Smooth horizontal table scrolling");
 		scrollingToBottomCheckbox = new JCheckBox("Initial 'Scrolling to Bottom' setting");
 		coloringWholeRowCheckbox = new JCheckBox("Color whole row according to Level or Status");
 
-		showFullCallstackCheckbox = new JCheckBox("Show full Callstack.");
+		showFullCallStackCheckbox = new JCheckBox("Show full call stack.");
 		showStackTraceCheckbox = new JCheckBox("Show stacktrace of Throwables");
 		usingWrappedExceptionStyleCheckbox = new JCheckBox("Use wrapped exception style.");
 
@@ -103,34 +115,32 @@ public class GeneralPanel
 			gbc.weightx = 0;
 			appPathPanel.add(browseAppPathButton, gbc);
 		}
-		lookAndFeelCombo = new JComboBox();
-		defaultConditionCombo = new JComboBox();
+		lookAndFeelCombo = new JComboBox<>();
+		defaultConditionCombo = new JComboBox<>();
 
 		globalLoggingEnabledCheckbox = new JCheckBox("Enable global logs.");
-		loggingStatsEnabledCheckbox = new JCheckBox("Enable logging statistics.");
 		trayActiveCheckbox = new JCheckBox("Enable tray icon.");
 		hidingOnCloseCheckbox = new JCheckBox("Hide windows on close.");
 		hidingOnCloseCheckbox.setToolTipText("Hide all windows on close of main frame instead of exiting the application. This is only relevant if tray icon is enabled.");
 
-
-		JPanel viewPanel = new JPanel(new GridLayout(2, 1));
+		JPanel viewPanel = new JPanel(new GridLayout(3, 1));
 		viewPanel.setBorder(new TitledBorder(new EtchedBorder(EtchedBorder.LOWERED), "View"));
+		viewPanel.add(scrollingSmoothlyCheckbox);
 		viewPanel.add(scrollingToBottomCheckbox);
 		viewPanel.add(coloringWholeRowCheckbox);
 
 		JPanel detailsPanel = new JPanel(new GridLayout(3, 1));
 		detailsPanel.setBorder(new TitledBorder(new EtchedBorder(EtchedBorder.LOWERED), "Details View"));
-		detailsPanel.add(showFullCallstackCheckbox);
+		detailsPanel.add(showFullCallStackCheckbox);
 		detailsPanel.add(showStackTraceCheckbox);
 		detailsPanel.add(usingWrappedExceptionStyleCheckbox);
 
 		lookAndFeelCombo.setBorder(new TitledBorder(new EtchedBorder(EtchedBorder.LOWERED), "Look & Feel"));
 		defaultConditionCombo.setBorder(new TitledBorder(new EtchedBorder(EtchedBorder.LOWERED), "Default search condition"));
 
-		JPanel globalPanel = new JPanel(new GridLayout(4, 1));
+		JPanel globalPanel = new JPanel(new GridLayout(3, 1));
 		globalPanel.setBorder(new TitledBorder(new EtchedBorder(EtchedBorder.LOWERED), "Global settings"));
 		globalPanel.add(globalLoggingEnabledCheckbox);
-		globalPanel.add(loggingStatsEnabledCheckbox);
 		globalPanel.add(trayActiveCheckbox);
 		globalPanel.add(hidingOnCloseCheckbox);
 
@@ -168,15 +178,16 @@ public class GeneralPanel
 
 	public void initUI()
 	{
+		scrollingSmoothlyCheckbox.setSelected(applicationPreferences.isScrollingSmoothly());
 		scrollingToBottomCheckbox.setSelected(applicationPreferences.isScrollingToBottom());
 		coloringWholeRowCheckbox.setSelected(applicationPreferences.isColoringWholeRow());
-		showFullCallstackCheckbox.setSelected(applicationPreferences.isShowingFullCallstack());
+		showFullCallStackCheckbox.setSelected(applicationPreferences.isShowingFullCallStack());
 		showStackTraceCheckbox.setSelected(applicationPreferences.isShowingStackTrace());
 		usingWrappedExceptionStyleCheckbox.setSelected(applicationPreferences.isUsingWrappedExceptionStyle());
 
 		// look and feel
 		{
-			ArrayList<String> lookAndFeels = new ArrayList<String>();
+			ArrayList<String> lookAndFeels = new ArrayList<>();
 			for(UIManager.LookAndFeelInfo info : UIManager.getInstalledLookAndFeels())
 			{
 				lookAndFeels.add(info.getName());
@@ -201,7 +212,7 @@ public class GeneralPanel
 					selectedIndex = idx;
 				}
 			}
-			lookAndFeelCombo.setModel(new DefaultComboBoxModel(lookAndFeels.toArray()));
+			lookAndFeelCombo.setModel(new DefaultComboBoxModel<>(lookAndFeels.toArray(EMPTY_STRING_ARRAY)));
 			lookAndFeelCombo.setSelectedIndex(selectedIndex);
 		}
 
@@ -215,7 +226,7 @@ public class GeneralPanel
 				idx=0;
 			}
 
-			defaultConditionCombo.setModel(new DefaultComboBoxModel(conditionNames.toArray()));
+			defaultConditionCombo.setModel(new DefaultComboBoxModel<>(conditionNames.toArray(EMPTY_STRING_ARRAY)));
 			defaultConditionCombo.setSelectedIndex(idx);
 		}
 		String appPath = applicationPreferences.getApplicationPath().getAbsolutePath();
@@ -223,18 +234,18 @@ public class GeneralPanel
 		appPathTextField.setToolTipText(appPath);
 
 		globalLoggingEnabledCheckbox.setSelected(applicationPreferences.isGlobalLoggingEnabled());
-		loggingStatsEnabledCheckbox.setSelected(applicationPreferences.isLoggingStatisticEnabled());
 		trayActiveCheckbox.setSelected(applicationPreferences.isTrayActive());
 		trayActiveCheckbox.setEnabled(TraySupport.isAvailable());
 		hidingOnCloseCheckbox.setSelected(applicationPreferences.isHidingOnClose());
 		hidingOnCloseCheckbox.setEnabled(TraySupport.isAvailable());
 	}
 
-	public void saveSettings()
+	void saveSettings()
 	{
+		applicationPreferences.setScrollingSmoothly(scrollingSmoothlyCheckbox.isSelected());
 		applicationPreferences.setScrollingToBottom(scrollingToBottomCheckbox.isSelected());
 		applicationPreferences.setColoringWholeRow(coloringWholeRowCheckbox.isSelected());
-		applicationPreferences.setShowingFullCallstack(showFullCallstackCheckbox.isSelected());
+		applicationPreferences.setShowingFullCallStack(showFullCallStackCheckbox.isSelected());
 		applicationPreferences.setShowingStackTrace(showStackTraceCheckbox.isSelected());
 		applicationPreferences.setUsingWrappedExceptionStyle(usingWrappedExceptionStyleCheckbox.isSelected());
 
@@ -244,7 +255,6 @@ public class GeneralPanel
 		applicationPreferences.setApplicationPath(new File(appPathTextField.getText()));
 
 		applicationPreferences.setGlobalLoggingEnabled(globalLoggingEnabledCheckbox.isSelected());
-		applicationPreferences.setLoggingStatisticEnabled(loggingStatsEnabledCheckbox.isSelected());
 		applicationPreferences.setTrayActive(trayActiveCheckbox.isSelected());
 		applicationPreferences.setHidingOnClose(hidingOnCloseCheckbox.isSelected());
 	}
@@ -254,25 +264,14 @@ public class GeneralPanel
 	{
 		private static final long serialVersionUID = -5563121695654253673L;
 
-		public BrowseApplicationPathAction()
+		BrowseApplicationPathAction()
 		{
 			super();
-			Icon icon;
-			{
-				URL url = EventWrapperViewPanel.class.getResource("/tango/16x16/actions/document-open.png");
-				if(url != null)
-				{
-					icon = new ImageIcon(url);
-				}
-				else
-				{
-					icon = null;
-				}
-			}
-			putValue(Action.SMALL_ICON, icon);
+			putValue(Action.SMALL_ICON, Icons.resolveMenuIcon(LilithActionId.OPEN));
 			putValue(Action.SHORT_DESCRIPTION, "Browse for the application path.");
 		}
 
+		@Override
 		public void actionPerformed(ActionEvent e)
 		{
 			applicationPathFileChooser.setCurrentDirectory(applicationPreferences.getApplicationPath());

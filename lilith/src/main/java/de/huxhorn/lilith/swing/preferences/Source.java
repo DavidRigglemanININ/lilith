@@ -1,20 +1,21 @@
 /*
  * Lilith - a log event viewer.
- * Copyright (C) 2007-2011 Joern Huxhorn
- * 
+ * Copyright (C) 2007-2017 Joern Huxhorn
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package de.huxhorn.lilith.swing.preferences;
 
 import java.io.Serializable;
@@ -37,16 +38,17 @@ public class Source
 		this.name = name;
 	}
 
-	public String getIdentifier()
+	String getIdentifier()
 	{
 		return identifier;
 	}
 
-	public void setIdentifier(String identifier)
+	void setIdentifier(String identifier)
 	{
 		this.identifier = identifier;
 	}
 
+	@Override
 	public boolean equals(Object o)
 	{
 		if(this == o) return true;
@@ -58,6 +60,7 @@ public class Source
 		return !(name != null ? !name.equals(source.name) : source.name != null);
 	}
 
+	@Override
 	public int hashCode()
 	{
 		int result;
@@ -66,6 +69,7 @@ public class Source
 		return result;
 	}
 
+	@Override
 	public int compareTo(Source other)
 	{
 		//noinspection StringEquality

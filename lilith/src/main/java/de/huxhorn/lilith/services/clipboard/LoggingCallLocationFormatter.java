@@ -1,6 +1,6 @@
 /*
  * Lilith - a log event viewer.
- * Copyright (C) 2007-2011 Joern Huxhorn
+ * Copyright (C) 2007-2017 Joern Huxhorn
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,72 +15,42 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package de.huxhorn.lilith.services.clipboard;
 
-import de.huxhorn.lilith.data.eventsource.EventWrapper;
 import de.huxhorn.lilith.data.logging.ExtendedStackTraceElement;
-import de.huxhorn.lilith.data.logging.LoggingEvent;
+import de.huxhorn.lilith.swing.LilithActionId;
+
+import static de.huxhorn.lilith.services.clipboard.FormatterTools.resolveCallStack;
 
 public class LoggingCallLocationFormatter
-	implements ClipboardFormatter
+		extends AbstractNativeClipboardFormatter
 {
-	private static final long serialVersionUID = 1443730189004642289L;
+	private static final long serialVersionUID = 4735891531691924433L;
 
-	public String getName()
+	public LoggingCallLocationFormatter()
 	{
-		return "Copy call location";
+		super(LilithActionId.COPY_CALL_LOCATION);
 	}
 
-	public String getDescription()
-	{
-		return "Copies the call location, i.e. the first element of the logging events call stack, to the clipboard.";
-	}
-
-	public String getAccelerator()
-	{
-		return null;
-	}
-
+	@Override
 	public boolean isCompatible(Object object)
 	{
-		if(object instanceof EventWrapper)
-		{
-			EventWrapper wrapper = (EventWrapper) object;
-			if(wrapper.getEvent() != null)
-			{
-				Object eventObj = wrapper.getEvent();
-				if(eventObj instanceof LoggingEvent)
-				{
-					LoggingEvent loggingEvent = (LoggingEvent) eventObj;
-					ExtendedStackTraceElement[] callStack = loggingEvent.getCallStack();
-					return callStack != null && callStack.length > 0;
-				}
-
-			}
-		}
-		return false;
+		return resolveCallStack(object).map(it -> it[0] != null).orElse(false);
 	}
 
+	@Override
 	public String toString(Object object)
 	{
-		if(object instanceof EventWrapper)
-		{
-			EventWrapper wrapper = (EventWrapper) object;
-			if(wrapper.getEvent() != null)
-			{
-				Object eventObj = wrapper.getEvent();
-				if(eventObj instanceof LoggingEvent)
-				{
-					LoggingEvent loggingEvent = (LoggingEvent) eventObj;
-					ExtendedStackTraceElement[] callStack = loggingEvent.getCallStack();
-					if(callStack != null && callStack.length > 0)
-					{
-						return callStack[0].toString(true);
-					}
-				}
-			}
-		}
+		return resolveCallStack(object).map(LoggingCallLocationFormatter::toStringOrNull).orElse(null);
+	}
 
+	private static String toStringOrNull(ExtendedStackTraceElement[] callStack)
+	{
+		if (callStack[0] != null)
+		{
+			return callStack[0].toString(true);
+		}
 		return null;
 	}
 }

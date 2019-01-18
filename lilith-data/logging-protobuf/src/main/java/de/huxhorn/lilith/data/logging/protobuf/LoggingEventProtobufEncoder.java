@@ -1,6 +1,6 @@
 /*
  * Lilith - a log event viewer.
- * Copyright (C) 2007-2011 Joern Huxhorn
+ * Copyright (C) 2007-2017 Joern Huxhorn
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -17,7 +17,7 @@
  */
 
 /*
- * Copyright 2007-2011 Joern Huxhorn
+ * Copyright 2007-2017 Joern Huxhorn
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,6 +34,7 @@
 
 package de.huxhorn.lilith.data.logging.protobuf;
 
+import de.huxhorn.lilith.data.eventsource.LoggerContext;
 import de.huxhorn.lilith.data.logging.ExtendedStackTraceElement;
 import de.huxhorn.lilith.data.logging.LoggingEvent;
 import de.huxhorn.lilith.data.logging.Marker;
@@ -41,9 +42,7 @@ import de.huxhorn.lilith.data.logging.Message;
 import de.huxhorn.lilith.data.logging.ThreadInfo;
 import de.huxhorn.lilith.data.logging.ThrowableInfo;
 import de.huxhorn.lilith.data.logging.protobuf.generated.LoggingProto;
-import de.huxhorn.lilith.data.eventsource.LoggerContext;
 import de.huxhorn.sulky.codec.Encoder;
-
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -51,12 +50,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.zip.GZIPOutputStream;
 
-public class LoggingEventProtobufEncoder
+class LoggingEventProtobufEncoder
 	implements Encoder<LoggingEvent>
 {
-	private boolean compressing;
+	private final boolean compressing;
 
-	public LoggingEventProtobufEncoder(boolean compressing)
+	LoggingEventProtobufEncoder(boolean compressing)
 	{
 		this.compressing = compressing;
 	}
@@ -66,11 +65,8 @@ public class LoggingEventProtobufEncoder
 		return compressing;
 	}
 
-	public void setCompressing(boolean compressing)
-	{
-		this.compressing = compressing;
-	}
-
+	@Override
+	@SuppressWarnings("PMD.ReturnEmptyArrayRatherThanNull")
 	public byte[] encode(LoggingEvent event)
 	{
 		LoggingProto.LoggingEvent converted = convert(event);
@@ -105,7 +101,7 @@ public class LoggingEventProtobufEncoder
 		{
 			return null;
 		}
-		List<String> handledMarkers = new ArrayList<String>();
+		List<String> handledMarkers = new ArrayList<>();
 		return convert(marker, handledMarkers);
 	}
 
@@ -138,6 +134,31 @@ public class LoggingEventProtobufEncoder
 			return null;
 		}
 		LoggingProto.StackTraceElement.Builder builder = LoggingProto.StackTraceElement.newBuilder();
+
+		{
+			String classLoaderName = ste.getClassLoaderName();
+			if(classLoaderName != null)
+			{
+				builder.setClassLoaderName(classLoaderName);
+			}
+		}
+
+		{
+			String moduleName = ste.getModuleName();
+			if(moduleName != null)
+			{
+				builder.setModuleName(moduleName);
+			}
+		}
+
+
+		{
+			String moduleVersion = ste.getModuleVersion();
+			if(moduleVersion != null)
+			{
+				builder.setModuleVersion(moduleVersion);
+			}
+		}
 
 		{
 			String methodName = ste.getMethodName();
@@ -266,7 +287,11 @@ public class LoggingEventProtobufEncoder
 			return null;
 		}
 		LoggingProto.Message.Builder messageBuilder = LoggingProto.Message.newBuilder();
-		messageBuilder.setMessagePattern(message.getMessagePattern());
+		String pattern = message.getMessagePattern();
+		if(pattern != null)
+		{
+			messageBuilder.setMessagePattern(pattern);
+		}
 
 		String[] arguments = message.getArguments();
 		if(arguments != null)
@@ -323,6 +348,14 @@ public class LoggingEventProtobufEncoder
 				builder.setGroupId(id);
 			}
 		}
+
+		{
+			Integer priority = threadInfo.getPriority();
+			if(priority != null)
+			{
+				builder.setPriority(priority);
+			}
+		}
 		return builder.build();
 	}
 
@@ -349,7 +382,7 @@ public class LoggingEventProtobufEncoder
 		}
 		{
 			Map<String, String> map = context.getProperties();
-			if(map != null && map.size() > 0)
+			if(map != null && !map.isEmpty())
 			{
 				builder.setProperties(convert(map));
 			}
@@ -433,7 +466,7 @@ public class LoggingEventProtobufEncoder
 					case WARN:
 						eventBuilder.setLevel(LoggingProto.Level.WARN);
 						break;
-					case ERROR:
+					default: // ERROR
 						eventBuilder.setLevel(LoggingProto.Level.ERROR);
 						break;
 				}
@@ -502,7 +535,7 @@ public class LoggingEventProtobufEncoder
 
 		// handling MappedDiagnosticContext
 		Map<String, String> mdc = event.getMdc();
-		if(mdc != null && mdc.size() > 0)
+		if(mdc != null && !mdc.isEmpty())
 		{
 			eventBuilder.setMappedDiagnosticContext(convert(mdc));
 		}

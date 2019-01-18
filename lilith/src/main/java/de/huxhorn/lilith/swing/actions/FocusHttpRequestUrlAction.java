@@ -1,6 +1,6 @@
 /*
  * Lilith - a log event viewer.
- * Copyright (C) 2007-2013 Joern Huxhorn
+ * Copyright (C) 2007-2016 Joern Huxhorn
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,10 +18,9 @@
 package de.huxhorn.lilith.swing.actions;
 
 import de.huxhorn.lilith.conditions.HttpRequestUrlCondition;
-import de.huxhorn.lilith.swing.TextPreprocessor;
 import de.huxhorn.sulky.conditions.Condition;
-
-import javax.swing.*;
+import java.awt.event.ActionEvent;
+import javax.swing.Action;
 
 public class FocusHttpRequestUrlAction
 		extends AbstractAccessFilterAction
@@ -32,13 +31,13 @@ public class FocusHttpRequestUrlAction
 
 	public FocusHttpRequestUrlAction()
 	{
-		super("Request URL");
+		super("Request URL", false);
 	}
 
 	protected void setSearchString(String searchString)
 	{
 		this.searchString = searchString;
-		putValue(Action.SHORT_DESCRIPTION, TextPreprocessor.cropLine(searchString));
+		putValue(Action.SHORT_DESCRIPTION, searchString);
 
 		setEnabled(searchString != null);
 	}
@@ -46,12 +45,6 @@ public class FocusHttpRequestUrlAction
 	@Override
 	protected void updateState()
 	{
-		if(viewContainer == null)
-		{
-			setSearchString(null);
-			return;
-		}
-
 		if(accessEvent != null)
 		{
 			setSearchString(accessEvent.getRequestURL());
@@ -63,9 +56,9 @@ public class FocusHttpRequestUrlAction
 	}
 
 	@Override
-	public Condition resolveCondition()
+	public Condition resolveCondition(ActionEvent e)
 	{
-		if(searchString == null)
+		if(!isEnabled())
 		{
 			return null;
 		}

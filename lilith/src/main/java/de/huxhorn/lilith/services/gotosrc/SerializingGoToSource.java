@@ -1,6 +1,6 @@
 /*
  * Lilith - a log event viewer.
- * Copyright (C) 2007-2011 Joern Huxhorn
+ * Copyright (C) 2007-2018 Joern Huxhorn
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,11 +15,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package de.huxhorn.lilith.services.gotosrc;
 
-import de.huxhorn.sulky.io.IOUtilities;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+package de.huxhorn.lilith.services.gotosrc;
 
 import java.io.BufferedOutputStream;
 import java.io.IOException;
@@ -27,6 +24,8 @@ import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * This class sends serialized StackTraceElements to a server.
@@ -35,9 +34,9 @@ import java.util.concurrent.LinkedBlockingQueue;
 public class SerializingGoToSource
 	implements GoToSource
 {
-	public static final int DEFAULT_PORT = 11111;
+	public static final int DEFAULT_PORT = 11_111;
 
-	private final BlockingQueue<StackTraceElement> queue=new LinkedBlockingQueue<StackTraceElement>();
+	private final BlockingQueue<StackTraceElement> queue=new LinkedBlockingQueue<>();
 	private final GoToSourceRunnable goToSourceRunnable;
 	private Thread goToSourceThread=null;
 
@@ -62,6 +61,7 @@ public class SerializingGoToSource
 		goToSourceRunnable.setPort(port);
 	}
 
+	@Override
 	public void goToSource(StackTraceElement ste)
 	{
 		if(goToSourceThread == null)
@@ -84,6 +84,7 @@ public class SerializingGoToSource
 		}
 	}
 
+	@Override
 	public void stop()
 	{
 		if(goToSourceThread != null)
@@ -117,7 +118,7 @@ public class SerializingGoToSource
 		{
 			try
 			{
-				socket = new Socket("127.0.0.1", port);
+				socket = new Socket("127.0.0.1", port); // NOPMD
 				oos = new ObjectOutputStream(new BufferedOutputStream(socket.getOutputStream()));
 			}
 			catch(IOException e)
@@ -131,7 +132,14 @@ public class SerializingGoToSource
 		{
 			if(oos != null)
 			{
-				IOUtilities.closeQuietly(oos);
+				try
+				{
+					oos.close();
+				}
+				catch (IOException e)
+				{
+					// ignore
+				}
 				oos = null;
 			}
 			if(socket != null)
@@ -148,6 +156,7 @@ public class SerializingGoToSource
 			}
 		}
 
+		@Override
 		public void run()
 		{
 			for(;;)

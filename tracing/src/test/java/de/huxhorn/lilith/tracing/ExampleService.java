@@ -1,6 +1,6 @@
 /*
  * Lilith - a log event viewer.
- * Copyright (C) 2007-2011 Joern Huxhorn
+ * Copyright (C) 2007-2018 Joern Huxhorn
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -17,7 +17,7 @@
  */
 
 /*
- * Copyright 2007-2011 Joern Huxhorn
+ * Copyright 2007-2018 Joern Huxhorn
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,8 +35,9 @@
 package de.huxhorn.lilith.tracing;
 
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory; 
+import org.slf4j.LoggerFactory;
 
+@SuppressWarnings("PMD.AvoidThrowingRawExceptionTypes")
 public class ExampleService implements ExampleServiceIfc, Cloneable
 {
 	private final Logger logger = LoggerFactory.getLogger(ExampleService.class);
@@ -44,11 +45,13 @@ public class ExampleService implements ExampleServiceIfc, Cloneable
 	private String name;
 	private OtherIfc other;
 
+	@Override
 	public String getName()
 	{
 		return name;
 	}
 
+	@Override
 	public void setName(String name)
 	{
 		this.name = name;
@@ -64,28 +67,33 @@ public class ExampleService implements ExampleServiceIfc, Cloneable
 		this.other = other;
 	}
 
+	@Override
 	public void noArgs()
 	{
 		if(logger.isInfoEnabled()) logger.info("Executing noArgs");
 	}
 
+	@Override
 	public String noArgsResult()
 	{
 		if(logger.isInfoEnabled()) logger.info("Executing noArgsResult");
 		return "noArgsResult";
 	}
 
+	@Override
 	public void singleArg(String arg)
 	{
 		if(logger.isInfoEnabled()) logger.info("Executing singleArg with {}", arg);
 	}
 
+	@Override
 	public String singleArgResult(String arg)
 	{
 		if(logger.isInfoEnabled()) logger.info("Executing singleArgResult with {}", arg);
 		return "singleArgResult "+arg;
 	}
 
+	@Override
 	public String singleArgResultTakingTime(String arg)
 	{
 		if(logger.isInfoEnabled()) logger.info("Executing singleArgResultTakingTime with {}", arg);
@@ -95,22 +103,25 @@ public class ExampleService implements ExampleServiceIfc, Cloneable
 		}
 		catch(InterruptedException e)
 		{
-			e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+			// ignore
 		}
 		return "singleArgResultTakingTime "+arg;
 	}
 
+	@Override
 	public void args(String arg1, String arg2)
 	{
 		if(logger.isInfoEnabled()) logger.info("Executing args with {} and {}", arg1, arg2);
 	}
 
+	@Override
 	public void argsWithVarargs(String arg1, String arg2, String... args)
 	{
 		if(logger.isInfoEnabled()) logger.info("Foo {}", (Object) args);
-		if(logger.isInfoEnabled()) logger.info("Executing argsWithVarargs with {}, {} & {}", new Object[]{arg1, arg2, args});
+		if(logger.isInfoEnabled()) logger.info("Executing argsWithVarargs with {}, {} & {}", arg1, arg2, args);
 	}
 
+	@Override
 	public String argsResult(String arg1, String arg2)
 	{
 		if(logger.isInfoEnabled()) logger.info("Executing argsResult with {} and {}", arg1, arg2);
@@ -118,31 +129,37 @@ public class ExampleService implements ExampleServiceIfc, Cloneable
 		return "argsResult[arg1="+arg1+", arg2="+arg2+"]";
 	}
 
+	@Override
 	public void noArgsThrows()
 	{
 		throw new RuntimeException("Executing noArgsThrows");
 	}
 
+	@Override
 	public String noArgsResultThrows()
 	{
 		throw new RuntimeException("Executing noArgsThrows");
 	}
 
+	@Override
 	public void singleArgThrows(String arg)
 	{
 		throw new RuntimeException("Executing singleArgThrows with "+arg);
 	}
 
+	@Override
 	public String singleArgResultThrows(String arg)
 	{
 		throw new RuntimeException("Executing singleArgResultThrows with "+arg);
 	}
 
+	@Override
 	public void argsThrows(String arg1, String arg2)
 	{
 		throw new RuntimeException("Executing argsThrows with "+arg1+" and "+arg2);
 	}
 
+	@Override
 	public String argsResultThrows(String arg1, String arg2)
 	{
 		throw new RuntimeException("Executing argsResultThrows with "+arg1+" and "+arg2);
@@ -154,12 +171,14 @@ public class ExampleService implements ExampleServiceIfc, Cloneable
 		return "notInInterface";
 	}
 
+	@Override
 	public String callingOther()
 	{
 		if(logger.isInfoEnabled()) logger.info("Executing callingOther");
 		return other.someMethod();
 	}
 
+	@Override
 	public String methodCallingPrivateMethod()
 	{
 		if(logger.isInfoEnabled()) logger.info("Executing methodCallingPrivateMethod");
@@ -172,8 +191,9 @@ public class ExampleService implements ExampleServiceIfc, Cloneable
 		return "privateMethod";
 	}
 
-	public Object clone() throws CloneNotSupportedException
+	@Override
+	public ExampleService clone() throws CloneNotSupportedException
 	{
-		return super.clone();
+		return (ExampleService) super.clone();
 	}
 }

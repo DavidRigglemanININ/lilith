@@ -1,23 +1,23 @@
 /*
  * Lilith - a log event viewer.
- * Copyright (C) 2007-2011 Joern Huxhorn
- * 
+ * Copyright (C) 2007-2018 Joern Huxhorn
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 /*
- * Copyright 2007-2011 Joern Huxhorn
+ * Copyright 2007-2018 Joern Huxhorn
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,10 +34,10 @@
 
 package de.huxhorn.lilith.logback.appender;
 
-import de.huxhorn.lilith.data.logging.logback.TransformingEncoder;
-import de.huxhorn.lilith.data.logging.protobuf.LoggingEventProtobufEncoder;
-
 import ch.qos.logback.classic.spi.LoggingEvent;
+import de.huxhorn.lilith.data.logging.logback.TransformingEncoder;
+import de.huxhorn.lilith.data.logging.protobuf.LoggingEventProtobufCodec;
+import de.huxhorn.lilith.logback.appender.core.MultiplexSocketAppenderBase;
 
 public class ClassicMultiplexSocketAppender
 	extends MultiplexSocketAppenderBase<LoggingEvent>
@@ -45,15 +45,14 @@ public class ClassicMultiplexSocketAppender
 	/**
 	 * The default port number of compressed new-style remote logging server (10000).
 	 */
-	public static final int COMPRESSED_DEFAULT_PORT = 10000;
+	public static final int COMPRESSED_DEFAULT_PORT = 10_000;
 
 	/**
 	 * The default port number of uncompressed new-style remote logging server (10001).
 	 */
-	public static final int UNCOMPRESSED_DEFAULT_PORT = 10001;
+	public static final int UNCOMPRESSED_DEFAULT_PORT = 10_001;
 
 	private boolean includeCallerData;
-	private boolean compressing;
 	private boolean usingDefaultPort;
 	private TransformingEncoder transformingEncoder;
 
@@ -72,11 +71,13 @@ public class ClassicMultiplexSocketAppender
 		includeCallerData = false;
 	}
 
+	@Override
 	protected void applicationIdentifierChanged()
 	{
 		transformingEncoder.setApplicationIdentifier(getApplicationIdentifier());
 	}
 
+	@Override
 	protected void uuidChanged()
 	{
 		transformingEncoder.setUUID(getUUID());
@@ -98,7 +99,6 @@ public class ClassicMultiplexSocketAppender
 	 */
 	public void setCompressing(boolean compressing)
 	{
-		this.compressing = compressing;
 		if(usingDefaultPort)
 		{
 			if(compressing)
@@ -111,17 +111,7 @@ public class ClassicMultiplexSocketAppender
 			}
 			usingDefaultPort = true;
 		}
-		transformingEncoder.setLilithEncoder(new LoggingEventProtobufEncoder(compressing));
-	}
-
-	public boolean isCompressing()
-	{
-		return compressing;
-	}
-
-	public boolean isIncludeCallerData()
-	{
-		return includeCallerData;
+		transformingEncoder.setLilithEncoder(new LoggingEventProtobufCodec(compressing));
 	}
 
 	public void setIncludeCallerData(boolean includeCallerData)
@@ -129,14 +119,12 @@ public class ClassicMultiplexSocketAppender
 		this.includeCallerData = includeCallerData;
 	}
 
+	@Override
 	protected void preProcess(LoggingEvent event)
 	{
-		if(event != null)
+		if(event != null && includeCallerData)
 		{
-			if(includeCallerData)
-			{
-				event.getCallerData();
-			}
+			event.getCallerData();
 		}
 	}
 }

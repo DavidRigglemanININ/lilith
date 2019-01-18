@@ -1,6 +1,6 @@
 /*
  * Lilith - a log event viewer.
- * Copyright (C) 2007-2011 Joern Huxhorn
+ * Copyright (C) 2007-2018 Joern Huxhorn
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,6 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package de.huxhorn.lilith.tools;
 
 import de.huxhorn.lilith.api.FileConstants;
@@ -35,17 +36,23 @@ import de.huxhorn.sulky.codec.filebuffer.DefaultFileHeaderStrategy;
 import de.huxhorn.sulky.codec.filebuffer.FileHeader;
 import de.huxhorn.sulky.codec.filebuffer.FileHeaderStrategy;
 import de.huxhorn.sulky.codec.filebuffer.MetaData;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-public class TailCommand
+public final class TailCommand
 {
+	static
+	{
+		new TailCommand();
+	}
+
+	private TailCommand() {}
+
 	public static boolean tailFile(File inputFile, String pattern, long amount, boolean keepRunning)
 	{
 		final Logger logger = LoggerFactory.getLogger(TailCommand.class);
@@ -123,7 +130,7 @@ public class TailCommand
 
 			if (FileConstants.CONTENT_TYPE_VALUE_LOGGING.equals(contentType))
 			{
-				Map<String, String> loggingMetaData = new HashMap<String, String>();
+				Map<String, String> loggingMetaData = new HashMap<>();
 				loggingMetaData.put(FileConstants.CONTENT_TYPE_KEY, FileConstants.CONTENT_TYPE_VALUE_LOGGING);
 				loggingMetaData.put(FileConstants.CONTENT_FORMAT_KEY, FileConstants.CONTENT_FORMAT_VALUE_PROTOBUF);
 				loggingMetaData.put(FileConstants.COMPRESSION_KEY, FileConstants.COMPRESSION_VALUE_GZIP);
@@ -143,7 +150,7 @@ public class TailCommand
 			}
 			else if (FileConstants.CONTENT_TYPE_VALUE_ACCESS.equals(contentType))
 			{
-				Map<String, String> accessMetaData = new HashMap<String, String>();
+				Map<String, String> accessMetaData = new HashMap<>();
 				accessMetaData.put(FileConstants.CONTENT_TYPE_KEY, FileConstants.CONTENT_TYPE_VALUE_ACCESS);
 				accessMetaData.put(FileConstants.CONTENT_FORMAT_KEY, FileConstants.CONTENT_FORMAT_VALUE_PROTOBUF);
 				accessMetaData.put(FileConstants.COMPRESSION_KEY, FileConstants.COMPRESSION_VALUE_GZIP);
@@ -177,6 +184,7 @@ public class TailCommand
 		return false;
 	}
 
+	@SuppressWarnings("PMD.SystemPrintln")
 	private static <T extends Serializable> void pollFile(Buffer<EventWrapper<T>> buffer, Formatter<EventWrapper<T>> formatter, File dataFile, File indexFile, long index)
 	{
 		final Logger logger = LoggerFactory.getLogger(TailCommand.class);
@@ -188,7 +196,7 @@ public class TailCommand
 			if (indexModified < dataModified)
 			{
 				// Index file is outdated.
-				IndexingCallable callable=new IndexingCallable(dataFile, indexFile, true);
+				IndexingCallable callable=new IndexingCallable(dataFile, indexFile, true); // NOPMD - AvoidInstantiatingObjectsInLoops
 				try
 				{
 					callable.call();
@@ -224,6 +232,7 @@ public class TailCommand
 		}
 	}
 
+	@SuppressWarnings("PMD.SystemPrintln")
 	private static <T extends Serializable> long printContent(Buffer<EventWrapper<T>> buffer, Formatter<EventWrapper<T>> formatter, long amount)
 	{
 		long bufferSize=buffer.getSize();

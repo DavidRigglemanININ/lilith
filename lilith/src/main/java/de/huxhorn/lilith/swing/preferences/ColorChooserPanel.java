@@ -1,6 +1,6 @@
 /*
  * Lilith - a log event viewer.
- * Copyright (C) 2007-2011 Joern Huxhorn
+ * Copyright (C) 2007-2017 Joern Huxhorn
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,15 +15,9 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package de.huxhorn.lilith.swing.preferences;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import javax.swing.JCheckBox;
-import javax.swing.JColorChooser;
-import javax.swing.JPanel;
-import javax.swing.SwingConstants;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.GridBagConstraints;
@@ -31,24 +25,28 @@ import java.awt.GridBagLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
+import javax.swing.JCheckBox;
+import javax.swing.JColorChooser;
+import javax.swing.JPanel;
+import javax.swing.SwingConstants;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class ColorChooserPanel
 	extends JPanel
 {
+	private static final long serialVersionUID = -8183344633360150605L;
+
 	private final Logger logger = LoggerFactory.getLogger(ColorChooserPanel.class);
 
-	private JColorChooser colorChooser;
-	private JCheckBox inheritCheckbox;
-	private Color defaultColor;
+	private final JColorChooser colorChooser;
+	private final JCheckBox inheritCheckbox;
+	private final Color defaultColor;
 
-	public ColorChooserPanel(Color defaultColor)
+	ColorChooserPanel(Color defaultColor)
 	{
 		this.defaultColor=defaultColor;
-		createUI();
-	}
 
-	private void createUI()
-	{
 		JPanel emptyPreview = new JPanel();
 		emptyPreview.setMinimumSize(new Dimension(0, 0));
 		emptyPreview.setPreferredSize(new Dimension(0, 0));
@@ -137,7 +135,7 @@ public class ColorChooserPanel
 		return getColor(false);
 	}
 
-	public Color getColor(boolean returnDefault)
+	Color getColor(boolean returnDefault)
 	{
 		if(!inheritCheckbox.isSelected())
 		{
@@ -150,21 +148,11 @@ public class ColorChooserPanel
 		return null;
 	}
 
-//	public void setInheritingColor(boolean inheritingColor)
-//	{
-//		inheritCheckbox.setSelected(inheritingColor);
-//		updateComponents();
-//	}
-//
-//	public boolean isInheritingColor()
-//	{
-//		return inheritCheckbox.isSelected();
-//	}
-
 	private class InheritListener
 		implements ActionListener
 	{
 
+		@Override
 		public void actionPerformed(ActionEvent actionEvent)
 		{
 			updateComponents();

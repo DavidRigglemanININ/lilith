@@ -1,6 +1,6 @@
 /*
  * Lilith - a log event viewer.
- * Copyright (C) 2007-2011 Joern Huxhorn
+ * Copyright (C) 2007-2017 Joern Huxhorn
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,83 +15,60 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package de.huxhorn.lilith.swing.callables;
 
 import de.huxhorn.lilith.data.eventsource.EventWrapper;
-import de.huxhorn.lilith.data.eventsource.SourceIdentifier;
 import de.huxhorn.lilith.engine.EventSource;
 import de.huxhorn.lilith.swing.TextPreprocessor;
 import de.huxhorn.sulky.buffers.Buffer;
 import de.huxhorn.sulky.buffers.FileBuffer;
 import de.huxhorn.sulky.buffers.filtering.FilteringBuffer;
 import de.huxhorn.sulky.conditions.Condition;
-
 import java.io.File;
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 
-public class CallableMetaData
+public final class CallableMetaData
 {
 	public static final String FIND_TASK_META_CONDITION = "Condition";
 	public static final String FIND_TASK_META_SOURCE_IDENTIFIER = "SourceIdentifier";
-	public static final String FIND_TASK_META_START_ROW = "StartRow";
-	public static final String FIND_TASK_META_DATA_FILE = "DataFile";
+	private static final String FIND_TASK_META_START_ROW = "StartRow";
+	private static final String FIND_TASK_META_DATA_FILE = "DataFile";
+
+	static
+	{
+		new CallableMetaData(); // stfu
+	}
+
+	private CallableMetaData() {}
 
 	public static <T extends Serializable> Map<String, String> createFindMetaData(Condition condition, EventSource<T> eventSource, int startRow)
 	{
-		String conditionStr = null;
-		if(condition != null)
-		{
-			conditionStr = TextPreprocessor.formatCondition(condition);
-		}
-		Buffer<EventWrapper<T>> buffer = null;
-		String sourceIdentifierStr = null;
-		if(eventSource != null)
-		{
-			buffer = eventSource.getBuffer();
-			SourceIdentifier si = eventSource.getSourceIdentifier();
-			if(si != null)
-			{
-				sourceIdentifierStr = si.toString();
-			}
-		}
-		Map<String, String> metaData = new HashMap<String, String>();
-		metaData.put(FIND_TASK_META_CONDITION, conditionStr);
-		metaData.put(FIND_TASK_META_START_ROW, "" + startRow);
-		if(sourceIdentifierStr != null)
-		{
-			metaData.put(FIND_TASK_META_SOURCE_IDENTIFIER, sourceIdentifierStr);
-		}
-		resolveDataFile(metaData, buffer);
+		Map<String, String> metaData = createFilteringMetaData(condition, eventSource);
+		metaData.put(FIND_TASK_META_START_ROW, Integer.toString(startRow));
+
 		return metaData;
 	}
 
 	public static <T extends Serializable> Map<String, String> createFilteringMetaData(Condition condition, EventSource<T> eventSource)
 	{
-		String conditionStr = null;
+		Map<String, String> metaData = new HashMap<>();
 		if(condition != null)
 		{
-			conditionStr = TextPreprocessor.formatCondition(condition);
+			metaData.put(FIND_TASK_META_CONDITION, TextPreprocessor.formatCondition(condition));
 		}
-		Buffer<EventWrapper<T>> buffer = null;
-		String sourceIdentifierStr = null;
-		if(eventSource != null)
+		if(eventSource == null)
 		{
-			buffer = eventSource.getBuffer();
-			SourceIdentifier si = eventSource.getSourceIdentifier();
-			if(si != null)
-			{
-				sourceIdentifierStr = si.toString();
-			}
+			return metaData;
 		}
-		Map<String, String> metaData = new HashMap<String, String>();
-		metaData.put(FIND_TASK_META_CONDITION, conditionStr);
-		if(sourceIdentifierStr != null)
-		{
-			metaData.put(FIND_TASK_META_SOURCE_IDENTIFIER, sourceIdentifierStr);
-		}
+
+		metaData.put(FIND_TASK_META_SOURCE_IDENTIFIER, eventSource.getSourceIdentifier().toString());
+		Buffer<EventWrapper<T>> buffer = eventSource.getBuffer();
+
 		resolveDataFile(metaData, buffer);
+
 		return metaData;
 	}
 

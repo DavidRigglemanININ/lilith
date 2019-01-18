@@ -1,36 +1,40 @@
 /*
  * Lilith - a log event viewer.
- * Copyright (C) 2007-2011 Joern Huxhorn
- * 
+ * Copyright (C) 2007-2017 Joern Huxhorn
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package de.huxhorn.lilith.swing.preferences;
 
 import de.huxhorn.lilith.data.access.HttpStatus;
 import de.huxhorn.lilith.swing.ApplicationPreferences;
-import de.huxhorn.lilith.swing.EventWrapperViewPanel;
+import de.huxhorn.lilith.swing.Icons;
 import de.huxhorn.lilith.swing.preferences.table.AccessStatusTypeColumnModel;
 import de.huxhorn.lilith.swing.preferences.table.AccessStatusTypeTableModel;
 import de.huxhorn.lilith.swing.table.ColorScheme;
 import de.huxhorn.sulky.swing.Windows;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
+import java.awt.BorderLayout;
+import java.awt.GridLayout;
+import java.awt.Point;
+import java.awt.event.ActionEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.util.List;
+import java.util.Map;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
-import javax.swing.Icon;
-import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -39,39 +43,30 @@ import javax.swing.JToolBar;
 import javax.swing.ListSelectionModel;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
-import java.awt.BorderLayout;
-import java.awt.GridLayout;
-import java.awt.Point;
-import java.awt.event.ActionEvent;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
-import java.net.URL;
-import java.util.List;
-import java.util.Map;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class AccessStatusTypePanel
 	extends JPanel
 {
+	private static final long serialVersionUID = -2356865948513043440L;
 	private final Logger logger = LoggerFactory.getLogger(AccessStatusTypePanel.class);
 
-	private PreferencesDialog preferencesDialog;
-	private ApplicationPreferences applicationPreferences;
-	private EditAccessStatusTypeDialog editDialog;
-	private JTable table;
-	private AccessStatusTypeTableModel tableModel;
-	private AccessStatusTypeColumnModel tableColumnModel;
-	private EditConditionAction editAction;
+	private final PreferencesDialog preferencesDialog;
+	private final ApplicationPreferences applicationPreferences;
+	private final EditAccessStatusTypeDialog editDialog;
+	private final JTable table;
+	private final AccessStatusTypeTableModel tableModel;
+	private final AccessStatusTypeColumnModel tableColumnModel;
+	private final EditConditionAction editAction;
+
 	private Map<HttpStatus.Type, ColorScheme> colors;
 
-	public AccessStatusTypePanel(PreferencesDialog preferencesDialog)
+	AccessStatusTypePanel(PreferencesDialog preferencesDialog)
 	{
 		this.preferencesDialog = preferencesDialog;
 		applicationPreferences = preferencesDialog.getApplicationPreferences();
-		createUI();
-	}
 
-	private void createUI()
-	{
 		setLayout(new BorderLayout());
 		editDialog = new EditAccessStatusTypeDialog(preferencesDialog);
 
@@ -115,7 +110,7 @@ public class AccessStatusTypePanel
 		updateConditions();
 	}
 
-	public void updateConditions()
+	private void updateConditions()
 	{
 		int selectedRow = table.getSelectedRow();
 		if(logger.isDebugEnabled()) logger.debug("selectedRow={}", selectedRow);
@@ -130,7 +125,7 @@ public class AccessStatusTypePanel
 		editAction.setEnabled(type != null);
 	}
 
-	public void saveSettings()
+	void saveSettings()
 	{
 		if(logger.isInfoEnabled()) logger.info("Setting level colors to {}.", colors);
 		applicationPreferences.setStatusColors(colors);
@@ -158,6 +153,7 @@ public class AccessStatusTypePanel
 	private class ConditionTableRowSelectionListener
 		implements ListSelectionListener
 	{
+		@Override
 		public void valueChanged(ListSelectionEvent e)
 		{
 			updateConditions();
@@ -170,25 +166,14 @@ public class AccessStatusTypePanel
 	{
 		private static final long serialVersionUID = 95425194239658313L;
 
-		public EditConditionAction()
+		EditConditionAction()
 		{
 			super("Edit");
-			Icon icon;
-			{
-				URL url = EventWrapperViewPanel.class.getResource("/tango/16x16/actions/list-add.png");
-				if(url != null)
-				{
-					icon = new ImageIcon(url);
-				}
-				else
-				{
-					icon = null;
-				}
-			}
-			putValue(Action.SMALL_ICON, icon);
+			putValue(Action.SMALL_ICON, Icons.ADD_16_ICON);
 			putValue(Action.SHORT_DESCRIPTION, "Edit colors.");
 		}
 
+		@Override
 		public void actionPerformed(ActionEvent e)
 		{
 			if(logger.isDebugEnabled()) logger.debug("Edit");
@@ -208,64 +193,23 @@ public class AccessStatusTypePanel
 
 
 	private class ConditionTableMouseListener
-		implements MouseListener
+		extends MouseAdapter
 	{
-		public ConditionTableMouseListener()
-		{
-		}
-
+		@Override
 		public void mouseClicked(MouseEvent evt)
 		{
-			if(evt.isPopupTrigger())
-			{
-				showPopup(evt);
-			}
-			else if(evt.getButton() == MouseEvent.BUTTON1)
+			if(evt.getButton() == MouseEvent.BUTTON1)
 			{
 				Point p = evt.getPoint();
 				int row = table.rowAtPoint(p);
 
 				List<HttpStatus.Type> types = tableModel.getData();
-				if(row >= 0 && row < types.size())
+				if(row >= 0 && row < types.size() && evt.getClickCount() >= 2)
 				{
-					if(evt.getClickCount() >= 2)
-					{
-						HttpStatus.Type type = types.get(row);
-						edit(type);
-					}
+					HttpStatus.Type type = types.get(row);
+					edit(type);
 				}
 			}
 		}
-
-
-		@SuppressWarnings({"UnusedDeclaration"})
-		private void showPopup(MouseEvent evt)
-		{
-		}
-
-		public void mousePressed(MouseEvent evt)
-		{
-			if(evt.isPopupTrigger())
-			{
-				showPopup(evt);
-			}
-		}
-
-		public void mouseReleased(MouseEvent evt)
-		{
-			if(evt.isPopupTrigger())
-			{
-				showPopup(evt);
-			}
-		}
-
-		public void mouseEntered(MouseEvent e)
-		{
-		}
-
-		public void mouseExited(MouseEvent e)
-		{
-		}
-
 	}
 }

@@ -1,21 +1,3 @@
-apply from: 'dependencyDefinitions.gradle'
-apply from: 'projectDependencies.gradle'
-
-apply plugin: 'versions'
-apply plugin: 'base'
-apply plugin: 'signing'
-apply plugin: 'com.github.kt3k.coveralls' // see https://github.com/kt3k/coveralls-gradle-plugin
-
-import org.apache.tools.ant.filters.FixCrLfFilter
-import de.huxhorn.sulky.plist.*
-import org.gradle.plugins.signing.Sign
-
-task wrapper(type: Wrapper) {
-	gradleVersion = '2.3'
-}
-
-def copyright = "Copyright \u00a9 2007-2014 J\u00f6rn Huxhorn"
-
 buildscript {
 	apply from: 'dependencyDefinitions.gradle'
 	project.ext.localReleaseRepoFile = new File("${System.properties.'user.home'}/local-gradle-repository/release")
@@ -33,50 +15,69 @@ buildscript {
 		mavenCentral()
 		mavenLocal()
 		maven {
-			// workaround for http://issues.gradle.org/browse/GRADLE-784
-			// propdep => provided, optional
-			url 'http://repo.springsource.org/plugins-release'
-		}
-		maven {
-			// workaround for http://issues.gradle.org/browse/GRADLE-784
-			// propdep => provided, optional
-			url 'http://repo.spring.io/plugins-snapshot-local'
+			url 'https://plugins.gradle.org/m2/'
 		}
 	}
 
 	dependencies {
 		// needed for syncSnapshot and syncStaging
-		classpath 'org.apache.maven.wagon:wagon-webdav-jackrabbit:1.0-beta-6'
-		classpath "de.huxhorn.sulky:de.huxhorn.sulky.plist:${versions.sulky}"
-		classpath 'de.huxhorn.gradle:de.huxhorn.gradle.git-state-plugin:0.0.2'
-		classpath 'com.github.ben-manes:gradle-versions-plugin:0.4'
-		// workaround for http://issues.gradle.org/browse/GRADLE-784
-		// propdep => provided, optional
-		// http://repo.spring.io/plugins-release/org/springframework/build/gradle/propdeps-plugin/
-		classpath 'org.springframework.build.gradle:propdeps-plugin:0.0.7' 
-		classpath 'org.kt3k.gradle.plugin:coveralls-gradle-plugin:1.0.2'
-		// https://code.google.com/p/gradle-macappbundle/
-		classpath 'edu.sc.seis.gradle:macappbundle:2.0.0'
+		classpath 'org.apache.maven.wagon:wagon-webdav-jackrabbit:2.9'
+		classpath 'de.huxhorn.gradle:de.huxhorn.gradle.git-state-plugin:0.0.4'
+		classpath 'com.github.ben-manes:gradle-versions-plugin:0.20.0'
+		classpath 'org.kt3k.gradle.plugin:coveralls-gradle-plugin:2.8.2'
+		classpath 'gradle.plugin.edu.sc.seis:macAppBundle:2.2.3'
+		classpath 'com.github.jengelman.gradle.plugins:shadow:4.0.3'
+		classpath 'de.thetaphi:forbiddenapis:2.6'
+		classpath 'org.kordamp.gradle:jdeps-gradle-plugin:0.4.1'
 	}
 }
 
-apply plugin: 'compare-gradle-builds'
+apply from: 'dependencyDefinitions.gradle'
+apply from: 'projectDependencies.gradle'
 
-compareGradleBuilds {
-	sourceBuild {
-		gradleVersion "1.3"
-		// tasks = ['clean', 'install']
-	}
-	targetBuild {
-		gradleVersion "1.4"
-		// tasks = ['clean', 'install']
+import org.apache.tools.ant.filters.FixCrLfFilter
+import org.gradle.plugins.signing.Sign
+
+wrapper {
+	gradleVersion = '5.1.1'
+}
+
+def copyright = "Copyright \u00a9 2007-2017 J\u00f6rn Huxhorn"
+def globalSourceCompatibility = 1.8
+def globalTargetCompatibility = 1.8
+
+apply plugin: 'idea'
+
+idea {
+	project {
+		jdkName = globalSourceCompatibility
+		languageLevel = globalSourceCompatibility
+
+		ipr {
+			withXml {
+				def node = it.asNode()
+				def vcsConfig = node.component.find { it.'@name' == 'VcsDirectoryMappings' }
+				vcsConfig.mapping[0].'@vcs' = 'Git'
+			}
+		}
 	}
 }
 
-task javadoc(type: Javadoc) {
+apply plugin: 'com.github.ben-manes.versions'
+apply plugin: 'base'
+apply plugin: 'signing'
+apply plugin: 'com.github.kt3k.coveralls' // see https://github.com/kt3k/coveralls-gradle-plugin
+
+task javadocAll(type: Javadoc) {
 	destinationDir = file("$buildDir/javadoc")
 	source = files { subprojects.collect { it.sourceSets.main.java } }
 	classpath = files { subprojects.collect { it.sourceSets.main.compileClasspath } }
+	// disable doclint for protobuf
+	// http://blog.joda.org/2014/02/turning-off-doclint-in-jdk-8-javadoc.html
+	// https://github.com/google/protobuf/issues/304
+	if (JavaVersion.current().isJava8Compatible()) {
+		options.addStringOption('Xdoclint:none', '-quiet')
+	}
 }
 
 task sourceZip(type: Zip) {
@@ -86,7 +87,7 @@ task sourceZip(type: Zip) {
 
 task javadocZip(type: Zip) {
 	classifier = 'javadoc'
-	from javadoc.outputs.files
+	from javadocAll.outputs.files
 }
 
 signing {
@@ -99,7 +100,8 @@ gradle.taskGraph.whenReady { taskGraph ->
 	if(taskGraph.allTasks.any { it instanceof Sign && it.required }) {
 		String pgpPassword = System.properties.'pgpPassword'
 		if(!pgpPassword) {
-			Console console = System.console()
+			// name clash with org.gradle.api.tasks.Console
+			java.io.Console console = System.console()
 			if(!console) {
 				throw new IllegalStateException('System.console() returned null. Restart with --no-daemon.')
 			}
@@ -112,10 +114,10 @@ gradle.taskGraph.whenReady { taskGraph ->
 	}
 }
 
-if(!System.properties.'release') {
-	defaultTasks 'build', 'uploadPublished', 'jarAll', 'myDistZip', 'myDistTgz', 'appTgz'	
+if(!System.properties.'release' && !System.properties.'prerelease') {
+	defaultTasks 'build', 'uploadPublished', 'shadowJar', 'myDistZip', 'myDistTgz', 'appTgz'
 } else {
-	defaultTasks 'build', 'uploadPublished', 'jarAll', 'myDistZip', 'myDistTgz', 'appTgz', 'signJavadocZip', 'signSourceZip'	
+	defaultTasks 'build', 'uploadPublished', 'shadowJar', 'myDistZip', 'myDistTgz', 'appTgz', 'signJavadocZip', 'signSourceZip'
 }
 
 allprojects {
@@ -125,8 +127,11 @@ allprojects {
 	apply plugin: 'jacoco'
 
 	group = 'de.huxhorn.lilith'
-	version = '0.9.45'
-	if(!System.properties.'release') {
+	version = '8.3.0'
+	def prereleaseIdentifier = System.properties.'prerelease'
+	if(prereleaseIdentifier) {
+		version = version + '-' + prereleaseIdentifier
+	} else if(!System.properties.'release') {
 		version = version + '-SNAPSHOT'
 	}
 
@@ -142,19 +147,69 @@ allprojects {
 	}
 
 	jacoco {
-		toolVersion = '0.7.1.201405082137'
-	}	
+		toolVersion = '0.8.2'
+	}
+
+	task printConfig doLast {
+		configurations.each { config ->
+			println "Configuration " + config.name
+				config.allArtifacts.each {
+					println "\t${it}"
+					println "\t\t${it.name}"
+					println "\t\t${it.file}"
+					println "\t\t${it.buildDependencies.values}"
+				}
+			println "------"
+		}
+	}
 }
 
 subprojects {
 	apply plugin: 'groovy'
 	apply plugin: 'maven'
 	apply plugin: 'signing'
+	apply plugin: 'de.thetaphi.forbiddenapis'
+	apply plugin: 'checkstyle'
+	apply plugin: 'pmd'
+	//apply plugin: 'org.kordamp.jdeps'
 	
+	checkstyle {
+		configFile = rootProject.file('config/checkstyle/checkstyle.xml')
+		configProperties = [
+				'configDir': rootProject.file('config/checkstyle'),
+				'baseDir': rootDir,
+			]
+		toolVersion = '8.16'
+		//ignoreFailures = true
+	}
+	
+	pmd {
+		ruleSetFiles = files(rootProject.file('config/pmd/ruleSet.xml'))
+		ruleSets = []
+		toolVersion = '6.10.0'
+		// https://github.com/gradle/gradle/pull/3125#issuecomment-352442432
+		//incrementalAnalysis = true
+		//ignoreFailures = true
+	}
+
+	forbiddenApis {
+		bundledSignatures = [
+			'jdk-unsafe-1.8',
+			'jdk-deprecated-1.8',
+			'jdk-internal-1.8',
+			'jdk-non-portable',
+			//'jdk-system-out',
+			'jdk-reflection',
+			//'commons-io-unsafe-2.5',
+			]
+		ignoreFailures = false
+		//failOnUnresolvableSignatures = false
+	}
+
 	jacocoTestReport {
-		additionalSourceDirs = files(sourceSets.main.allSource.srcDirs)
-		sourceDirectories = files(sourceSets.main.allSource.srcDirs)
-		classDirectories = files(sourceSets.main.output)
+		additionalSourceDirs.from(files(sourceSets.main.allSource.srcDirs))
+		sourceDirectories.from(files(sourceSets.main.allSource.srcDirs))
+		classDirectories.from(files(sourceSets.main.output))
 		reports {
 			html.enabled = true
 			xml.enabled = true
@@ -162,27 +217,26 @@ subprojects {
 		}
 	}
 	//defaultTasks 'build', 'uploadPublished'
-	
-	sourceCompatibility = 1.5
-	targetCompatibility = 1.5
-	
+
+	sourceCompatibility = globalSourceCompatibility
+	targetCompatibility = globalTargetCompatibility
+
 	// -Xlint:-options disables the
 	// "warning: [options] bootstrap class path not set in conjunction with -source 1.x"
 	// for now
 	def compilerArgs = ['-Xlint:unchecked', '-Xlint:-options', '-Xlint:deprecation', '-g']
-	
+
 	compileJava.options.compilerArgs = compilerArgs
 	compileTestJava.options.compilerArgs = compilerArgs
 	compileGroovy.options.compilerArgs = compilerArgs
 	compileTestGroovy.options.compilerArgs = compilerArgs
 
 	def sourceEncoding = 'UTF-8'
-	
+
 	compileJava.options.encoding = sourceEncoding
 	compileTestJava.options.encoding = sourceEncoding
 	compileGroovy.options.encoding = sourceEncoding
 	compileTestGroovy.options.encoding = sourceEncoding
-	javadoc.options.encoding = sourceEncoding
 
 	signing {
 		required = { !version.endsWith("SNAPSHOT") }
@@ -193,23 +247,21 @@ subprojects {
 
 	task sourceJar(type: Jar) { from sourceSets.main.allSource; classifier = 'sources' }
 	task javadocJar(type: Jar) { from javadoc.outputs.files; classifier = 'javadoc' }
-	
+
 	artifacts { archives sourceJar, javadocJar }
 
     project.ext.defaultProject= {
-    	url 'http://lilith.huxhorn.de'
+    	url 'http://lilithapp.com'
     	name project.name
     	description project.description
     	inceptionYear '2007'
-    	//packaging 'jar' // does not work, fixed below
-    	// See http://jira.codehaus.org/browse/GRADLE-1200
 
     	scm {
     		connection 'scm:git:git://github.com/huxi/lilith.git'
     		developerConnection 'scm:git:ssh://git@github.com:huxi/lilith.git'
     		url 'http://github.com/huxi/lilith/'
     	}
-    	
+
 		licenses {
 			if(gpl)
 			{
@@ -226,7 +278,7 @@ subprojects {
 					url 'http://www.gnu.org/copyleft/lesser.html'
 					distribution 'repo'
 				}
-				
+
 				license {
 					name 'The Apache Software License, Version 2.0'
 					url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
@@ -234,49 +286,25 @@ subprojects {
 				}
 			}
 		}
-		
+
 		issueManagement {
-			system 'trac'
-			url 'http://apps.sourceforge.net/trac/lilith/'
+			system 'Github'
+			url 'https://github.com/huxi/lilith/issues'
 		}
-		
-		mailingLists {
-			mailingList {
-				name 'Announce List'
-				subscribe 'lilith-announce-join@lists.sourceforge.net'
-				unsubscribe 'lilith-announce-leave@lists.sourceforge.net'
-				post 'lilith-announce@lists.sourceforge.net'
-				archive 'http://sourceforge.net/mailarchive/forum.php?forum_name=lilith-announce'
-			}
-			mailingList {
-				name 'User List'
-				subscribe 'lilith-user-join@lists.sourceforge.net'
-				unsubscribe 'lilith-user-leave@lists.sourceforge.net'
-				post 'lilith-user@lists.sourceforge.net'
-				archive 'http://sourceforge.net/mailarchive/forum.php?forum_name=lilith-user'
-			}
-			mailingList {
-				name 'Developer List'
-				subscribe 'lilith-devel-join@lists.sourceforge.net'
-				unsubscribe 'lilith-devel-leave@lists.sourceforge.net'
-				post 'lilith-devel@lists.sourceforge.net'
-				archive 'http://sourceforge.net/mailarchive/forum.php?forum_name=lilith-devel'
-			}
-		}
-		
+
 		developers {
 			developer {
 				id 'huxhorn'
 				email 'huxhorn@users.sourceforge.net'
 				name 'Joern Huxhorn'
 				organization = 'Joern Huxhorn'
-				organizationUrl 'http://lilith.huxhorn.de'
+				organizationUrl 'http://lilithapp.com'
 				roles {
 					role 'Developer'
 				}
 			}
 		}
-		
+
 		properties {
 			'project.build.sourceEncoding' 'UTF-8'
 			'project.reporting.outputEncoding' 'UTF-8'
@@ -289,21 +317,20 @@ subprojects {
 
 		published.extendsFrom archives, signatures
 	}
-	
+
 	dependencies {
+		testCompile libraries.'byte-buddy'
 		testCompile libraries.'groovy'
-		testCompile libraries.'spock-core'
-		testCompile libraries.junit
+		testCompile libraries.'spock-core', {
+			exclude group: 'org.codehaus.groovy', module: 'groovy-all' 
+		}
+		testCompile libraries.'junit'
 		testCompile libraries.'slf4j-api'
 		testRuntime libraries.'logback-classic'
 	}
 
-	jar {
-		manifest.attributes provider: 'gradle'
-	}
-
 	def deployer = null
-	
+
 	uploadPublished {
 		deployer = repositories.mavenDeployer {
 			repository(url: localReleaseRepo)
@@ -313,75 +340,45 @@ subprojects {
 			}
 		}
 	}
-	
+
 	def installer = install.repositories.mavenInstaller
-	
+
 	installer.pom.project defaultProject
-	
+
 	deployer.pom.project defaultProject
-
-	// The following fixes the broken packaging
-	// See http://jira.codehaus.org/browse/GRADLE-1200
-	// Thanks xlson
-	/*
-	installer.pom.withXml { XmlProvider xmlProvider ->
-		def xml = xmlProvider.asString()
-		def pomXml = new XmlParser().parseText(xml.toString())
-
-		pomXml.version[0] + { packaging('jar') }
-
-		def newXml = new StringWriter()
-		def printer = new XmlNodePrinter(new PrintWriter(newXml))
-		printer.preserveWhitespace = true
-		printer.print(pomXml)
-		xml.setLength(0)
-		xml.append(newXml.toString())
-	}
-	deployer.pom.withXml { XmlProvider xmlProvider ->
-		def xml = xmlProvider.asString()
-		def pomXml = new XmlParser().parseText(xml.toString())
-
-		pomXml.version[0] + { packaging('jar') }
-
-		def newXml = new StringWriter()
-		def printer = new XmlNodePrinter(new PrintWriter(newXml))
-		printer.preserveWhitespace = true
-		printer.print(pomXml)
-		xml.setLength(0)
-		xml.append(newXml.toString())
-	}
-	*/
 }
 
 project(':lilith') {
 	apply plugin: 'application'
 	apply plugin: de.huxhorn.gradle.git.GitStatePlugin
-	apply plugin: 'macAppBundle'
+	apply plugin: 'edu.sc.seis.macAppBundle'
+	apply plugin: 'com.github.johnrengelman.shadow'
 
 /*
 ### macappbundle
-- [Gradle Plugin Homepage](https://code.google.com/p/gradle-macappbundle/)
-- [MacAppBundlePluginExtension](https://code.google.com/p/gradle-macappbundle/source/browse/src/main/groovy/edu/sc/seis/gradle/macAppBundle/MacAppBundlePluginExtension.groovy)
-- Artifact: `'edu.sc.seis.gradle:macappbundle:2.0.0'`
+- [Gradle Plugin Homepage](https://github.com/crotwell/gradle-macappbundle/)
+- [MacAppBundlePluginExtension](https://github.com/crotwell/gradle-macappbundle/blob/master/src/main/groovy/edu/sc/seis/macAppBundle/MacAppBundlePluginExtension.groovy)
 - http://kovuthehusky.com/blog/running-minecraft-on-os-x-using-java-7/
 - https://bugs.mojang.com/browse/MCL-1049
 - https://bugs.mojang.com/browse/MCL-2628
 - https://gist.github.com/pudquick/7518753
 - http://docs.oracle.com/javase/8/docs/technotes/guides/deploy/package_for_mac.html
+- https://developer.apple.com/library/mac/documentation/GraphicsAnimation/Conceptual/HighResolutionOSX/Optimizing/Optimizing.html
 */
-	
-	if(System.properties.'release') {
+	if(!System.properties.'ignoreGit' && (System.properties.'release' || System.properties.'prerelease')) {
 		project.git.requireClean = true
 		processResources.dependsOn checkGitState
 	}
-	
-	def theMainClassName = 'de.huxhorn.lilith.Lilith'
-	
+
+	//def theMainClassName = 'de.huxhorn.lilith.Lilith'
+	def theMainClassName = 'de.huxhorn.sulky.version.Main'
+
 	mainClassName = theMainClassName
 
 	macAppBundle {
 		mainClassName = theMainClassName
-		appName = 'Lilith'
+		appName = 'Lilith' // ends up in CFBundleName
+		bundleIdentifier = 'de.huxhorn.lilith'
 		creatorCode = 'Llth'
 		//jvmVersion = '1.8+'
 		//jvmVersion is AppleJava only
@@ -390,13 +387,19 @@ project(':lilith') {
 			'CFBundleShortVersionString': version,
 			//'CFBundleGetInfoString': copyright,
 			'NSHumanReadableCopyright': copyright,
-                        'NSHighResolutionCapable':'true',	
 			//'CFBundleIdentifier': 'de.huxhorn.lilith'
 			// not possible to override CFBundleIdentifier
+			'NSSupportsAutomaticGraphicsSwitching': true,
+            'NSHighResolutionCapable':'true'
 		]
 		javaProperties = [
 			'apple.laf.useScreenMenuBar': 'true'
 		]
+		javaExtras = [
+			'-Xdock:name': appName // About name
+		]
+		bundleJRE = false
+		jreHome = 'N/A'
 	}
 
 	createDmg {
@@ -412,34 +415,38 @@ project(':lilith') {
 		)
 
 	}
-	
-	processResources { 
-		def props = [ 
-			'lilithVersion': version, 
-			'slf4jVersion': versions.slf4j, 
-			'logbackVersion': versions.logback, 
-			'gitRevision': project.gitHeadHash, 
-			'timestamp': "${System.currentTimeMillis()}" 
+
+	processResources {
+		def props = [
+			'lilithVersion': version,
+			'jacksonVersion': versions.jackson,
+			'slf4jVersion': versions.slf4j,
+			'logbackVersion': versions.logback,
+			'log4jVersion': versions.log4j,
+			'log4j2Version': versions.log4j2,
+			'gitRevision': project.gitHeadHash,
+			'timestamp': "${System.currentTimeMillis()}"
 		]
-		
+
 		// props is manually added as input to circumvent the following issues:
 		// - Change in filtered resource not picked up by archive tasks
 		//   http://issues.gradle.org/browse/GRADLE-1298
 		// - processResources task considered up-to-date although its spec has changed
-		//   http://jira.codehaus.org/browse/GRADLE-1276
+		//   https://issues.gradle.org/browse/GRADLE-1276
 		// - Copy tasks do not consider filter/expansion properties in up-to-date checks
-		//   http://issues.gradle.org/browse/GRADLE-1646
-		inputs.properties props 
+		//   https://issues.gradle.org/browse/GRADLE-1646
+		inputs.properties props
 		// See also:
 		// http://forums.gradle.org/gradle/topics/1_7_rc_1_probably_erroneous_including_duplicate_file_warnings
 
-		filesMatching '**/*.properties', { expand props } 
-		filesMatching '**/*.xhtml', { expand props } 
-	} 
+		filesMatching '**/*.properties', { expand props }
+		filesMatching '**/*.xhtml', { expand props }
+		filesMatching '**/*.message', { expand props }
+	}
 
 	project.ext.distSpec = copySpec {
 		into("lilith-${version}") {
-			
+
 			//println "projectDir: ${projectDir}"
 			from(projectDir) {
 				include 'COPYING'
@@ -447,7 +454,7 @@ project(':lilith') {
 				include 'LICENSE-2.0.txt'
 				include 'build.txt'
 			}
-		
+
 			from(projectDir) {
 				include 'readme.txt'
 				expand(
@@ -464,19 +471,19 @@ project(':lilith') {
 					include 'lilith.bat'
 				}
 			}
-			
+
 			into('bin') {
 				from("${projectDir}/src/bin") {
 					include 'lilith'
 					fileMode = 0755
-					filter(FixCrLfFilter, 
+					filter(FixCrLfFilter,
 						eol: FixCrLfFilter.CrLf.newInstance('lf'),
 						tab: FixCrLfFilter.AddAsisRemove.newInstance('asis'),
 						eof: FixCrLfFilter.AddAsisRemove.newInstance('remove'),
 						fixlast: true)
 				}
 			}
-			
+
 			into('lib') {
 				from configurations.default
 				from configurations.default.allArtifacts.files
@@ -487,29 +494,9 @@ project(':lilith') {
 		}
 	}
 
-	task jarAll(dependsOn: configurations.default.allArtifacts.buildDependencies, type: Jar) {
-		description = 'Creates a shaded/uberjar/fatjar of the application.'
-		classifier = 'all'
-
-		manifest.attributes(
-			'Main-Class': "${mainClassName}"
-		)
-
-		from (sourceSets.main.output.classesDir)
-		from (sourceSets.main.output.resourcesDir)
-
-		doFirst {  // <- note the doFirst
-			// the following must be executed in doFirst since the configuration
-			// has not been initialized at configuration time
-			from (configurations.runtime.resolve().collect { it.isDirectory() ? it : zipTree(it) }) {
-				exclude 'META-INF/MANIFEST.MF'
-				exclude 'META-INF/*.SF'
-				exclude 'META-INF/*.DSA'
-				exclude 'META-INF/*.RSA'
-			}
-		}
-	}
-
+	shadowDistZip.classifier = 'shadow'
+	shadowDistTar.classifier = 'shadow'
+	
 	task myDistZip(dependsOn: configurations.default.allArtifacts.buildDependencies, type: Zip) {
 		description = 'Creates a ZIP containing the Lilith distribution.'
 		classifier = 'bin'
@@ -522,144 +509,7 @@ project(':lilith') {
 		compression = Compression.GZIP
 		with distSpec
 	}
-	
-	/*
-	task preparePropertyList(dependsOn: configurations.default.allArtifacts.buildDependencies) << {
-		File propFile=file('src/main/mac-resources/Info.plist')
-		PropertyList plist
-		if(propFile.isFile())
-		{
-			PropertyListDecoder decoder=new PropertyListDecoder()
-			plist=decoder.decode(new FileInputStream(propFile))
-		}
-		//println("PropertyList before: ${plist}")
-		if(!plist)
-		{
-			plist=new PropertyList()
-		}
-		if(!plist.root)
-		{
-			plist.root=new TreeMap()
-		}
-		else
-		{
-			plist.root=new TreeMap(plist.root)
-		}
-		String bundleName='Lilith'
-		
-		plist.root.'CFBundleName'="${bundleName}"
-		plist.root.'CFBundleIdentifier'='de.huxhorn.lilith'
-		plist.root.'CFBundleVersion'="${version}"
-		plist.root.'CFBundleGetInfoString'="${bundleName} ${version}, ${copyright}"
-		plist.root.'CFBundleShortVersionString'="${version}"
-		plist.root.'CFBundleAllowMixedLocalizations'='true'
-		plist.root.'CFBundleExecutable'='JavaApplicationStub'
-		plist.root.'CFBundleDevelopmentRegion'='English'
-		plist.root.'CFBundlePackageType'='APPL'
-		//plist.root.'CFBundleSignature'='Llth'
-		plist.root.'CFBundleInfoDictionaryVersion'='6.0'
-		plist.root.'CFBundleIconFile'='Lilith.icns'
-	
-		List macClasspath=new ArrayList()
-		//println configurations.default
-		configurations.default.collect  { File file -> 
-			String currentName='$JAVAROOT/'+file.name
-			if(!currentName.endsWith('-sources.jar') && !currentName.endsWith('-javadoc.jar')
-				&& !macClasspath.contains(currentName))
-			{
-				macClasspath.add(currentName)
-				//println "Added ${currentName}"
-			}
-		}
-		//println "classpath 1 = ${macClasspath}"
-		//println configurations.default.allArtifactFiles
-		configurations.default.allArtifacts.files.collect { File file -> 
-			String currentName='$JAVAROOT/'+file.name
-			if(!currentName.endsWith('-sources.jar') && !currentName.endsWith('-javadoc.jar')
-				&& !macClasspath.contains(currentName))
-			{
-				macClasspath.add(currentName)
-				//println "Added ${currentName}"
-			}
-		}
-		//println "classpath 2 = ${macClasspath}"
 
-		//String foo = "${ -> configurations.runtime.collect { File file -> file.name }.sort().join(' ')}"
-		//println foo
-		configurations.runtime.collect { File file -> 
-			String currentName='$JAVAROOT/'+file.name
-			if(!currentName.endsWith('-sources.jar') && !currentName.endsWith('-javadoc.jar')
-				&& !macClasspath.contains(currentName))
-			{
-				macClasspath.add(currentName)
-				//println "Added ${currentName}"
-			}
-		}
-		//println "classpath 3 = ${macClasspath}"
-		Collections.sort(macClasspath)
-		
-		Map javaMap=plist.root.'Java'
-		if(!javaMap)
-		{
-			javaMap=new TreeMap()
-			plist.root.'Java'=javaMap
-		}
-		else
-		{
-			javaMap=new TreeMap(javaMap)
-			plist.root.'Java'=javaMap
-		}
-		javaMap.'MainClass'="${mainClassName}"
-		javaMap.'JVMVersion'='1.5+'
-		javaMap.'ClassPath'=macClasspath
-		javaMap.'VMOptions'='-Dcom.apple.macos.useScreenMenuBar=true'
-		
-		
-		//println("PropertyList after: ${plist}")
-		File propOutFile=file('build/Info.plist')
-		propOutFile.parentFile.mkdirs()
-		PropertyListEncoder encoder=new PropertyListEncoder()
-		plist=encoder.encode(plist, new FileOutputStream(propOutFile))
-	}
-	
-	project.ext.appSpec = copySpec {
-		into("Lilith.app") {
-			
-			into('Contents') {
-				from("${projectDir}/build/Info.plist")
-			}
-
-			into('Contents/Resources') {
-				from("${projectDir}/src/main/mac-resources/Lilith.icns")
-			}
-			
-			into('Contents/MacOS') {
-				from("${projectDir}/src/main/mac-resources/JavaApplicationStub")
-				fileMode = 0755
-			}
-			
-			into('Contents/Resources/Java') {
-				from configurations.default
-				from configurations.default.allArtifacts.files
-				exclude '*-sources.jar'
-				exclude '*-javadoc.jar'
-			}
-		}
-	}
-	
-	task copyApp(dependsOn: preparePropertyList, type: Copy) {
-		with appSpec
-		into file('build/explodedApp')
-	}
-
-	task appTgz(dependsOn: preparePropertyList, type: Tar) {
-		description = 'Creates a TGZ containing the Lilith Mac OS X app.'
-		classifier = 'app'
-		compression = Compression.GZIP
-		with appSpec
-	}
-	*/
-	
 	task appTgz(dependsOn: createApp, type: Tar) {
 		description = 'Creates a TGZ containing the Lilith Mac OS X app.'
 		classifier = 'app'
@@ -669,8 +519,7 @@ project(':lilith') {
 
 	signing {
 		required = { !version.endsWith("SNAPSHOT") }
-		sign jarAll
-		sign distZip
+		sign shadowJar
 		sign myDistZip
 		sign myDistTgz
 		sign appTgz
@@ -681,13 +530,14 @@ project(':lilith') {
 task jacocoRootReport(type: org.gradle.testing.jacoco.tasks.JacocoReport) {
 	dependsOn = subprojects.jacocoTestReport
 	dependsOn = subprojects.test
-	additionalSourceDirs = files(subprojects.sourceSets.main.allSource.srcDirs)
-	sourceDirectories = files(subprojects.sourceSets.main.allSource.srcDirs)
-	classDirectories = files(subprojects.sourceSets.main.output)
-	executionData = files(subprojects.jacocoTestReport.executionData)
+	additionalSourceDirs.from(files(subprojects.sourceSets.main.allSource.srcDirs))
+	sourceDirectories.from(files(subprojects.sourceSets.main.allSource.srcDirs))
+	classDirectories.from(files(subprojects.sourceSets.main.output))
+	executionData.from(files(subprojects.jacocoTestReport.executionData))
 	reports {
 		html.enabled = true
 		xml.enabled = true
+		xml.destination file("${buildDir}/reports/jacoco/report.xml")
 		csv.enabled = false
 	}
 	onlyIf = {
@@ -701,8 +551,21 @@ task jacocoRootReport(type: org.gradle.testing.jacoco.tasks.JacocoReport) {
 }
 
 coveralls {
-	jacocoReportPath = 'build/reports/jacoco/jacocoRootReport/jacocoRootReport.xml'
+	jacocoReportPath = "${buildDir}/reports/jacoco/report.xml"
 	sourceDirs += jacocoRootReport.sourceDirectories
+}
+
+allprojects {
+	tasks.each { task ->
+		if (task instanceof Javadoc) {
+			//println task
+			if (JavaVersion.current().isJava10Compatible()) {
+				task.options.optionFiles << rootProject.file('config/javadoc10.options')
+			} else {
+				task.options.optionFiles << rootProject.file('config/javadoc.options')
+			}
+		}
+	}
 }
 
 project.ext.deleteClosure = {
@@ -715,17 +578,17 @@ project.ext.deleteClosure = {
 	}
 }
 
-task (group: 'Repository', description: "Cleans the local staging-repository, i.e. '${localReleaseRepoFile.absolutePath}'.", 'cleanStaging') << {
+task (group: 'Repository', description: "Cleans the local staging-repository, i.e. '${localReleaseRepoFile.absolutePath}'.", 'cleanStaging') doLast {
 	deleteClosure(localReleaseRepoFile)
 	logger.info("Deleted content of ${localReleaseRepoFile.absolutePath}.")
 }
 
-task (group: 'Repository', description: "Cleans the local SNAPSHOT-repository, i.e. '${localSnapshotRepoFile.absolutePath}'.", 'cleanSnapshot') << {
+task (group: 'Repository', description: "Cleans the local SNAPSHOT-repository, i.e. '${localSnapshotRepoFile.absolutePath}'.", 'cleanSnapshot') doLast {
 	deleteClosure(localSnapshotRepoFile)
 	logger.info("Deleted content of ${localReleaseRepoFile.absolutePath}.")
 }
 
-task (group: 'Repository', description: 'Sync local staging-repository to oss.sonatype.org.', 'syncStaging') << {
+task (group: 'Repository', description: 'Sync local staging-repository to oss.sonatype.org.', 'syncStaging') doLast {
 	if (project.hasProperty('remoteUsername') && project.hasProperty('remotePassword')) {
 		def stagingRepos = new org.apache.maven.wagon.repository.Repository('staging', 'https://oss.sonatype.org/service/local/staging/deploy/maven2')
 		def auth = new org.apache.maven.wagon.authentication.AuthenticationInfo()
@@ -746,7 +609,7 @@ task (group: 'Repository', description: 'Sync local staging-repository to oss.so
 	}
 }
 
-task (group: 'Repository', description: 'Sync local SNAPSHOT-repository to oss.sonatype.org.', 'syncSnapshot') << {
+task (group: 'Repository', description: 'Sync local SNAPSHOT-repository to oss.sonatype.org.', 'syncSnapshot') doLast {
 	if (project.hasProperty('remoteUsername') && project.hasProperty('remotePassword')) {
 		def snapshotRepos = new org.apache.maven.wagon.repository.Repository('snapshot', 'https://oss.sonatype.org/content/repositories/snapshots')
 		def auth = new org.apache.maven.wagon.authentication.AuthenticationInfo()
@@ -767,3 +630,4 @@ task (group: 'Repository', description: 'Sync local SNAPSHOT-repository to oss.s
 	}
 }
 
+apply plugin: 'detect-split-packages'

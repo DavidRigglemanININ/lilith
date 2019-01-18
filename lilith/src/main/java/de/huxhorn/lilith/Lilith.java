@@ -1,26 +1,31 @@
 /*
  * Lilith - a log event viewer.
- * Copyright (C) 2007-2013 Joern Huxhorn
- * 
+ * Copyright (C) 2007-2018 Joern Huxhorn
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package de.huxhorn.lilith;
 
 import ch.qos.logback.classic.LoggerContext;
+import ch.qos.logback.classic.gaffer.GafferConfigurator;
 import ch.qos.logback.classic.joran.JoranConfigurator;
 import ch.qos.logback.core.joran.spi.JoranException;
-import ch.qos.logback.core.util.StatusPrinter;
+import ch.qos.logback.core.status.ErrorStatus;
+import ch.qos.logback.core.status.Status;
+import ch.qos.logback.core.status.StatusManager;
+import ch.qos.logback.core.status.StatusUtil;
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.ParameterException;
 import de.huxhorn.lilith.appender.InternalLilithAppender;
@@ -31,48 +36,69 @@ import de.huxhorn.lilith.cli.Help;
 import de.huxhorn.lilith.cli.Index;
 import de.huxhorn.lilith.cli.Md5;
 import de.huxhorn.lilith.cli.Tail;
-import de.huxhorn.lilith.handler.Slf4JHandler;
+import de.huxhorn.lilith.logback.tools.ContextHelper;
 import de.huxhorn.lilith.swing.ApplicationPreferences;
-import de.huxhorn.lilith.tools.FilterCommand;
-import de.huxhorn.lilith.tools.ImportExportCommand;
 import de.huxhorn.lilith.swing.LicenseAgreementDialog;
 import de.huxhorn.lilith.swing.MainFrame;
 import de.huxhorn.lilith.swing.SplashScreen;
 import de.huxhorn.lilith.tools.CatCommand;
 import de.huxhorn.lilith.tools.CreateMd5Command;
+import de.huxhorn.lilith.tools.FilterCommand;
+import de.huxhorn.lilith.tools.ImportExportCommand;
 import de.huxhorn.lilith.tools.IndexCommand;
 import de.huxhorn.lilith.tools.TailCommand;
+import de.huxhorn.sulky.formatting.SafeString;
 import de.huxhorn.sulky.sounds.jlayer.JLayerSounds;
 import de.huxhorn.sulky.swing.Windows;
 import it.sauronsoftware.junique.AlreadyLockedException;
 import it.sauronsoftware.junique.JUnique;
-import it.sauronsoftware.junique.MessageHandler;
-import org.apache.commons.io.FileUtils;
-import de.huxhorn.sulky.io.IOUtilities;
-import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang3.JavaVersion;
-import org.apache.commons.lang3.SystemUtils;
-import org.joda.time.format.DateTimeFormatter;
-import org.joda.time.format.ISODateTimeFormat;
-import org.simplericity.macify.eawt.Application;
-import org.simplericity.macify.eawt.DefaultApplication;
-import org.slf4j.ILoggerFactory;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import javax.swing.*;
-import java.io.*;
+import java.awt.EventQueue;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.PrintStream;
 import java.lang.reflect.InvocationTargetException;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.HashMap;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.time.Instant;
+import java.util.Date;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
-import java.util.logging.Handler;
+import javax.swing.UIManager;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
+import org.slf4j.ILoggerFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.bridge.SLF4JBridgeHandler;
 
+import static java.nio.file.StandardOpenOption.APPEND;
+import static java.nio.file.StandardOpenOption.CREATE;
+
+@SuppressWarnings({"PMD.SystemPrintln", "PMD.DoNotCallSystemExit", "PMD.AvoidPrintStackTrace"})
 public class Lilith
 {
+	static
+	{
+		SLF4JBridgeHandler.removeHandlersForRootLogger();  // (since SLF4J 1.6.5)
+		SLF4JBridgeHandler.install();
+	}
+
+	// uncomment the code below to enable flying saucer logging......
+	/*
+	static
+	{
+		System.getProperties().setProperty("xr.util-logging.loggingEnabled", "true");
+		XRLog.setLoggingEnabled(true);
+	}
+    */
+
 	/**
 	 * Application name
 	 */
@@ -111,15 +137,43 @@ public class Lilith
 	public static final VersionBundle APP_VERSION_BUNDLE;
 
 	private static final String SNAPSHOT_POSTFIX = "-SNAPSHOT";
-	
+
 	private static final String JUNIQUE_MSG_SHOW = "Show";
 	private static final String JUNIQUE_REPLY_OK = "OK";
 	private static final String JUNIQUE_REPLY_UNKNOWN = "Unknown";
 
+	private static final String APPLE_SCREEN_MENU_BAR_SYSTEM_PROPERTY = "apple.laf.useScreenMenuBar";
+	private static final String GROOVY_EXTENSION = ".groovy";
+
+	private static final String[] STATUS_TEXT=
+			{
+					"INFO : ",
+					"WARN : ",
+					"ERROR: ",
+			};
+
 	private static Thread.UncaughtExceptionHandler uncaughtExceptionHandler;
 	private static MainFrame mainFrame;
-	private static DateTimeFormatter isoDateTimeFormat = ISODateTimeFormat.dateTime().withZoneUTC();
-	private static DateTimeFormatter isoDateTimeFormatLocal = ISODateTimeFormat.dateTime();
+
+	static {
+		new Lilith(); // stfu
+	}
+
+	private Lilith() {}
+
+	private static class UncaughtExceptionHandler
+		implements Thread.UncaughtExceptionHandler
+	{
+		private final Logger logger = LoggerFactory.getLogger(UncaughtExceptionHandler.class);
+
+		@Override
+		public void uncaughtException(Thread t, Throwable e)
+		{
+			if(logger.isErrorEnabled()) logger.error("Caught an uncaught exception from thread {}!", t, e);
+			System.err.println("\n-----\nThread " + t.getName() + " threw an exception!");
+			e.printStackTrace();
+		}
+	}
 
 	static
 	{
@@ -129,9 +183,9 @@ public class Lilith
 
 		final Logger logger = LoggerFactory.getLogger(Lilith.class);
 
-		InputStream is = Lilith.class.getResourceAsStream("/app.properties");
+
 		Properties p = new Properties();
-		try
+		try(InputStream is = Lilith.class.getResourceAsStream("/app.properties"))
 		{
 			p.load(is);
 		}
@@ -140,15 +194,11 @@ public class Lilith
 			if(logger.isErrorEnabled()) logger.error("Couldn't find app info resource!", ex);
 			//ex.printStackTrace();
 		}
-		finally
-		{
-			IOUtilities.closeQuietly(is);
-		}
 		APP_NAME = p.getProperty("application.name");
 		APP_VERSION = p.getProperty("application.version");
 		boolean snapshot=false;
-		String plainVersion=APP_VERSION;
-		if(plainVersion != null && plainVersion.endsWith(SNAPSHOT_POSTFIX))
+		String plainVersion=APP_VERSION != null ? APP_VERSION : "n/a";
+		if(plainVersion.endsWith(SNAPSHOT_POSTFIX))
 		{
 			snapshot = true;
 			plainVersion = plainVersion.substring(0, plainVersion.length()-SNAPSHOT_POSTFIX.length());
@@ -165,7 +215,7 @@ public class Lilith
 			try
 			{
 				ts = Long.parseLong(tsStr);
-				dateStr = isoDateTimeFormat.print(ts);
+				dateStr = SafeString.toString(new Date(ts));
 			}
 			catch(NumberFormatException ex)
 			{
@@ -180,13 +230,15 @@ public class Lilith
 		APP_TIMESTAMP = ts;
 		APP_TIMESTAMP_DATE = dateStr;
 		APP_VERSION_BUNDLE = new VersionBundle(APP_PLAIN_VERSION, APP_TIMESTAMP);
+
 		if(APP_VERSION != null)
 		{
 			System.setProperty("lilith.version", APP_VERSION);
+			System.setProperty("lilith.version.bundle", APP_VERSION_BUNDLE.toString());
 		}
 		if(APP_TIMESTAMP > -1)
 		{
-			System.setProperty("lilith.timestamp.milliseconds", ""+APP_TIMESTAMP);
+			System.setProperty("lilith.timestamp.milliseconds", Long.toString(APP_TIMESTAMP));
 		}
 		if(APP_TIMESTAMP_DATE != null)
 		{
@@ -201,22 +253,14 @@ public class Lilith
 	// TODO: - Shortcut in tooltip of toolbars...?
 	// TODO: - check termination of every started thread
 
-	public static void main(String[] argv)
+	public static void main(String[] args)
 	{
-		{
-			// initialize java.util.logging to use slf4j...
-			Handler handler = new Slf4JHandler();
-			java.util.logging.Logger rootLogger = java.util.logging.Logger.getLogger("");
-			rootLogger.addHandler(handler);
-			rootLogger.setLevel(java.util.logging.Level.WARNING);
-		}
-
 		StringBuilder appTitle = new StringBuilder();
 		appTitle.append(APP_NAME).append(" V").append(APP_VERSION);
 		if(APP_SNAPSHOT)
 		{
 			// always append timestamp for SNAPSHOT
-			appTitle.append(" (").append(APP_TIMESTAMP_DATE).append(")");
+			appTitle.append(" (").append(APP_TIMESTAMP_DATE).append(')');
 		}
 
 		CommandLineArgs cl=new CommandLineArgs();
@@ -236,7 +280,7 @@ public class Lilith
 
 		try
 		{
-			commander.parse(argv);
+			commander.parse(args);
 		}
 		catch(ParameterException ex)
 		{
@@ -251,7 +295,7 @@ public class Lilith
 			{
 				// timestamp is always appended for SNAPSHOT
 				// don't append it twice
-				appTitle.append(" (").append(APP_TIMESTAMP_DATE).append(")");
+				appTitle.append(" (").append(APP_TIMESTAMP_DATE).append(')');
 			}
 			appTitle.append(" - ").append(APP_REVISION);
 		}
@@ -295,9 +339,9 @@ public class Lilith
 
 		if(cl.printBuildTimestamp)
 		{
-			System.out.println("Build-Timestamp: " + APP_TIMESTAMP);
 			System.out.println("Build-Date     : " + APP_TIMESTAMP_DATE);
 			System.out.println("Build-Revision : " + APP_REVISION);
+			System.out.println("Build-Timestamp: " + APP_TIMESTAMP);
 			System.exit(0);
 		}
 
@@ -325,19 +369,20 @@ public class Lilith
 			}
 			System.exit(0);
 		}
-		
+
 		if(Md5.NAME.equals(command))
 		{
 			List<String> files = md5.files;
-			if(files == null || files.size()==0)
+			if(files == null || files.isEmpty())
 			{
 				printHelp(commander);
+				System.out.println("Missing files!");
 				System.exit(-1);
 			}
 			boolean error=false;
 			for(String current:files)
 			{
-				if(!CreateMd5Command.createMd5(new File(current)))
+				if(!CreateMd5Command.createMd5(current))
 				{
 					error=true;
 				}
@@ -356,7 +401,7 @@ public class Lilith
 				initCLILogging();
 			}
 			List<String> files = index.files;
-			if(files == null || files.size()==0)
+			if(files == null || files.isEmpty())
 			{
 				printHelp(commander);
 				System.exit(-1);
@@ -364,7 +409,7 @@ public class Lilith
 			boolean error=false;
 			for(String current:files)
 			{
-				if(!IndexCommand.indexLogFile(new File(current)))
+				if(!IndexCommand.indexLogFile(current))
 				{
 					error=true;
 				}
@@ -452,7 +497,7 @@ public class Lilith
 			flushLicensed();
 		}
 
-		startLilith(appTitleString, cl.enableBonjour);
+		startLilith(appTitleString);
 	}
 
 	private static void printHelp(JCommander commander)
@@ -475,8 +520,8 @@ public class Lilith
 			"| |___| | | | |_| | | |\n" +
 			"|_____|_|_|_|\\__|_| |_|");
 		System.out.println(appTitle);
-		System.out.println("http://lilith.huxhorn.de");
-		System.out.println("\nCopyright (C) 2007-2013 Joern Huxhorn\n\n" +
+		System.out.println("http://lilithapp.com");
+		System.out.println("\nCopyright (C) 2007-2017 Joern Huxhorn\n\n" +
 			"This program comes with ABSOLUTELY NO WARRANTY!\n\n" +
 			"This is free software, and you are welcome to redistribute it\n" +
 			"under certain conditions.\n" +
@@ -498,32 +543,18 @@ public class Lilith
 		ImportExportCommand.exportPreferences(new File(file));
 	}
 
-	private static void startLilith(String appTitle, boolean enableBonjour)
+	private static void startLilith(String appTitle)
 	{
 		final Logger logger = LoggerFactory.getLogger(Lilith.class);
 
-		uncaughtExceptionHandler = new Thread.UncaughtExceptionHandler()
-		{
-			public void uncaughtException(Thread t, Throwable e)
-			{
-				if(logger.isErrorEnabled()) logger.error("Caught an uncaught exception from thread {}!", t, e);
-				System.err.println("\n-----\nThread " + t.getName() + " threw an exception!");
-				e.printStackTrace(System.err);
-			}
-		};
+		uncaughtExceptionHandler = new UncaughtExceptionHandler();
 
 		Thread.setDefaultUncaughtExceptionHandler(uncaughtExceptionHandler);
 
 		// preventing duplicate instances...
 		try
 		{
-			JUnique.acquireLock(Lilith.class.getName(), new MessageHandler()
-			{
-				public String handle(String message)
-				{
-					return handleJUniqueMessage(message);
-				}
-			});
+			JUnique.acquireLock(Lilith.class.getName(), Lilith::handleJUniqueMessage);
 		}
 		catch(AlreadyLockedException e)
 		{
@@ -534,25 +565,20 @@ public class Lilith
 		}
 		// ok, we are the first instance this user has started...
 
-		SwingUtilities.invokeLater(new Runnable()
-		{
+		// install uncaught exception handler on event thread.
+		EventQueue.invokeLater(() -> Thread.currentThread().setUncaughtExceptionHandler(uncaughtExceptionHandler));
 
-			public void run()
-			{
-				Thread.currentThread().setUncaughtExceptionHandler(uncaughtExceptionHandler);
-			}
-		});
-		startUI(appTitle, enableBonjour);
+		startUI(appTitle);
 	}
 
 	private static void initCLILogging()
 	{
-		initLogbackConfig(Lilith.class.getResource("/logbackCLI.xml"));
+		initLogbackConfig(Lilith.class.getResource("/logbackCLI.groovy"));
 	}
 
 	private static void initVerboseLogging()
 	{
-		initLogbackConfig(Lilith.class.getResource("/logbackVerbose.xml"));
+		initLogbackConfig(Lilith.class.getResource("/logbackVerbose.groovy"));
 	}
 
 	private static void initLogbackConfig(URL configUrl)
@@ -560,26 +586,109 @@ public class Lilith
 		ILoggerFactory loggerFactory = LoggerFactory.getILoggerFactory();
 		if(loggerFactory instanceof LoggerContext)
 		{
-			LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
-			// reset previous configuration initially loaded from logback.xml
+			LoggerContext loggerContext = (LoggerContext) loggerFactory;
+
+			StatusManager sm = loggerContext.getStatusManager();
+			sm.clear();
+
+			// reset previous configuration initially loaded from logback.groovy
 			loggerContext.reset();
-			JoranConfigurator configurator = new JoranConfigurator();
-			configurator.setContext(loggerContext);
-			try
-			{
-				configurator.doConfigure(configUrl);
-				final Logger logger = LoggerFactory.getLogger(Lilith.class);
 
-				if(logger.isDebugEnabled()) logger.debug("Configured logging with {}.", configUrl);
-				StatusPrinter.print(loggerContext);
-			}
-			catch(JoranException ex)
+			if(configUrl.toString().endsWith(GROOVY_EXTENSION))
 			{
-				final Logger logger = LoggerFactory.getLogger(Lilith.class);
+				// http://jira.qos.ch/browse/LOGBACK-1079
+				GafferConfigurator configurator = new GafferConfigurator(loggerContext);
+				try
+				{
+					configurator.run(configUrl);
 
-				if(logger.isErrorEnabled()) logger.error("Error configuring logging framework!", ex);
-				StatusPrinter.print(loggerContext);
+					final Logger logger = LoggerFactory.getLogger(Lilith.class);
+					if (logger.isDebugEnabled()) logger.debug("Configured logging with {}.", configUrl);
+				}
+				catch (RuntimeException ex)
+				{
+					sm.add(new ErrorStatus("Exception while configuring Logback!", configUrl, ex));
+				}
 			}
+			else
+			{
+				JoranConfigurator configurator = new JoranConfigurator();
+				configurator.setContext(loggerContext);
+				try
+				{
+					configurator.doConfigure(configUrl);
+
+					final Logger logger = LoggerFactory.getLogger(Lilith.class);
+					if (logger.isDebugEnabled()) logger.debug("Configured logging with {}.", configUrl);
+				}
+				catch (JoranException ex)
+				{
+					sm.add(new ErrorStatus("Exception while configuring Logback!", configUrl, ex));
+				}
+			}
+
+			int level = ContextHelper.getHighestLevel(loggerContext);
+			long lastReset = ContextHelper.getTimeOfLastReset(loggerContext);
+			if (level > Status.INFO)
+			{
+				List<Status> statusList = StatusUtil.filterStatusListByTimeThreshold(sm.getCopyOfStatusList(), lastReset);
+				if (statusList != null)
+				{
+					System.err.println("############################################################");
+					System.err.println("## Logback Status                                         ##");
+					System.err.println("############################################################");
+					StringBuilder statusBuilder = new StringBuilder();
+					for (Status current : statusList)
+					{
+						appendStatus(statusBuilder, current, 0);
+					}
+					System.err.println(statusBuilder.toString());
+					System.err.println("############################################################");
+				}
+			}
+
+		}
+	}
+
+	@SuppressWarnings({"ThrowableResultOfMethodCallIgnored"})
+	private static void appendStatus(StringBuilder builder, Status status, int indent)
+	{
+		int levelCode = status.getLevel();
+		appendIndent(builder, indent);
+		if(levelCode >= 0 && levelCode < STATUS_TEXT.length)
+		{
+			builder.append(STATUS_TEXT[levelCode]);
+		}
+		builder.append(status.getMessage()).append('\n');
+		Throwable t = status.getThrowable();
+		while(t != null)
+		{
+			appendIndent(builder, indent+1);
+			builder.append(t.getClass().getName());
+			String message = t.getMessage();
+			if(message != null)
+			{
+				builder.append(": ").append(message);
+			}
+			builder.append('\n');
+			// probably check for causes, too
+			t=t.getCause();
+		}
+		if(status.hasChildren())
+		{
+			Iterator<Status> children = status.iterator();
+			while(children.hasNext())
+			{
+				appendStatus(builder, children.next(), indent+1);
+			}
+		}
+	}
+
+	private static void appendIndent(StringBuilder builder, int indent)
+	{
+		for(int i=0;i<indent;i++)
+		{
+			builder.append('\t');
 		}
 	}
 
@@ -618,40 +727,29 @@ public class Lilith
 		if(mainFrame != null)
 		{
 			final MainFrame frame = mainFrame;
-			SwingUtilities.invokeLater(new Runnable()
-			{
+			EventQueue.invokeLater(() -> {
 
-				public void run()
+				if (frame.isVisible())
 				{
-
-					if(frame.isVisible())
-					{
-						frame.setVisible(false);
-					}
-					Windows.showWindow(frame, null, false);
-					frame.toFront();
+					frame.setVisible(false);
 				}
+				Windows.showWindow(frame, null, false);
+				frame.toFront();
 			});
 		}
 	}
 
 	private static void updateSplashStatus(final SplashScreen splashScreen, final String status)
-		throws InvocationTargetException, InterruptedException
 	{
 		if(splashScreen != null)
 		{
-			SwingUtilities.invokeAndWait(new Runnable()
-			{
-
-				public void run()
+			EventQueue.invokeLater(() -> {
+				if(!splashScreen.isVisible())
 				{
-					if(!splashScreen.isVisible())
-					{
-						Windows.showWindow(splashScreen, null, true);
-					}
-					splashScreen.toFront();
-					splashScreen.setStatusText(status);
+					Windows.showWindow(splashScreen, null, true);
 				}
+				splashScreen.toFront();
+				splashScreen.setStatusText(status);
 			});
 		}
 	}
@@ -661,156 +759,84 @@ public class Lilith
 	{
 		if(splashScreen != null)
 		{
-			SwingUtilities.invokeAndWait(new Runnable()
-			{
-				public void run()
-				{
-					splashScreen.setVisible(false);
-				}
-			});
+			EventQueue.invokeAndWait(() -> splashScreen.setVisible(false));
 		}
 	}
 
 
-	public static void startUI(final String appTitle, boolean enableBonjour)
+	public static void startUI(final String appTitle)
 	{
 		final Logger logger = LoggerFactory.getLogger(Lilith.class);
-		UIManager.installLookAndFeel("JGoodies Windows", "com.jgoodies.looks.windows.WindowsLookAndFeel");
-		UIManager.installLookAndFeel("JGoodies Plastic", "com.jgoodies.looks.plastic.PlasticLookAndFeel");
-		UIManager.installLookAndFeel("JGoodies Plastic 3D", "com.jgoodies.looks.plastic.Plastic3DLookAndFeel");
-		UIManager.installLookAndFeel("JGoodies Plastic XP", "com.jgoodies.looks.plastic.PlasticXPLookAndFeel");
-		if(SystemUtils.isJavaVersionAtLeast(JavaVersion.JAVA_1_6))
-		{
-			// Substance requires 1.6
-			UIManager.installLookAndFeel("Substance Dark - Twilight", "org.pushingpixels.substance.api.skin.SubstanceTwilightLookAndFeel");
-			UIManager.installLookAndFeel("Substance Light - Business", "org.pushingpixels.substance.api.skin.SubstanceBusinessLookAndFeel");
-		}
 
 		//UIManager.installLookAndFeel("Napkin", "net.sourceforge.napkinlaf.NapkinLookAndFeel");
 
-		// This instance of application is only used to query some info. The real one is in MainFrame.
-		Application application = new DefaultApplication();
+		// look & feels must be installed before creation of ApplicationPreferences.
 		ApplicationPreferences applicationPreferences = new ApplicationPreferences();
 
-		//final String[] defaultNames={"MenuBarUI", "MenuUI", "MenuItemUI", "CheckBoxMenuItemUI", "RadioButtonMenuItemUI", "PopupMenuUI"};
+		// init look & feel
+		String lookAndFeelName = applicationPreferences.getLookAndFeel();
+		String systemLookAndFeelClassName = UIManager.getSystemLookAndFeelClassName();
+		String lookAndFeelClassName = systemLookAndFeelClassName;
+		if(lookAndFeelName != null)
+		{
+			for (UIManager.LookAndFeelInfo info : UIManager.getInstalledLookAndFeels())
+			{
+				if (lookAndFeelName.equals(info.getName()))
+				{
+					lookAndFeelClassName = info.getClassName();
+					break;
+				}
+			}
+		}
 
-		HashMap<String, Object> storedDefaults = new HashMap<String, Object>();
-		if(application.isMac())
+		try
+		{
+			UIManager.setLookAndFeel(lookAndFeelClassName);
+		}
+		catch (Throwable e)
+		{
+			if(logger.isWarnEnabled()) logger.warn("Failed to set look&feel to '{}'.", lookAndFeelClassName, e);
+			if(!lookAndFeelClassName.equals(systemLookAndFeelClassName))
+			{
+				try
+				{
+					UIManager.setLookAndFeel(systemLookAndFeelClassName);
+					lookAndFeelClassName = systemLookAndFeelClassName;
+				}
+				catch (Throwable e2)
+				{
+					if(logger.isWarnEnabled()) logger.warn("Failed to set look&feel to '{}'.", systemLookAndFeelClassName, e);
+					lookAndFeelClassName = null;
+				}
+			}
+		}
+
+		boolean screenMenuBar = false;
+		if(isMac() && (
+				isJava9OrHigher() // all L&F support screen menu bar with Java 9 or higher
+				|| systemLookAndFeelClassName.equals(lookAndFeelClassName)
+		))
 		{
 			// Use Apple Aqua L&F screen menu bar if available; set property before any frames created
 			try
 			{
-				//System.setProperty("apple.awt.brushMetalLook", "true");
-				System.setProperty("apple.laf.useScreenMenuBar", "true");
+				System.setProperty(APPLE_SCREEN_MENU_BAR_SYSTEM_PROPERTY, "true");
+				screenMenuBar = true;
 			}
-			catch(Exception e)
+			catch(Throwable e)
 			{
-				// try the older menu bar property
-				System.setProperty("com.apple.macos.useScreenMenuBar", "true");
-				// this shouldn't happen since we only run on 1.5+
-			}
-
-			// this is part 1 of Mac Menu for all PLAFs.
-			// Thanks to Kirill Grouchnikov - http://www.pushing-pixels.org/?p=366
-			/*
-			Does not work, exception while displaying popup menu:
-			java.lang.NullPointerException
-				at com.apple.laf.AquaMenuPainter.paintSelectedMenuItemBackground(AquaMenuPainter.java:147)
-				at com.apple.laf.AquaMenuItemUI.paintBackground(AquaMenuItemUI.java:93)
-				at com.apple.laf.AquaMenuPainter.paintMenuItem(AquaMenuPainter.java:192)
-				at com.apple.laf.AquaMenuItemUI.paintMenuItem(AquaMenuItemUI.java:66)
-				at javax.swing.plaf.basic.BasicMenuItemUI.paint(BasicMenuItemUI.java:594)
-				at com.apple.laf.AquaMenuItemUI.update(AquaMenuItemUI.java:82)
-				at javax.swing.JComponent.paintComponent(JComponent.java:763)
-				at javax.swing.JComponent.paint(JComponent.java:1027)
-				at javax.swing.JComponent.paintChildren(JComponent.java:864)
-				at javax.swing.JComponent.paint(JComponent.java:1036)
-				at javax.swing.JComponent.paintChildren(JComponent.java:864)
-				at javax.swing.JComponent.paint(JComponent.java:1036)
-				at javax.swing.JComponent.paintChildren(JComponent.java:864)
-				at javax.swing.JComponent.paint(JComponent.java:1036)
-				at javax.swing.JLayeredPane.paint(JLayeredPane.java:564)
-				at javax.swing.JComponent.paintChildren(JComponent.java:864)
-				at javax.swing.JComponent.paint(JComponent.java:1036)
-				at javax.swing.JComponent._paintImmediately(JComponent.java:5096)
-				at javax.swing.JComponent.paintImmediately(JComponent.java:4880)
-				at javax.swing.RepaintManager.paintDirtyRegions(RepaintManager.java:829)
-				at javax.swing.RepaintManager.paintDirtyRegions(RepaintManager.java:714)
-				at javax.swing.RepaintManager.seqPaintDirtyRegions(RepaintManager.java:694)
-				at javax.swing.SystemEventQueueUtilities$ComponentWorkRequest.run(SystemEventQueueUtilities.java:128)
-				at java.awt.event.InvocationEvent.dispatch(InvocationEvent.java:209)
-				at java.awt.EventQueue.dispatchEvent(EventQueue.java:633)
-				at java.awt.EventDispatchThread.pumpOneEventForFilters(EventDispatchThread.java:296)
-				at java.awt.EventDispatchThread.pumpEventsForFilter(EventDispatchThread.java:211)
-				at java.awt.EventDispatchThread.pumpEventsForHierarchy(EventDispatchThread.java:201)
-				at java.awt.EventDispatchThread.pumpEvents(EventDispatchThread.java:196)
-				at java.awt.EventDispatchThread.pumpEvents(EventDispatchThread.java:188)
-				at java.awt.EventDispatchThread.run(EventDispatchThread.java:122)
-			*/
-			/*
-			try
-			{
-				UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-
-				for(String current : defaultNames)
+				try
 				{
-					storedDefaults.put(current, UIManager.get(current));
+					screenMenuBar = Boolean.parseBoolean(System.getProperty(APPLE_SCREEN_MENU_BAR_SYSTEM_PROPERTY, "false"));
+				}
+				catch(Throwable e2)
+				{
+					// ignore
 				}
 			}
-			catch(Throwable t)
-			{
-				if(logger.isErrorEnabled()) logger.error("Exception while setting SystemLookAndFeel!!", t);
-			}
-			*/
 		}
 
-		// init look & feel
-		String lookAndFeel = applicationPreferences.getLookAndFeel();
-		if(lookAndFeel != null)
-		{
-			try
-			{
-				for(UIManager.LookAndFeelInfo info : UIManager.getInstalledLookAndFeels())
-				{
-					if(lookAndFeel.equals(info.getName()))
-					{
-						String lafClassName = info.getClassName();
-						if(logger.isDebugEnabled()) logger.debug("Setting look&feel to {}.", lafClassName);
-						UIManager.setLookAndFeel(lafClassName);
-
-						if(application.isMac() && lafClassName.equals(UIManager.getSystemLookAndFeelClassName()))
-						{
-							// Use Apple Aqua L&F screen menu bar if available; set property before any frames created
-							try
-							{
-								System.setProperty("apple.laf.useScreenMenuBar", "true");
-							}
-							catch(Exception e)
-							{
-								// try the older menu bar property
-								System.setProperty("com.apple.macos.useScreenMenuBar", "true");
-								// this shouldn't happen since we only run on 1.5+
-							}
-						}
-
-
-						break;
-					}
-				}
-			}
-			catch(Throwable t)
-			{
-				if(logger.isErrorEnabled()) logger.error("Exception while setting look & feel '{}'!", lookAndFeel, t);
-			}
-
-			// this is part 2 of Mac Menu for all PLAFs.
-			// Thanks to Kirill Grouchnikov - http://www.pushing-pixels.org/?p=366
-			if(logger.isDebugEnabled()) logger.debug("storedDefaults: {}", storedDefaults);
-			for(Map.Entry<String, Object> current : storedDefaults.entrySet())
-			{
-				UIManager.put(current.getKey(), current.getValue());
-			}
-		}
+		applicationPreferences.setUsingScreenMenuBar(screenMenuBar);
 
 		boolean splashScreenDisabled = applicationPreferences.isSplashScreenDisabled();
 		try
@@ -819,16 +845,16 @@ public class Lilith
 			if(!splashScreenDisabled)
 			{
 				CreateSplashRunnable createRunnable = new CreateSplashRunnable(appTitle);
-				SwingUtilities.invokeAndWait(createRunnable);
+				EventQueue.invokeAndWait(createRunnable);
 				splashScreen = createRunnable.getSplashScreen();
 				Thread.sleep(500); // so the splash gets the chance to get displayed :(
-				updateSplashStatus(splashScreen, "Initialized application preferences...");
+				updateSplashStatus(splashScreen, "Initialized application preferences…");
 			}
 
 			File startupApplicationPath = applicationPreferences.getStartupApplicationPath();
 			if(startupApplicationPath.mkdirs())
 			{
-				if(logger.isDebugEnabled()) logger.debug("Created '{}'.", startupApplicationPath.getAbsolutePath());
+				if(logger.isDebugEnabled()) logger.debug("Created '{}'.", startupApplicationPath.getAbsolutePath()); // NOPMD
 			}
 
 			// System.err redirection
@@ -841,17 +867,18 @@ public class Lilith
 				}
 				try
 				{
-					FileOutputStream fos = new FileOutputStream(errorLog, true);
-					PrintStream ps = new PrintStream(fos, true);
+					OutputStream fos = Files.newOutputStream(errorLog.toPath(), CREATE, APPEND);
+					PrintStream ps = new PrintStream(fos, true, StandardCharsets.UTF_8.name());
 					if(!freshFile)
 					{
 						ps.println("----------------------------------------");
 					}
-					ps.println("Started " + APP_NAME + " V" + APP_VERSION + " at " + isoDateTimeFormatLocal.print(System.currentTimeMillis()));
+					String currentDateTime = DateTimeFormatters.DATETIME_IN_SYSTEM_ZONE_SPACE.format(Instant.now());
+					ps.println("Started " + APP_NAME + " V" + APP_VERSION + " at " + currentDateTime);
 					System.setErr(ps);
 					if(logger.isInfoEnabled()) logger.info("Writing System.err to '{}'.", errorLog.getAbsolutePath());
 				}
-				catch(FileNotFoundException e)
+				catch(IOException e)
 				{
 					e.printStackTrace();
 				}
@@ -860,7 +887,7 @@ public class Lilith
 			File prevPathFile = new File(startupApplicationPath, ApplicationPreferences.PREVIOUS_APPLICATION_PATH_FILENAME);
 			if(prevPathFile.isFile())
 			{
-				updateSplashStatus(splashScreen, "Moving application path content...");
+				updateSplashStatus(splashScreen, "Moving application path content…");
 				moveApplicationPathContent(prevPathFile, startupApplicationPath);
 			}
 			if(!applicationPreferences.isLicensed())
@@ -868,6 +895,8 @@ public class Lilith
 				hideSplashScreen(splashScreen);
 
 				LicenseAgreementDialog licenseDialog = new LicenseAgreementDialog();
+				licenseDialog.setAlwaysOnTop(true);
+				licenseDialog.setAutoRequestFocus(true);
 				Windows.showWindow(licenseDialog, null, true);
 				if(licenseDialog.isLicenseAgreed())
 				{
@@ -880,20 +909,13 @@ public class Lilith
 				}
 			}
 
-			updateSplashStatus(splashScreen, "Creating main window...");
-			CreateMainFrameRunnable createMain = new CreateMainFrameRunnable(applicationPreferences, splashScreen, appTitle, enableBonjour);
-			SwingUtilities.invokeAndWait(createMain);
+			updateSplashStatus(splashScreen, "Creating main window…");
+			CreateMainFrameRunnable createMain = new CreateMainFrameRunnable(applicationPreferences, splashScreen, appTitle);
+			EventQueue.invokeAndWait(createMain);
 			final MainFrame frame = createMain.getMainFrame();
 			if(logger.isDebugEnabled()) logger.debug("After show...");
-			updateSplashStatus(splashScreen, "Initializing application...");
-			SwingUtilities.invokeAndWait(new Runnable()
-			{
-
-				public void run()
-				{
-					frame.startUp();
-				}
-			});
+			updateSplashStatus(splashScreen, "Initializing application…");
+			EventQueue.invokeAndWait(frame::startUp);
 			hideSplashScreen(splashScreen);
 			mainFrame=frame;
 
@@ -906,29 +928,29 @@ public class Lilith
 		{
 			if(logger.isWarnEnabled()) logger.warn("InvocationTargetException...", ex);
 			if(logger.isWarnEnabled()) logger.warn("Target-Exception: ", ex.getTargetException());
-
 		}
 	}
-
 
 	static class CreateSplashRunnable
 		implements Runnable
 	{
-		private SplashScreen splashScreen;
-		private String appTitle;
+		private final String appTitle;
 
-		public CreateSplashRunnable(String appTitle)
+		private SplashScreen splashScreen;
+
+		CreateSplashRunnable(String appTitle)
 		{
 			this.appTitle = appTitle;
 		}
 
+		@Override
 		public void run()
 		{
 			splashScreen = new SplashScreen(appTitle);
 			Windows.showWindow(splashScreen, null, true);
 		}
 
-		public SplashScreen getSplashScreen()
+		SplashScreen getSplashScreen()
 		{
 			return splashScreen;
 		}
@@ -937,23 +959,23 @@ public class Lilith
 	static class CreateMainFrameRunnable
 		implements Runnable
 	{
-		private SplashScreen splashScreen;
-		private MainFrame mainFrame;
-		private ApplicationPreferences applicationPreferences;
-		private String appTitle;
-		private boolean enableBonjour;
+		private final ApplicationPreferences applicationPreferences;
+		private final SplashScreen splashScreen;
+		private final String appTitle;
 
-		public CreateMainFrameRunnable(ApplicationPreferences applicationPreferences, SplashScreen splashScreen, String appTitle, boolean enableBonjour)
+		private MainFrame mainFrame;
+
+		CreateMainFrameRunnable(ApplicationPreferences applicationPreferences, SplashScreen splashScreen, String appTitle)
 		{
-			this.splashScreen = splashScreen;
-			this.enableBonjour = enableBonjour;
-			this.appTitle = appTitle;
 			this.applicationPreferences = applicationPreferences;
+			this.splashScreen = splashScreen;
+			this.appTitle = appTitle;
 		}
 
+		@Override
 		public void run()
 		{
-			mainFrame = new MainFrame(applicationPreferences, splashScreen, appTitle, enableBonjour);
+			mainFrame = new MainFrame(applicationPreferences, splashScreen, appTitle);
 			mainFrame.setSounds(new JLayerSounds());
 			mainFrame.setSize(1024, 768);
 			Windows.showWindow(mainFrame, null, false);
@@ -973,20 +995,14 @@ public class Lilith
 	{
 		final Logger logger = LoggerFactory.getLogger(Lilith.class);
 
-		InputStream is = null;
 		String prevPathStr = null;
-		try
+		try(InputStream is = Files.newInputStream(prevPathFile.toPath()))
 		{
-			is = new FileInputStream(prevPathFile);
-			prevPathStr = IOUtils.toString(is);
+			prevPathStr = IOUtils.toString(is, StandardCharsets.UTF_8);
 		}
 		catch(IOException ex)
 		{
 			if(logger.isWarnEnabled()) logger.warn("Exception while reading previous application path!", ex);
-		}
-		finally
-		{
-			IOUtilities.closeQuietly(is);
 		}
 		if(prevPathStr != null)
 		{
@@ -1012,7 +1028,17 @@ public class Lilith
 		}
 		if(prevPathFile.delete())
 		{
-			if(logger.isDebugEnabled()) logger.debug("Deleted {}.", prevPathFile.getAbsolutePath());
+			if(logger.isDebugEnabled()) logger.debug("Deleted {}.", prevPathFile.getAbsolutePath()); // NOPMD
 		}
+	}
+
+	private static boolean isMac()
+	{
+		return System.getProperty("os.name").toLowerCase(Locale.US).startsWith("mac");
+	}
+
+	private static boolean isJava9OrHigher()
+	{
+		return !System.getProperty("java.version").startsWith("1.");
 	}
 }

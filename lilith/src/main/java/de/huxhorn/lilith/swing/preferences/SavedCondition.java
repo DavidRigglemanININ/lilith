@@ -1,6 +1,6 @@
 /*
  * Lilith - a log event viewer.
- * Copyright (C) 2007-2011 Joern Huxhorn
+ * Copyright (C) 2007-2017 Joern Huxhorn
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,12 +15,11 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package de.huxhorn.lilith.swing.preferences;
 
 import de.huxhorn.lilith.swing.table.ColorScheme;
 import de.huxhorn.sulky.conditions.Condition;
-
-import java.awt.*;
 import java.io.Serializable;
 
 public class SavedCondition
@@ -82,39 +81,12 @@ public class SavedCondition
 		this.active = active;
 	}
 
-	public Color getTextColor()
-	{
-		if(colorScheme != null)
-		{
-			return colorScheme.getTextColor();
-		}
-		return null;
-	}
-
-	public Color getBackgroundColor()
-	{
-		if(colorScheme != null)
-		{
-			return colorScheme.getBackgroundColor();
-		}
-		return null;
-	}
-
-	public Color getBorderColor()
-	{
-		if(colorScheme != null)
-		{
-			return colorScheme.getBorderColor();
-		}
-		return null;
-	}
-
 	public ColorScheme getColorScheme()
 	{
 		return colorScheme;
 	}
 
-	public void setColorScheme(ColorScheme colorScheme)
+	void setColorScheme(ColorScheme colorScheme)
 	{
 		this.colorScheme = colorScheme;
 	}
@@ -122,17 +94,15 @@ public class SavedCondition
 	@Override
 	public boolean equals(Object o)
 	{
-		if(this == o) return true;
-		if(o == null || getClass() != o.getClass()) return false;
+		if (this == o) return true;
+		if (o == null || getClass() != o.getClass()) return false;
 
 		SavedCondition that = (SavedCondition) o;
 
-		if(active != that.active) return false;
-		if(colorScheme != null ? !colorScheme.equals(that.colorScheme) : that.colorScheme != null) return false;
-		if(condition != null ? !condition.equals(that.condition) : that.condition != null) return false;
-		if(name != null ? !name.equals(that.name) : that.name != null) return false;
-
-		return true;
+		return active == that.active
+				&& (colorScheme != null ? colorScheme.equals(that.colorScheme) : that.colorScheme == null)
+				&& (condition != null ? condition.equals(that.condition) : that.condition == null)
+				&& (name != null ? name.equals(that.name) : that.name == null);
 	}
 
 	@Override
@@ -151,6 +121,7 @@ public class SavedCondition
 		return "SavedCondition[name=" + name + ", condition=" + condition + ", colorScheme=" + colorScheme + ", active=" + active + "]";
 	}
 
+	@Override
 	public SavedCondition clone()
 		throws CloneNotSupportedException
 	{

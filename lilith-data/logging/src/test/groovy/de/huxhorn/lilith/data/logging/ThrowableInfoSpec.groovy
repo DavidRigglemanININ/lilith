@@ -1,6 +1,6 @@
 /*
  * Lilith - a log event viewer.
- * Copyright (C) 2007-2013 Joern Huxhorn
+ * Copyright (C) 2007-2016 Joern Huxhorn
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -17,7 +17,7 @@
  */
 
 /*
- * Copyright 2007-2013 Joern Huxhorn
+ * Copyright 2007-2016 Joern Huxhorn
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -231,7 +231,7 @@ class ThrowableInfoSpec extends Specification {
                         ),
                         new ThrowableInfo(
                             name: "java.lang.RuntimeException",
-                            message: "Multi\nline",
+                            message: "Multi"+LINE_SEPARATOR+"line",
                             stackTrace: [
                                 new ExtendedStackTraceElement(
                                     className: "de.huxhorn.lilith.sandbox.Log4jSandbox\$InnerClass",
@@ -444,38 +444,166 @@ class ThrowableInfoSpec extends Specification {
         compare(inputValue, other)
     }
 
-    def compare(ThrowableInfo inputValue, ThrowableInfo other) {
-        assert inputValue == other
-        if(inputValue) {
-            assert !(inputValue.is(other))
+	@Unroll
+	def 'Serialization of broken instances.'() {
+		when: 'serialization works'
+		def other = JUnitTools.testSerialization(inputValue)
 
-            assert inputValue.name == other.name
+		then:
+		compare(inputValue, other)
 
-            assert inputValue.message == other.message
+		where:
+		inputValue << brokenInstances()
+	}
 
-            assert inputValue.stackTrace == other.stackTrace
-            if(inputValue.stackTrace) {
-                assert !(inputValue.stackTrace.is(other.stackTrace))
-                for(int i=0; i<inputValue.stackTrace.length; i++) {
-                    assert !(inputValue.stackTrace[i].is(other.stackTrace[i]))
-                }
-            }
+	@Unroll
+	def 'XML-Serialization of broken instances.'() {
+		when: 'xml serialization works'
+		def other = JUnitTools.testXmlSerialization(inputValue)
 
-            assert inputValue.omittedElements == other.omittedElements
+		then:
+		compare(inputValue, other)
 
-            assert inputValue.suppressed == other.suppressed
-            if(inputValue.suppressed) {
-                assert !(inputValue.suppressed.is(other.suppressed))
-                for(int i=0; i<inputValue.suppressed.length; i++) {
-                    assert !(inputValue.suppressed[i].is(other.suppressed[i]))
-                }
-            }
+		where:
+		inputValue << brokenInstances()
+	}
 
-            assert inputValue.cause == other.cause
-            if(inputValue.cause) {
-                assert !(inputValue.cause.is(other.cause))
-            }
-        }
-        return true
-    }
+	@Unroll
+	def 'Cloning of broken instances.'() {
+		when: 'cloning works'
+		def other = JUnitTools.testClone(inputValue)
+
+		then:
+		compare(inputValue, other)
+
+		where:
+		inputValue << brokenInstances()
+	}
+
+	@Unroll
+	def 'toString() of broken instances.'() {
+		expect:
+		inputValue.toString() != null
+
+		where:
+		inputValue << brokenInstances()
+	}
+
+	def brokenInstances() {
+		def recursiveCause = new ThrowableInfo()
+		recursiveCause.cause = recursiveCause
+
+		def recursiveSuppressed = new ThrowableInfo()
+		recursiveSuppressed.suppressed = [recursiveSuppressed]
+
+		def nullSuppressed1 = new ThrowableInfo(suppressed: [null])
+		def nullSuppressed2 = new ThrowableInfo(suppressed: [new ThrowableInfo(), null, new ThrowableInfo()])
+
+		def nullStack1 = new ThrowableInfo(stackTrace: [null])
+		def nullStack2 = new ThrowableInfo(stackTrace: [new ExtendedStackTraceElement(), null, new ExtendedStackTraceElement()])
+
+		[recursiveCause, recursiveSuppressed, nullSuppressed1, nullSuppressed2, nullStack1, nullStack2]
+	}
+
+	def compare(ThrowableInfo inputValue, ThrowableInfo other) {
+		assert inputValue == other
+		if (inputValue) {
+			assert !(inputValue.is(other))
+
+			assert inputValue.name == other.name
+			assert inputValue.message == other.message
+
+			if (inputValue.stackTrace) {
+				assert other.stackTrace
+				assert inputValue.stackTrace.length == other.stackTrace.length
+				assert !(inputValue.stackTrace.is(other.stackTrace))
+
+				for (int i = 0; i < inputValue.stackTrace.length; i++) {
+					def inputStackTraceElement = inputValue.stackTrace[i]
+					def otherStackTraceElement = other.stackTrace[i]
+					assert inputStackTraceElement == otherStackTraceElement
+					if (inputStackTraceElement) {
+						assert !(inputStackTraceElement.is(otherStackTraceElement))
+					}
+				}
+			} else {
+				assert !other.stackTrace
+			}
+
+			assert inputValue.omittedElements == other.omittedElements
+
+			if (inputValue.suppressed) {
+				assert other.suppressed
+				assert inputValue.suppressed.length == other.suppressed.length
+				assert !(inputValue.suppressed.is(other.suppressed))
+
+				for (int i = 0; i < inputValue.suppressed.length; i++) {
+					def inputSuppressed = inputValue.suppressed[i]
+					def otherSuppressed = other.suppressed[i]
+					assert inputSuppressed == otherSuppressed
+					if (inputSuppressed) {
+						assert !(inputSuppressed.is(otherSuppressed))
+					}
+				}
+			} else {
+				assert !other.suppressed
+			}
+
+			assert inputValue.cause == other.cause
+			if (inputValue.cause) {
+				assert !(inputValue.cause.is(other.cause))
+			}
+		}
+		return true
+	}
+
+	@Unroll
+	def "#instance does not equal #other."() {
+		expect:
+		!instance.equals(other)
+		!other.equals(instance)
+
+		where:
+		instance                              | other
+		new ThrowableInfo()                   | new ThrowableInfo(name: 'b')
+		new ThrowableInfo(name: 'a')          | new ThrowableInfo(name: 'b')
+		new ThrowableInfo()                   | new ThrowableInfo(message: 'b')
+		new ThrowableInfo(message: 'a')       | new ThrowableInfo(message: 'b')
+		new ThrowableInfo()                   | new ThrowableInfo(cause: new ThrowableInfo())
+		new ThrowableInfo()                   | new ThrowableInfo(suppressed: [])
+		new ThrowableInfo(suppressed: [])     | new ThrowableInfo(suppressed: [null])
+		new ThrowableInfo(suppressed: [null]) | new ThrowableInfo(suppressed: [new ThrowableInfo()])
+	}
+
+	def "equals behaves as expected."() {
+		setup:
+		def instance = new ThrowableInfo()
+		def other = new ThrowableInfo(name: 'foo')
+
+		expect:
+		instance.equals(instance)
+		!instance.equals(null)
+		!instance.equals(new Object())
+		!instance.equals(other)
+		!other.equals(instance)
+	}
+
+	def "equals behaves as expected with internal identity equality."() {
+		setup:
+		def cause = new ThrowableInfo()
+		def instance = new ThrowableInfo(cause: cause)
+		def other = new ThrowableInfo(cause: cause)
+
+		expect:
+		instance.equals(instance)
+		instance.equals(other)
+		other.equals(instance)
+	}
+
+	def "toString() special cases"() {
+		expect:
+		new ThrowableInfo(name: 'java.lang.RuntimeException').toString() == 'java.lang.RuntimeException\n'
+		new ThrowableInfo(name: 'java.lang.RuntimeException', message: 'java.lang.RuntimeException').toString() == 'java.lang.RuntimeException\n'
+		new ThrowableInfo(name: 'java.lang.RuntimeException', message: 'foo').toString() == 'java.lang.RuntimeException: foo\n'
+	}
 }

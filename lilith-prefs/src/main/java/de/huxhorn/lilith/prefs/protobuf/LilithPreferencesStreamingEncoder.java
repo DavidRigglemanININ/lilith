@@ -1,6 +1,6 @@
 /*
  * Lilith - a log event viewer.
- * Copyright (C) 2007-2011 Joern Huxhorn
+ * Copyright (C) 2007-2017 Joern Huxhorn
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -17,7 +17,7 @@
  */
 
 /*
- * Copyright 2007-2011 Joern Huxhorn
+ * Copyright 2007-2017 Joern Huxhorn
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,7 +38,6 @@ import com.google.protobuf.ByteString;
 import de.huxhorn.lilith.prefs.LilithPreferences;
 import de.huxhorn.lilith.prefs.protobuf.generated.PrefsProto;
 import de.huxhorn.sulky.codec.streaming.StreamingEncoder;
-
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Map;
@@ -46,6 +45,7 @@ import java.util.Map;
 public class LilithPreferencesStreamingEncoder
 	implements StreamingEncoder<LilithPreferences>
 {
+	@Override
 	public void encode(LilithPreferences obj, OutputStream into) throws IOException
 	{
 		PrefsProto.LilithPreferences converted = convert(obj);
@@ -83,57 +83,58 @@ public class LilithPreferencesStreamingEncoder
 		{
 			return null;
 		}
-		PrefsProto.LilithPreferences.Builder prefs = PrefsProto.LilithPreferences.newBuilder();
+		PrefsProto.LilithPreferences.Builder preferences = PrefsProto.LilithPreferences.newBuilder();
 
 		if(p.getGroovyConditions() != null)
 		{
-			prefs.setGroovyConditions(convert(p.getGroovyConditions()));
+			preferences.setGroovyConditions(convert(p.getGroovyConditions()));
 		}
 		if(p.getGroovyClipboardFormatters() != null)
 		{
-			prefs.setGroovyClipboardFormatters(convert(p.getGroovyClipboardFormatters()));
+			preferences.setGroovyClipboardFormatters(convert(p.getGroovyClipboardFormatters()));
 		}
 		if(p.getDetailsView() != null)
 		{
-			prefs.setDetailsView(convert(p.getDetailsView()));
+			preferences.setDetailsView(convert(p.getDetailsView()));
 		}
 		if(p.getRootFiles() != null)
 		{
-			prefs.setRootFiles(convert(p.getRootFiles()));
+			preferences.setRootFiles(convert(p.getRootFiles()));
 		}
 
 		// String
-		prefs.setBlacklistName(p.getBlackListName());
-		prefs.setWhitelistName(p.getWhiteListName());
-		prefs.setLookAndFeel(p.getLookAndFeel());
+		preferences.setBlacklistName(p.getBlackListName());
+		preferences.setWhitelistName(p.getWhiteListName());
+		preferences.setLookAndFeel(p.getLookAndFeel());
 
 		// boolean
-		prefs.setAskingBeforeQuit(p.isAskingBeforeQuit());
-		prefs.setAutoClosing(p.isAutoClosing());
-		prefs.setAutoFocusingWindow(p.isAutoFocusingWindow());
-		prefs.setAutoOpening(p.isAutoOpening());
-		prefs.setCheckingForUpdate(p.isCheckingForUpdate());
-		prefs.setCheckingForSnapshot(p.isCheckingForSnapshot());
-		prefs.setCleaningLogsOnExit(p.isCleaningLogsOnExit());
-		prefs.setColoringWholeRow(p.isColoringWholeRow());
-		prefs.setGlobalLoggingEnabled(p.isGlobalLoggingEnabled());
-		prefs.setHidingOnClose(p.isHidingOnClose());
-		prefs.setLoggingStatisticEnabled(p.isLoggingStatisticEnabled());
-		prefs.setMaximizingInternalFrames(p.isMaximizingInternalFrames());
-		prefs.setMute(p.isMute());
-		prefs.setScrollingToBottom(p.isScrollingToBottom());
-		prefs.setShowingFullCallstack(p.isShowingFullCallstack());
-		prefs.setShowingFullRecentPath(p.isShowingFullRecentPath());
-		prefs.setShowingIdentifier(p.isShowingIdentifier());
-		prefs.setShowingStatusbar(p.isShowingStatusbar());
-		prefs.setShowingStacktrace(p.isShowingStackTrace());
-		prefs.setUsingWrappedExceptionStyle(p.isUsingWrappedExceptionStyle());
-		prefs.setShowingTipOfTheDay(p.isShowingTipOfTheDay());
-		prefs.setShowingToolbar(p.isShowingToolbar());
-		prefs.setSplashScreenDisabled(p.isSplashScreenDisabled());
-		prefs.setTrayActive(p.isTrayActive());
-		prefs.setUsingInternalFrames(p.isUsingInternalFrames());
-		prefs.setDefaultConditionName(p.getDefaultConditionName());
+		preferences.setAskingBeforeQuit(p.isAskingBeforeQuit());
+		preferences.setAutoClosing(p.isAutoClosing());
+		preferences.setAutoFocusingWindow(p.isAutoFocusingWindow());
+		preferences.setAutoOpening(p.isAutoOpening());
+		preferences.setCheckingForUpdate(p.isCheckingForUpdate());
+		preferences.setCheckingForSnapshot(p.isCheckingForSnapshot());
+		preferences.setCleaningLogsOnExit(p.isCleaningLogsOnExit());
+		preferences.setColoringWholeRow(p.isColoringWholeRow());
+		preferences.setGlobalLoggingEnabled(p.isGlobalLoggingEnabled());
+		preferences.setHidingOnClose(p.isHidingOnClose());
+		preferences.setMaximizingInternalFrames(p.isMaximizingInternalFrames());
+		preferences.setMute(p.isMute());
+		preferences.setScrollingSmoothly(p.isScrollingSmoothly());
+		preferences.setScrollingToBottom(p.isScrollingToBottom());
+		preferences.setShowingFullCallStack(p.isShowingFullCallStack());
+		preferences.setShowingFullRecentPath(p.isShowingFullRecentPath());
+		preferences.setShowingPrimaryIdentifier(p.isShowingPrimaryIdentifier());
+		preferences.setShowingSecondaryIdentifier(p.isShowingSecondaryIdentifier());
+		preferences.setShowingStatusBar(p.isShowingStatusBar());
+		preferences.setShowingStacktrace(p.isShowingStackTrace());
+		preferences.setUsingWrappedExceptionStyle(p.isUsingWrappedExceptionStyle());
+		preferences.setShowingTipOfTheDay(p.isShowingTipOfTheDay());
+		preferences.setShowingToolbar(p.isShowingToolbar());
+		preferences.setSplashScreenDisabled(p.isSplashScreenDisabled());
+		preferences.setTrayActive(p.isTrayActive());
+		preferences.setUsingInternalFrames(p.isUsingInternalFrames());
+		preferences.setDefaultConditionName(p.getDefaultConditionName());
 
 		LilithPreferences.SourceFiltering sf = p.getSourceFiltering();
 		if(sf != null)
@@ -141,20 +142,21 @@ public class LilithPreferencesStreamingEncoder
 			switch(sf)
 			{
 				case BLACKLIST:
-					prefs.setSourceFiltering(PrefsProto.SourceFiltering.BLACKLIST);
+					preferences.setSourceFiltering(PrefsProto.SourceFiltering.BLACKLIST);
 					break;
 				case WHITELIST:
-					prefs.setSourceFiltering(PrefsProto.SourceFiltering.WHITELIST);
+					preferences.setSourceFiltering(PrefsProto.SourceFiltering.WHITELIST);
 					break;
 				default:
-					prefs.setSourceFiltering(PrefsProto.SourceFiltering.NONE);
+					preferences.setSourceFiltering(PrefsProto.SourceFiltering.NONE);
+					break;
 			}
 		}
 		else
 		{
-			prefs.setSourceFiltering(PrefsProto.SourceFiltering.NONE);
+			preferences.setSourceFiltering(PrefsProto.SourceFiltering.NONE);
 		}
-		
-		return prefs.build();
+
+		return preferences.build();
 	}
 }

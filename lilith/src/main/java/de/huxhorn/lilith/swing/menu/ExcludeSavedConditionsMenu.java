@@ -1,6 +1,6 @@
 /*
  * Lilith - a log event viewer.
- * Copyright (C) 2007-2013 Joern Huxhorn
+ * Copyright (C) 2007-2016 Joern Huxhorn
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,25 +18,23 @@
 package de.huxhorn.lilith.swing.menu;
 
 import de.huxhorn.lilith.swing.ApplicationPreferences;
-import de.huxhorn.lilith.swing.ViewContainer;
-import de.huxhorn.lilith.swing.actions.FilterAction;
-import de.huxhorn.lilith.swing.actions.FocusSavedConditionAction;
+import de.huxhorn.lilith.swing.actions.BasicFilterAction;
 import de.huxhorn.lilith.swing.actions.NegateFilterAction;
 import de.huxhorn.lilith.swing.preferences.SavedCondition;
 
-public class ExcludeSavedConditionsMenu
+class ExcludeSavedConditionsMenu
 	extends FocusSavedConditionsMenu
 {
 	private static final long serialVersionUID = 6995608490657897758L;
 
-	public ExcludeSavedConditionsMenu(ApplicationPreferences applicationPreferences)
+	ExcludeSavedConditionsMenu(ApplicationPreferences applicationPreferences, boolean htmlTooltip)
 	{
-		super(applicationPreferences);
+		super(applicationPreferences, htmlTooltip);
 	}
 
 	@Override
-	protected FilterAction createAction(ViewContainer viewContainer, SavedCondition savedCondition)
+	protected BasicFilterAction createAction(SavedCondition savedCondition)
 	{
-		return new NegateFilterAction(new FocusSavedConditionAction(viewContainer, savedCondition));
+		return new NegateFilterAction(super.createAction(savedCondition));
 	}
 }

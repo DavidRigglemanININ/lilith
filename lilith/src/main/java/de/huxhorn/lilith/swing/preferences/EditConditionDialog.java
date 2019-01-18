@@ -1,60 +1,63 @@
 /*
  * Lilith - a log event viewer.
- * Copyright (C) 2007-2011 Joern Huxhorn
- * 
+ * Copyright (C) 2007-2017 Joern Huxhorn
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package de.huxhorn.lilith.swing.preferences;
 
 import de.huxhorn.lilith.swing.LilithKeyStrokes;
 import de.huxhorn.lilith.swing.table.ColorScheme;
 import de.huxhorn.sulky.swing.KeyStrokes;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Dialog;
+import java.awt.FlowLayout;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
-
-import javax.swing.*;
+import javax.swing.AbstractAction;
+import javax.swing.Action;
+import javax.swing.JButton;
+import javax.swing.JCheckBox;
+import javax.swing.JDialog;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JTextField;
+import javax.swing.KeyStroke;
 
 public class EditConditionDialog
 	extends JDialog
 {
-	private final Logger logger = LoggerFactory.getLogger(EditConditionDialog.class);
+	private static final long serialVersionUID = -217524106405669380L;
+
+	private final JTextField conditionName;
+	private final OkAction okAction;
+	private final JCheckBox activeCheckBox;
+	private final ColorSchemeEditorPanel colorSchemeEditorPanel;
 
 	private SavedCondition savedCondition;
-	private JTextField conditionName;
-	private OkAction okAction;
-	private boolean adding;
 	private boolean canceled;
 
-	private JCheckBox activeCheckBox;
-	private ColorSchemeEditorPanel colorSchemeEditorPanel;
-
-	public EditConditionDialog(Dialog owner)
+	EditConditionDialog(Dialog owner)
 	{
 		super(owner);
 		setModal(true);
-		createUi();
-	}
 
-	private void createUi()
-	{
 		okAction = new OkAction();
 		Action cancelAction = new CancelAction();
 
@@ -118,19 +121,19 @@ public class EditConditionDialog
 	}
 
 
-	public void setAdding(boolean adding)
+	void setAdding(boolean adding)
 	{
-		this.adding = adding;
 		if(adding)
 		{
-			setTitle("Add condition...");
+			setTitle("Add condition…");
 		}
 		else
 		{
-			setTitle("Edit condition...");
+			setTitle("Edit condition…");
 		}
 	}
 
+	@Override
 	public void setVisible(boolean b)
 	{
 		if(b)
@@ -168,11 +171,6 @@ public class EditConditionDialog
 		this.savedCondition = savedCondition;
 	}
 
-	public boolean isAdding()
-	{
-		return adding;
-	}
-
 	public boolean isCanceled()
 	{
 		return canceled;
@@ -199,7 +197,7 @@ public class EditConditionDialog
 	{
 		private static final long serialVersionUID = -7380136684827113354L;
 
-		public OkAction()
+		OkAction()
 		{
 			super("Ok");
 		}
@@ -217,6 +215,7 @@ public class EditConditionDialog
 			}
 		}
 
+		@Override
 		public void actionPerformed(ActionEvent e)
 		{
 			String name = conditionName.getText();
@@ -238,11 +237,12 @@ public class EditConditionDialog
 	{
 		private static final long serialVersionUID = 3523022122100092148L;
 
-		public ResetAction()
+		ResetAction()
 		{
 			super("Reset");
 		}
 
+		@Override
 		public void actionPerformed(ActionEvent e)
 		{
 			initUI();
@@ -254,13 +254,14 @@ public class EditConditionDialog
 	{
 		private static final long serialVersionUID = 5442950514112749763L;
 
-		public CancelAction()
+		CancelAction()
 		{
 			super("Cancel");
 			KeyStroke accelerator = LilithKeyStrokes.getKeyStroke(LilithKeyStrokes.ESCAPE);
 			putValue(Action.ACCELERATOR_KEY, accelerator);
 		}
 
+		@Override
 		public void actionPerformed(ActionEvent e)
 		{
 			canceled = true;
@@ -271,6 +272,7 @@ public class EditConditionDialog
 	private class ConditionNameActionListener
 		implements ActionListener
 	{
+		@Override
 		public void actionPerformed(ActionEvent e)
 		{
 			String name = conditionName.getText();
@@ -284,17 +286,22 @@ public class EditConditionDialog
 	private class TextKeyListener
 		implements KeyListener
 	{
+		@Override
 		public void keyTyped(KeyEvent e)
 		{
 			updateActions();
 		}
 
+		@Override
 		public void keyPressed(KeyEvent e)
 		{
+			// no-op
 		}
 
+		@Override
 		public void keyReleased(KeyEvent e)
 		{
+			// no-op
 		}
 	}
 }

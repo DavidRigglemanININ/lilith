@@ -1,6 +1,6 @@
 /*
  * Lilith - a log event viewer.
- * Copyright (C) 2007-2013 Joern Huxhorn
+ * Copyright (C) 2007-2017 Joern Huxhorn
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,6 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package de.huxhorn.lilith.swing;
 
 import de.huxhorn.sulky.conditions.And;
@@ -24,16 +25,22 @@ import de.huxhorn.sulky.conditions.ConditionWrapper;
 import de.huxhorn.sulky.conditions.Not;
 import de.huxhorn.sulky.conditions.Or;
 import de.huxhorn.sulky.formatting.SimpleXml;
-
 import java.util.List;
 
-public class TextPreprocessor
+public final class TextPreprocessor
 {
 	private static final int MAX_LINE_LENGTH = 100;
 	private static final int MAX_LINES = 40;
 	private static final String TAB_REPLACEMENT = "    ";
 	private static final String LINE_TRUNCATION = "[..]";
 	private static final String INDENT = "    ";
+
+	static
+	{
+		new TextPreprocessor(); // stfu
+	}
+
+	private TextPreprocessor() {}
 
 	public static String cropLine(String text)
 	{
@@ -209,18 +216,18 @@ public class TextPreprocessor
 			}
 			Condition c = wrapper.getCondition();
 			appendIndent(result, indent);
-			result.append(operator).append("(");
+			result.append(operator).append('(');
 			if(c == null)
 			{
 				result.append("null");
 			}
 			else
 			{
-				result.append("\n");
+				result.append('\n');
 				formatCondition(c, result, indent+1);
 				appendIndent(result, indent);
 			}
-			result.append(")");
+			result.append(')');
 		}
 		else if(condition instanceof ConditionGroup)
 		{
@@ -241,14 +248,14 @@ public class TextPreprocessor
 			}
 			List<Condition> conditions = group.getConditions();
 			appendIndent(result, indent);
-			result.append("(");
+			result.append('(');
 			if(conditions == null || conditions.isEmpty())
 			{
-				result.append("[").append(operator).append(" without conditions.]");
+				result.append('[').append(operator).append(" without conditions.]");
 			}
 			else
 			{
-				result.append("\n");
+				result.append('\n');
 				boolean first = true;
 				for(Condition current : conditions)
 				{
@@ -259,13 +266,13 @@ public class TextPreprocessor
 					else
 					{
 						appendIndent(result, indent+1);
-						result.append(operator).append("\n");
+						result.append(operator).append('\n');
 					}
 					formatCondition(current, result, indent+1);
 				}
 				appendIndent(result, indent);
 			}
-			result.append(")");
+			result.append(')');
 		}
 		else
 		{
@@ -276,7 +283,7 @@ public class TextPreprocessor
 
 		if(indent > 0)
 		{
-			result.append("\n");
+			result.append('\n');
 		}
 	}
 

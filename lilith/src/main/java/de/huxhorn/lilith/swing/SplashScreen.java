@@ -1,50 +1,51 @@
 /*
  * Lilith - a log event viewer.
- * Copyright (C) 2007-2011 Joern Huxhorn
- * 
+ * Copyright (C) 2007-2017 Joern Huxhorn
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package de.huxhorn.lilith.swing;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.Image;
+import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.net.URL;
-
 import javax.imageio.ImageIO;
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JWindow;
+import javax.swing.SwingConstants;
 
 public class SplashScreen
 	extends JWindow
 {
-	private final Logger logger = LoggerFactory.getLogger(SplashScreen.class);
+	private static final long serialVersionUID = 668541832046187990L;
 
-	private JLabel statusLabel;
-	private JPanel contentPane;
+	private final JPanel contentPane;
+	private final JLabel statusLabel;
 
 	public SplashScreen(String applicationTitle)
 	{
 		super();
-		initUI(applicationTitle);
-	}
 
-
-	private void initUI(String applicationTitle)
-	{
 		contentPane = new JPanel(true);
 		contentPane.setLayout(new BorderLayout());
 		URL url = SplashScreen.class.getResource("/splash/splash.jpg");
@@ -61,7 +62,7 @@ public class SplashScreen
 			}
 			catch(IOException ex)
 			{
-				if(logger.isWarnEnabled()) logger.warn("Exception while loading image!", ex);
+				ex.printStackTrace(); // NOPMD
 			}
 		}
 		statusLabel = new JLabel();
@@ -78,14 +79,13 @@ public class SplashScreen
 
 		contentPane.add(titleLabel, BorderLayout.NORTH);
 		contentPane.add(statusLabel, BorderLayout.SOUTH);
-		statusLabel.setText("Initializing...");
+		statusLabel.setText("Initializing…");
 		setContentPane(contentPane);
 	}
 
 	public void setStatusText(final String statusText)
 	{
 		statusLabel.setText(statusText);
-		if(logger.isInfoEnabled()) logger.info("Status: {}", statusText);
 		if(!isVisible())
 		{
 			setVisible(true);
@@ -94,43 +94,43 @@ public class SplashScreen
 		Rectangle bounds = contentPane.getBounds();
 		int height=statusLabel.getHeight();
 		contentPane.paintImmediately(0,bounds.height-height,bounds.width, height);
-		//statusLabel.paintImmediately(statusLabel.getBounds());
-		//repaint();
 	}
 
 	private class ImagePanel
 		extends JComponent
 	{
-		private BufferedImage image;
+		private static final long serialVersionUID = 1400735425931232883L;
+		private final BufferedImage image;
 
-		public ImagePanel(BufferedImage image)
+		ImagePanel(BufferedImage image)
 		{
 			this.image = image;
 			this.setPreferredSize(new Dimension(this.image.getWidth(), this.image.getHeight()));
 		}
 
+		@Override
 		public void paint(Graphics g)
 		{
-			if(logger.isInfoEnabled()) logger.info("paint");
 			g.drawImage(image, 0, 0, this);
 		}
 
+		@Override
 		public void update(Graphics g)
 		{
-			if(logger.isInfoEnabled()) logger.info("update");
 			paint(g);
 		}
 
+		@Override
 		protected void paintComponent(Graphics g)
 		{
 			paint(g);
 		}
 
-		public boolean imageUpdate(Image img, int infoflags, int x, int y, int w, int h)
+		@Override
+		public boolean imageUpdate(Image img, int infoFlags, int x, int y, int w, int h)
 		{
-			if(logger.isInfoEnabled()) logger.info("imageUpdate");
 			repaint();
-			return (infoflags & (ALLBITS | ABORT)) == 0;
+			return (infoFlags & (ALLBITS | ABORT)) == 0;
 		}
 	}
 }

@@ -1,8 +1,3 @@
-import de.huxhorn.lilith.data.logging.LoggingEvent;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import java.util.regex.PatternSyntaxException;
-
 /*
  * Lilith - a log event viewer.
  * Copyright (C) 2007-2011 Joern Huxhorn
@@ -21,6 +16,11 @@ import java.util.regex.PatternSyntaxException;
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+import de.huxhorn.lilith.data.logging.LoggingEvent
+
+import java.util.regex.Pattern
+import java.util.regex.PatternSyntaxException
+
 /**
  * Returns true if the logging events message matches the regex
  * given as searchString.
@@ -29,25 +29,25 @@ import java.util.regex.PatternSyntaxException;
 if(searchString == null || '' == searchString)
 {
 	// so no string doesn't filter anything
-	return true;
+	return true
 }
 
-def event = input?.event;
+def event = input?.event
 
 if(event instanceof LoggingEvent)
 {
 	try
 	{
-		def pattern = Pattern.compile(searchString);
-		def message = event.message.message;
+		def pattern = Pattern.compile(searchString)
+		def message = event.message.message
 		if(message)
 		{
-			return message ==~ pattern; // short for pattern.matcher(message).matches();
+			return message ==~ pattern // short for pattern.matcher(message).matches()
 		}
 	}
-	catch(PatternSyntaxException ex)
+	catch(PatternSyntaxException ignored)
 	{
 		// ignore, returns false
 	}
 }
-return false;
+return false

@@ -1,6 +1,6 @@
 /*
  * Lilith - a log event viewer.
- * Copyright (C) 2007-2013 Joern Huxhorn
+ * Copyright (C) 2007-2016 Joern Huxhorn
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,12 +17,10 @@
  */
 package de.huxhorn.lilith.swing.actions;
 
-import de.huxhorn.sulky.conditions.Condition;
-
-import javax.swing.*;
-
+/**
+ * A Filter action that cares about EventWrapper.
+ */
 public interface FilterAction
-	extends ViewContainerRelated, EventWrapperRelated, Action
+	extends BasicFilterAction, EventWrapperRelated
 {
-	Condition resolveCondition();
 }

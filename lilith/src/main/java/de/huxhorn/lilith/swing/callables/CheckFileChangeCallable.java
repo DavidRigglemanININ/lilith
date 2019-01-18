@@ -1,6 +1,6 @@
 /*
  * Lilith - a log event viewer.
- * Copyright (C) 2007-2011 Joern Huxhorn
+ * Copyright (C) 2007-2018 Joern Huxhorn
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,27 +15,28 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package de.huxhorn.lilith.swing.callables;
 
 import de.huxhorn.lilith.swing.ViewContainer;
 import de.huxhorn.sulky.tasks.AbstractProgressingCallable;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import javax.swing.SwingUtilities;
+import java.awt.EventQueue;
 import java.io.File;
 import java.io.IOException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class CheckFileChangeCallable
 	extends AbstractProgressingCallable<Long>
 {
 	private final Logger logger = LoggerFactory.getLogger(CheckFileChangeCallable.class);
 
-	private File dataFile;
-	private File indexFile;
 	private static final int POLL_INTERVAL = 1000;
-	private ViewContainer<?> viewContainer;
-	private FlushRunnable flushRunnable;
+
+	private final File dataFile;
+	private final File indexFile;
+	private final ViewContainer<?> viewContainer;
+	private final FlushRunnable flushRunnable;
 
 	public CheckFileChangeCallable(File dataFile, File indexFile, ViewContainer<?> viewContainer)
 	{
@@ -46,6 +47,7 @@ public class CheckFileChangeCallable
 	}
 
 
+	@Override
 	public Long call() throws Exception
 	{
 		setNumberOfSteps(-1);
@@ -58,9 +60,9 @@ public class CheckFileChangeCallable
 			{
 				try
 				{
-					IndexingCallable indexing=new IndexingCallable(dataFile, indexFile, true);
+					IndexingCallable indexing=new IndexingCallable(dataFile, indexFile, true); // NOPMD - AvoidInstantiatingObjectsInLoops
 					indexing.call();
-					SwingUtilities.invokeAndWait(flushRunnable);
+					EventQueue.invokeAndWait(flushRunnable);
 				}
 				catch(IOException ex)
 				{
@@ -68,7 +70,7 @@ public class CheckFileChangeCallable
 					// this can be safely ignored.
 					// changed from EOFException to general IOException due to
 					// http://sourceforge.net/apps/trac/lilith/ticket/97
-					if(logger.isInfoEnabled()) logger.info("Exception while reindexing log file. Ignoring it...", ex);
+					if(logger.isInfoEnabled()) logger.info("Exception while re-indexing log file. Ignoring it...", ex);
 				}
 			}
 			try
@@ -93,6 +95,7 @@ public class CheckFileChangeCallable
 		implements Runnable
 	{
 
+		@Override
 		public void run()
 		{
 			viewContainer.flush();

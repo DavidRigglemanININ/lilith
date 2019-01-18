@@ -1,6 +1,6 @@
 /*
  * Lilith - a log event viewer.
- * Copyright (C) 2007-2013 Joern Huxhorn
+ * Copyright (C) 2007-2016 Joern Huxhorn
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,57 +17,37 @@
  */
 package de.huxhorn.lilith.swing.actions;
 
-import de.huxhorn.lilith.data.eventsource.EventWrapper;
-import de.huxhorn.lilith.swing.TextPreprocessor;
-import de.huxhorn.lilith.swing.ViewContainer;
 import de.huxhorn.lilith.swing.preferences.SavedCondition;
 import de.huxhorn.sulky.conditions.Condition;
-
-import javax.swing.*;
+import java.awt.event.ActionEvent;
 
 public class FocusSavedConditionAction
-		extends AbstractFilterAction
+		extends AbstractBasicFilterAction
 {
 	private static final long serialVersionUID = -1245643497938628684L;
 
 	private final SavedCondition savedCondition;
-	//private EventWrapper eventWrapper;
 
-	public FocusSavedConditionAction(ViewContainer viewContainer, SavedCondition savedCondition)
+	public FocusSavedConditionAction(SavedCondition savedCondition, boolean htmlTooltip)
 	{
-		super(savedCondition.getName());
+		super(savedCondition.getName(), htmlTooltip);
 		this.savedCondition = savedCondition;
 		Condition condition = savedCondition.getCondition();
 		if(condition == null)
 		{
 			throw new IllegalArgumentException("Condition of "+savedCondition+" is null!");
 		}
-		putValue(Action.SHORT_DESCRIPTION, TextPreprocessor.preformattedTooltip(TextPreprocessor.cropTextBlock(TextPreprocessor.formatCondition(condition))));
-		setViewContainer(viewContainer);
+		initializeConditionTooltip(condition);
+		viewContainerUpdated();
 	}
 
 	@Override
-	protected void updateState()
+	public Condition resolveCondition(ActionEvent e)
 	{
-		if(viewContainer == null) // || eventWrapper == null)
+		if(!isEnabled())
 		{
-			setEnabled(false);
-			return;
+			return null;
 		}
-		//setEnabled(eventWrapper.getEvent() != null);
-		setEnabled(true);
-	}
-
-	@Override
-	public void setEventWrapper(EventWrapper eventWrapper)
-	{
-		// ignore
-		// this.eventWrapper = eventWrapper;
-	}
-
-	@Override
-	public Condition resolveCondition()
-	{
 		return savedCondition.getCondition();
 	}
 }

@@ -1,23 +1,23 @@
 /*
  * Lilith - a log event viewer.
- * Copyright (C) 2007-2014 Joern Huxhorn
- * 
+ * Copyright (C) 2007-2018 Joern Huxhorn
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 /*
- * Copyright 2007-2014 Joern Huxhorn
+ * Copyright 2007-2018 Joern Huxhorn
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,28 +39,38 @@ import de.huxhorn.lilith.data.logging.LoggingEvent;
 import de.huxhorn.lilith.data.logging.Message;
 import de.huxhorn.lilith.data.logging.ThreadInfo;
 import de.huxhorn.lilith.data.logging.ThrowableInfo;
-
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
+import java.io.ByteArrayInputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import javax.xml.stream.XMLInputFactory;
+import javax.xml.stream.XMLStreamException;
+import javax.xml.stream.XMLStreamReader;
 import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.ByteArrayInputStream;
-import java.io.InputStreamReader;
-import java.io.UnsupportedEncodingException;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import javax.xml.stream.XMLInputFactory;
-import javax.xml.stream.XMLStreamException;
-import javax.xml.stream.XMLStreamReader;
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 public class LoggingEventReaderTest
 {
+	// thread-safe, see http://www.cowtowncoder.com/blog/archives/2006/06/entry_2.html
+	// XMLInputFactory.newFactory() is not deprecated. See http://bugs.java.com/bugdatabase/view_bug.do?bug_id=JDK-8183519
+	@SuppressWarnings("deprecation")
+	private static final XMLInputFactory XML_INPUT_FACTORY = XMLInputFactory.newFactory();
+	static
+	{
+		XML_INPUT_FACTORY.setProperty(XMLInputFactory.IS_SUPPORTING_EXTERNAL_ENTITIES, false);
+		XML_INPUT_FACTORY.setProperty(XMLInputFactory.SUPPORT_DTD, false);
+		XML_INPUT_FACTORY.setProperty(XMLInputFactory.IS_VALIDATING, false);
+	}
+
 	private final Logger logger = LoggerFactory.getLogger(LoggingEventReaderTest.class);
 	private LoggingEventReader instance;
 
@@ -71,8 +81,15 @@ public class LoggingEventReaderTest
 	}
 
 	@Test
+	public void correctInputFactoryIsObtained()
+	{
+		String factoryClassName = XML_INPUT_FACTORY.getClass().getName();
+		assertTrue(factoryClassName, factoryClassName.startsWith("com.ctc.wstx.stax"));
+	}
+
+	@Test
 	public void full()
-		throws XMLStreamException, UnsupportedEncodingException
+		throws XMLStreamException
 	{
 		String eventString = "<log4j:event logger=\"de.huxhorn.lilith.sandbox.Log4jSandbox$InnerClass\" timestamp=\"1234567890000\" level=\"DEBUG\" thread=\"main\">\n" +
 			"<log4j:message><![CDATA[Foo!]]></log4j:message>\n" +
@@ -98,7 +115,7 @@ public class LoggingEventReaderTest
 		assertEquals("de.huxhorn.lilith.sandbox.Log4jSandbox$InnerClass", readEvent.getLogger());
 
 		// TimeStamp
-		assertEquals((Long) 1234567890000L, readEvent.getTimeStamp());
+		assertEquals((Long) 1_234_567_890_000L, readEvent.getTimeStamp());
 
 		// Level
 		assertEquals(LoggingEvent.Level.DEBUG, readEvent.getLevel());
@@ -108,7 +125,7 @@ public class LoggingEventReaderTest
 
 		// MDC
 		{
-			Map<String, String> expectedMdc = new HashMap<String, String>();
+			Map<String, String> expectedMdc = new HashMap<>();
 			expectedMdc.put("key1", "value1");
 			expectedMdc.put("key2", "value2");
 			assertEquals(expectedMdc, readEvent.getMdc());
@@ -119,7 +136,7 @@ public class LoggingEventReaderTest
 			Message[] expectedNdc = new Message[]
 				{
 					new Message("NDC1"),
-					new Message("NDC2")
+					new Message("NDC2"),
 				};
 			assertArrayEquals(expectedNdc, readEvent.getNdc());
 		}
@@ -128,7 +145,7 @@ public class LoggingEventReaderTest
 		{
 			ExtendedStackTraceElement[] expectedCallStack = new ExtendedStackTraceElement[]
 				{
-					new ExtendedStackTraceElement("de.huxhorn.lilith.sandbox.Log4jSandbox$InnerClass", "execute", "Log4jSandbox.java", 18)
+					new ExtendedStackTraceElement("de.huxhorn.lilith.sandbox.Log4jSandbox$InnerClass", "execute", "Log4jSandbox.java", 18),
 				};
 			assertArrayEquals(expectedCallStack, readEvent.getCallStack());
 		}
@@ -169,7 +186,7 @@ public class LoggingEventReaderTest
 
 	@Test
 	public void singleThrowable()
-		throws UnsupportedEncodingException, XMLStreamException
+		throws XMLStreamException
 	{
 		String eventString = "<log4j:event logger=\"de.huxhorn.lilith.sandbox.Log4jSandbox\" timestamp=\"1234567890000\" level=\"DEBUG\" thread=\"main\">\n" +
 			"<log4j:message><![CDATA[Foobar!]]></log4j:message>\n" +
@@ -191,7 +208,7 @@ public class LoggingEventReaderTest
 		assertEquals("de.huxhorn.lilith.sandbox.Log4jSandbox", readEvent.getLogger());
 
 		// TimeStamp
-		assertEquals((Long) 1234567890000L, readEvent.getTimeStamp());
+		assertEquals((Long) 1_234_567_890_000L, readEvent.getTimeStamp());
 
 		// Level
 		assertEquals(LoggingEvent.Level.DEBUG, readEvent.getLevel());
@@ -201,7 +218,7 @@ public class LoggingEventReaderTest
 
 		// MDC
 		{
-			Map<String, String> expectedMdc = new HashMap<String, String>();
+			Map<String, String> expectedMdc = new HashMap<>();
 			expectedMdc.put("key1", "value1");
 			expectedMdc.put("key2", "value2");
 			assertEquals(expectedMdc, readEvent.getMdc());
@@ -224,7 +241,7 @@ public class LoggingEventReaderTest
 		{
 			ExtendedStackTraceElement[] expectedCallStack = new ExtendedStackTraceElement[]
 				{
-					new ExtendedStackTraceElement("de.huxhorn.lilith.sandbox.Log4jSandbox", "main", "Log4jSandbox.java", 37)
+					new ExtendedStackTraceElement("de.huxhorn.lilith.sandbox.Log4jSandbox", "main", "Log4jSandbox.java", 37),
 				};
 			assertArrayEquals(expectedCallStack, readEvent.getCallStack());
 		}
@@ -254,7 +271,7 @@ public class LoggingEventReaderTest
 
 	@Test
 	public void multiLineMessage()
-		throws UnsupportedEncodingException, XMLStreamException
+		throws XMLStreamException
 	{
 		String eventString = "<log4j:event logger=\"de.huxhorn.lilith.sandbox.Log4jSandbox$InnerClass\" timestamp=\"1234567890000\" level=\"DEBUG\" thread=\"main\">\n" +
 			"<log4j:message><![CDATA[Foo!]]></log4j:message>\n" +
@@ -283,7 +300,7 @@ public class LoggingEventReaderTest
 		assertEquals("de.huxhorn.lilith.sandbox.Log4jSandbox$InnerClass", readEvent.getLogger());
 
 		// TimeStamp
-		assertEquals((Long) 1234567890000L, readEvent.getTimeStamp());
+		assertEquals((Long) 1_234_567_890_000L, readEvent.getTimeStamp());
 
 		// Level
 		assertEquals(LoggingEvent.Level.DEBUG, readEvent.getLevel());
@@ -293,7 +310,7 @@ public class LoggingEventReaderTest
 
 		// MDC
 		{
-			Map<String, String> expectedMdc = new HashMap<String, String>();
+			Map<String, String> expectedMdc = new HashMap<>();
 			expectedMdc.put("key1", "value1");
 			expectedMdc.put("key2", "value2");
 			assertEquals(expectedMdc, readEvent.getMdc());
@@ -316,7 +333,7 @@ public class LoggingEventReaderTest
 		{
 			ExtendedStackTraceElement[] expectedCallStack = new ExtendedStackTraceElement[]
 				{
-					new ExtendedStackTraceElement("de.huxhorn.lilith.sandbox.Log4jSandbox$InnerClass", "execute", "Log4jSandbox.java", 29)
+					new ExtendedStackTraceElement("de.huxhorn.lilith.sandbox.Log4jSandbox$InnerClass", "execute", "Log4jSandbox.java", 29),
 				};
 			assertArrayEquals(expectedCallStack, readEvent.getCallStack());
 		}
@@ -357,7 +374,7 @@ public class LoggingEventReaderTest
 
 	@Test
 	public void multiLineMessageWithEmptyLine()
-		throws UnsupportedEncodingException, XMLStreamException
+		throws XMLStreamException
 	{
 		String eventString = "<log4j:event logger=\"de.huxhorn.lilith.sandbox.Log4jSandbox$InnerClass\" timestamp=\"1234567890000\" level=\"DEBUG\" thread=\"main\">\n" +
 			"<log4j:message><![CDATA[Foo!]]></log4j:message>\n" +
@@ -388,7 +405,7 @@ public class LoggingEventReaderTest
 		assertEquals("de.huxhorn.lilith.sandbox.Log4jSandbox$InnerClass", readEvent.getLogger());
 
 		// TimeStamp
-		assertEquals((Long) 1234567890000L, readEvent.getTimeStamp());
+		assertEquals((Long) 1_234_567_890_000L, readEvent.getTimeStamp());
 
 		// Level
 		assertEquals(LoggingEvent.Level.DEBUG, readEvent.getLevel());
@@ -398,7 +415,7 @@ public class LoggingEventReaderTest
 
 		// MDC
 		{
-			Map<String, String> expectedMdc = new HashMap<String, String>();
+			Map<String, String> expectedMdc = new HashMap<>();
 			expectedMdc.put("key1", "value1");
 			expectedMdc.put("key2", "value2");
 			assertEquals(expectedMdc, readEvent.getMdc());
@@ -421,7 +438,7 @@ public class LoggingEventReaderTest
 		{
 			ExtendedStackTraceElement[] expectedCallStack = new ExtendedStackTraceElement[]
 				{
-					new ExtendedStackTraceElement("de.huxhorn.lilith.sandbox.Log4jSandbox$InnerClass", "execute", "Log4jSandbox.java", 29)
+					new ExtendedStackTraceElement("de.huxhorn.lilith.sandbox.Log4jSandbox$InnerClass", "execute", "Log4jSandbox.java", 29),
 				};
 			assertArrayEquals(expectedCallStack, readEvent.getCallStack());
 		}
@@ -461,7 +478,7 @@ public class LoggingEventReaderTest
 	}
 
 	private LoggingEvent read(String eventStr)
-		throws XMLStreamException, UnsupportedEncodingException
+		throws XMLStreamException
 	{
 		if(logger.isDebugEnabled()) logger.debug("Before change: {}", eventStr);
 		if(!eventStr.contains("xmlns:log4j=\"http://jakarta.apache.org/log4j/\""))
@@ -470,7 +487,7 @@ public class LoggingEventReaderTest
 				.replace("<log4j:event ", "<log4j:event xmlns:log4j=\"http://jakarta.apache.org/log4j/\" ");
 			if(logger.isDebugEnabled()) logger.debug("After change: {}", eventStr);
 		}
-		return read((eventStr).getBytes("UTF-8"));
+		return read((eventStr).getBytes(StandardCharsets.UTF_8));
 	}
 
 	private void logEvent(LoggingEvent event)
@@ -481,22 +498,21 @@ public class LoggingEventReaderTest
 			msg.append("loggingEvent=");
 			if(event == null)
 			{
-				msg.append((String) null);
+				msg.append("null");
 			}
 			else
 			{
-				msg.append("[");
-				msg.append("logger=").append(event.getLogger());
-				msg.append(", level=").append(event.getLevel());
-				msg.append(", threadInfo=").append(event.getThreadInfo());
-				msg.append(", timeStamp=").append(event.getTimeStamp());
-				msg.append(", message=").append(event.getMessage());
+				msg.append("[logger=").append(event.getLogger())
+						.append(", level=").append(event.getLevel())
+						.append(", threadInfo=").append(event.getThreadInfo())
+						.append(", timeStamp=").append(event.getTimeStamp())
+						.append(", message=").append(event.getMessage());
 				appendCallStack(msg, event.getCallStack());
 				appendThrowable(msg, event.getThrowable());
 				msg.append(", mdc=").append(event.getMdc());
 				appendNdc(msg, event.getNdc());
 
-				msg.append("]");
+				msg.append(']');
 			}
 			logger.info(msg.toString());
 		}
@@ -530,15 +546,10 @@ public class LoggingEventReaderTest
 	}
 
 	private LoggingEvent read(byte[] bytes)
-		throws XMLStreamException, UnsupportedEncodingException
+		throws XMLStreamException
 	{
-		XMLInputFactory inputFactory = XMLInputFactory.newInstance();
-		inputFactory.setProperty(XMLInputFactory.IS_SUPPORTING_EXTERNAL_ENTITIES, false);
-		inputFactory.setProperty(XMLInputFactory.SUPPORT_DTD, false);
-		inputFactory.setProperty(XMLInputFactory.IS_VALIDATING, false);
-
 		ByteArrayInputStream in = new ByteArrayInputStream(bytes);
-		XMLStreamReader reader = inputFactory.createXMLStreamReader(new InputStreamReader(in, "utf-8"));
+		XMLStreamReader reader = XML_INPUT_FACTORY.createXMLStreamReader(new InputStreamReader(in, StandardCharsets.UTF_8));
 		return instance.read(reader);
 	}
 }

@@ -1,23 +1,23 @@
 /*
  * Lilith - a log event viewer.
- * Copyright (C) 2007-2011 Joern Huxhorn
- * 
+ * Copyright (C) 2007-2017 Joern Huxhorn
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 /*
- * Copyright 2007-2011 Joern Huxhorn
+ * Copyright 2007-2017 Joern Huxhorn
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,12 +35,9 @@
 package de.huxhorn.lilith.logback.encoder;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
-import ch.qos.logback.core.recovery.ResilientFileOutputStream;
 import de.huxhorn.lilith.api.FileConstants;
-
-import java.io.File;
-import java.io.IOException;
-import java.io.OutputStream;
+import de.huxhorn.lilith.logback.encoder.core.LilithEncoderBase;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -48,12 +45,21 @@ public class ClassicLilithEncoder
 	extends LilithEncoderBase<ILoggingEvent>
 {
 	private boolean includeCallerData;
-	private WrappingClassicEncoder wrappingEncoder;
+
+	private static final Map<String, String> META_DATA_MAP;
+	static
+	{
+		Map<String, String> metaDataMap = new HashMap<>();
+		metaDataMap.put(FileConstants.CONTENT_TYPE_KEY, FileConstants.CONTENT_TYPE_VALUE_LOGGING);
+		metaDataMap.put(FileConstants.CONTENT_FORMAT_KEY, FileConstants.CONTENT_FORMAT_VALUE_PROTOBUF);
+		metaDataMap.put(FileConstants.COMPRESSION_KEY, FileConstants.COMPRESSION_VALUE_GZIP);
+
+		META_DATA_MAP = Collections.unmodifiableMap(metaDataMap);
+	}
 
 	public ClassicLilithEncoder()
 	{
-		wrappingEncoder = new WrappingClassicEncoder();
-		encoder=wrappingEncoder;
+		super(META_DATA_MAP, new WrappingClassicEncoder());
 	}
 
 	public boolean isIncludeCallerData()
@@ -67,39 +73,11 @@ public class ClassicLilithEncoder
 	}
 
 	@Override
-	public void init(OutputStream os) throws IOException
-	{
-		super.init(os);
-		if(os instanceof ResilientFileOutputStream)
-		{
-			ResilientFileOutputStream rfos = (ResilientFileOutputStream) os;
-			File file = rfos.getFile();
-			if(file.length() == 0)
-			{
-				// write header
-				Map<String, String> metaDataMap = new HashMap<String, String>();
-				metaDataMap.put(FileConstants.CONTENT_TYPE_KEY, FileConstants.CONTENT_TYPE_VALUE_LOGGING);
-				metaDataMap.put(FileConstants.CONTENT_FORMAT_KEY, FileConstants.CONTENT_FORMAT_VALUE_PROTOBUF);
-				metaDataMap.put(FileConstants.COMPRESSION_KEY, FileConstants.COMPRESSION_VALUE_GZIP);
-				writeHeader(metaDataMap);
-			}
-		}
-		else
-		{
-			throw new IOException("OutputStream wasn't instanceof ResilientFileOutputStream! "+os);
-		}
-		wrappingEncoder.reset();
-	}
-
-	@Override
 	protected void preProcess(ILoggingEvent event)
 	{
-		if(event != null)
+		if(event != null && includeCallerData)
 		{
-			if(includeCallerData)
-			{
-				event.getCallerData();
-			}
+			event.getCallerData();
 		}
 	}
 }

@@ -1,71 +1,80 @@
 /*
  * Lilith - a log event viewer.
- * Copyright (C) 2007-2014 Joern Huxhorn
- * 
+ * Copyright (C) 2007-2018 Joern Huxhorn
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package de.huxhorn.lilith.swing;
 
+import de.huxhorn.lilith.appender.InternalLilithAppender;
+import de.huxhorn.lilith.conditions.CallLocationCondition;
 import de.huxhorn.lilith.data.access.AccessEvent;
 import de.huxhorn.lilith.data.eventsource.EventWrapper;
+import de.huxhorn.lilith.data.eventsource.LoggerContext;
 import de.huxhorn.lilith.data.eventsource.SourceIdentifier;
 import de.huxhorn.lilith.data.logging.ExtendedStackTraceElement;
 import de.huxhorn.lilith.data.logging.LoggingEvent;
-import de.huxhorn.lilith.data.logging.json.LoggingJsonEncoder;
-import de.huxhorn.lilith.data.logging.xml.LoggingXmlEncoder;
 import de.huxhorn.lilith.engine.EventSource;
-import de.huxhorn.lilith.services.clipboard.AccessUriFormatter;
+import de.huxhorn.lilith.services.clipboard.AccessRequestHeadersFormatter;
+import de.huxhorn.lilith.services.clipboard.AccessRequestParametersFormatter;
+import de.huxhorn.lilith.services.clipboard.AccessRequestUriFormatter;
+import de.huxhorn.lilith.services.clipboard.AccessRequestUrlFormatter;
+import de.huxhorn.lilith.services.clipboard.AccessResponseHeadersFormatter;
 import de.huxhorn.lilith.services.clipboard.ClipboardFormatter;
 import de.huxhorn.lilith.services.clipboard.ClipboardFormatterData;
+import de.huxhorn.lilith.services.clipboard.EventHtmlFormatter;
 import de.huxhorn.lilith.services.clipboard.GroovyFormatter;
 import de.huxhorn.lilith.services.clipboard.LoggingCallLocationFormatter;
 import de.huxhorn.lilith.services.clipboard.LoggingCallStackFormatter;
+import de.huxhorn.lilith.services.clipboard.LoggingEventJsonFormatter;
+import de.huxhorn.lilith.services.clipboard.LoggingEventXmlFormatter;
 import de.huxhorn.lilith.services.clipboard.LoggingLoggerNameFormatter;
 import de.huxhorn.lilith.services.clipboard.LoggingMarkerFormatter;
 import de.huxhorn.lilith.services.clipboard.LoggingMdcFormatter;
 import de.huxhorn.lilith.services.clipboard.LoggingMessageFormatter;
 import de.huxhorn.lilith.services.clipboard.LoggingMessagePatternFormatter;
 import de.huxhorn.lilith.services.clipboard.LoggingNdcFormatter;
+import de.huxhorn.lilith.services.clipboard.LoggingThreadGroupNameFormatter;
+import de.huxhorn.lilith.services.clipboard.LoggingThreadNameFormatter;
 import de.huxhorn.lilith.services.clipboard.LoggingThrowableFormatter;
-import de.huxhorn.lilith.services.sender.EventSender;
+import de.huxhorn.lilith.services.clipboard.LoggingThrowableNameFormatter;
+import de.huxhorn.lilith.swing.actions.ActionTooltips;
 import de.huxhorn.lilith.swing.menu.ExcludeMenu;
 import de.huxhorn.lilith.swing.menu.FocusMenu;
 import de.huxhorn.lilith.swing.table.EventWrapperViewTable;
-import de.huxhorn.sulky.swing.PersistentTableColumnModel;
+import de.huxhorn.sulky.buffers.Buffer;
 import de.huxhorn.sulky.conditions.Condition;
 import de.huxhorn.sulky.swing.KeyStrokes;
-
-import org.apache.commons.lang3.SystemUtils;
-import org.simplericity.macify.eawt.Application;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.awt.*;
+import de.huxhorn.sulky.swing.PersistentTableColumnModel;
+import java.awt.AWTError;
+import java.awt.Container;
+import java.awt.EventQueue;
+import java.awt.Font;
+import java.awt.HeadlessException;
+import java.awt.KeyEventDispatcher;
+import java.awt.KeyboardFocusManager;
+import java.awt.Toolkit;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
-import java.awt.datatransfer.UnsupportedFlavorException;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
-import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.IOException;
 import java.io.Serializable;
-import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
@@ -76,19 +85,34 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.SortedMap;
 import java.util.SortedSet;
 import java.util.TreeSet;
-
-import javax.swing.*;
-import javax.swing.event.ChangeEvent;
+import java.util.stream.Collectors;
+import javax.swing.AbstractAction;
+import javax.swing.Action;
+import javax.swing.JButton;
+import javax.swing.JCheckBoxMenuItem;
+import javax.swing.JFrame;
+import javax.swing.JInternalFrame;
+import javax.swing.JMenu;
+import javax.swing.JMenuBar;
+import javax.swing.JMenuItem;
+import javax.swing.JPopupMenu;
+import javax.swing.JToggleButton;
+import javax.swing.JToolBar;
+import javax.swing.KeyStroke;
+import javax.swing.SwingConstants;
 import javax.swing.event.ChangeListener;
 import javax.swing.table.TableColumn;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * This class needs cleanup...... remove duplicated logic, make ToolBar/Menu configurable...
  */
-public class ViewActions
+public final class ViewActions
 {
 	private final Logger logger = LoggerFactory.getLogger(ViewActions.class);
 
@@ -114,137 +138,112 @@ public class ViewActions
 		manager.addKeyEventDispatcher(new EggListener());
 	}
 
-	private JToolBar toolbar;
-	private JMenuBar menubar;
+	private final JToolBar toolBar;
+	private final JMenuBar menuBar;
 
-	private MainFrame mainFrame;
+	private final MainFrame mainFrame;
+	private final ApplicationPreferences applicationPreferences;
+	private final JToggleButton tailButton;
+
+	private final ExportMenuAction exportMenuAction;
+	private final AttachAction attachToolBarAction;
+	private final AttachAction attachMenuAction;
+	private final DisconnectAction disconnectToolBarAction;
+	private final DisconnectAction disconnectMenuAction;
+	private final FindPreviousAction findPreviousToolBarAction;
+	private final FindPreviousAction findPreviousMenuAction;
+	private final FindNextAction findNextToolBarAction;
+	private final FindNextAction findNextMenuAction;
+	private final FindPreviousActiveAction findPreviousActiveAction;
+	private final FindPreviousActiveAction findPreviousActiveToolBarAction;
+	private final FindNextActiveAction findNextActiveAction;
+	private final FindNextActiveAction findNextActiveToolBarAction;
+	private final ResetFindAction resetFindAction;
+	private final TailAction tailMenuAction;
+	private final EditSourceNameMenuAction editSourceNameMenuAction;
+	private final SaveLayoutAction saveLayoutAction;
+	private final ResetLayoutAction resetLayoutAction;
+	private final SaveConditionMenuAction saveConditionMenuAction;
+
+	private final ZoomInMenuAction zoomInMenuAction;
+	private final ZoomOutMenuAction zoomOutMenuAction;
+	private final ResetZoomMenuAction resetZoomMenuAction;
+
+	private final NextViewAction nextViewAction;
+	private final PreviousViewAction previousViewAction;
+	private final CloseFilterAction closeFilterAction;
+	private final CloseOtherFiltersAction closeOtherFiltersAction;
+	private final CloseAllFiltersAction closeAllFiltersAction;
+
+	private final RemoveInactiveAction removeInactiveAction;
+	private final CloseAllAction closeAllAction;
+	private final CloseOtherAction closeOtherAction;
+	private final MinimizeAllAction minimizeAllAction;
+	private final MinimizeAllOtherAction minimizeAllOtherAction;
+
+	private final JMenuItem removeInactiveItem;
+
+	private final JMenu windowMenu;
+	private final FindAction findMenuAction;
+	private final JMenu searchMenu;
+	private final JMenu viewMenu;
+	private final JMenu columnsMenu;
+	private final ClearAction clearMenuAction;
+	private final FocusMessageAction focusMessageAction;
+	private final FocusEventsAction focusEventsAction;
+	private final ChangeListener containerChangeListener;
+	private final TailAction tailToolBarAction;
+	private final ClearAction clearToolBarAction;
+	private final FindAction findToolBarAction;
+	private final CopySelectionAction copySelectionAction;
+	private final CopyToClipboardAction copyEventAction;
+	private final ShowUnfilteredEventAction showUnfilteredEventAction;
+	private final JPopupMenu popup;
+	private final GoToSourceAction goToSourceAction;
+	private final FocusMenu focusMenu;
+	private final ExcludeMenu excludeMenu;
+	private final FocusMenu focusPopupMenu;
+	private final ExcludeMenu excludePopupMenu;
+	private final JMenu filterPopupMenu;
+	private final JMenu copyPopupMenu;
+	private final PropertyChangeListener containerPropertyChangeListener;
+	private final JMenuItem showTaskManagerItem;
+	private final JMenuItem closeAllItem;
+	private final JMenuItem minimizeAllItem;
+	private final JMenuItem closeAllOtherItem;
+	private final JMenuItem minimizeAllOtherItem;
+	private final JMenu recentFilesMenu;
+	private final ClearRecentFilesAction clearRecentFilesAction;
+	private final JMenu customCopyMenu;
+	private final JMenu customCopyPopupMenu;
+	private final List<CopyToClipboardAction> copyLoggingActions;
+	private final List<CopyToClipboardAction> copyAccessActions;
+	private final Map<KeyStroke, CopyToClipboardAction> keyStrokeActionMapping;
+
 	private ViewContainer viewContainer;
-	private JToggleButton scrollToBottomButton;
-
-	private ExportMenuAction exportMenuAction;
-	private AttachToolBarAction attachToolBarAction;
-	private AttachMenuAction attachMenuAction;
-	private DisconnectToolBarAction disconnectToolBarAction;
-	private DisconnectMenuAction disconnectMenuAction;
-	private PauseToolBarAction pauseToolBarAction;
-	private PauseMenuAction pauseMenuAction;
-	private FindPreviousAction findPreviousAction;
-	private FindNextAction findNextAction;
-	private FindPreviousActiveAction findPreviousActiveAction;
-	private FindNextActiveAction findNextActiveAction;
-	private ResetFindAction resetFindAction;
-	private ScrollToBottomMenuAction scrollToBottomMenuAction;
-	private EditSourceNameMenuAction editSourceNameMenuAction;
-	private SaveLayoutAction saveLayoutAction;
-	private ResetLayoutAction resetLayoutAction;
-	private SaveConditionMenuAction saveConditionMenuAction;
-
-	private ZoomInMenuAction zoomInMenuAction;
-	private ZoomOutMenuAction zoomOutMenuAction;
-	private ResetZoomMenuAction resetZoomMenuAction;
-
-	private NextTabAction nextTabAction;
-	private PreviousTabAction previousTabAction;
-	private CloseFilterAction closeFilterAction;
-	private CloseOtherFiltersAction closeOtherFiltersAction;
-	private CloseAllFiltersAction closeAllFiltersAction;
-
-	private RemoveInactiveAction removeInactiveAction;
-	private CloseAllAction closeAllAction;
-	private CloseOtherAction closeOtherAction;
-	private MinimizeAllAction minimizeAllAction;
-	private MinimizeAllOtherAction minimizeAllOtherAction;
-
-	private JMenuItem removeInactiveItem;
-
-	private JMenu windowMenu;
-	private AboutAction aboutAction;
-	private PreferencesMenuAction preferencesMenuAction;
-	private FindMenuAction findMenuAction;
-	private JMenu searchMenu;
-	private JMenu viewMenu;
-	private JMenu columnsMenu;
-	private ClearMenuAction clearMenuAction;
-	private FocusMessageAction focusMessageAction;
-	private FocusEventsAction focusEventsAction;
-	private ChangeListener containerChangeListener;
-	private ScrollToBottomToolBarAction scrollToBottomToolBarAction;
-	private ClearToolBarAction clearToolBarAction;
-	private FindToolBarAction findToolBarAction;
-	private CopySelectionAction copySelectionAction;
-	private CopyToClipboardAction copyEventAction;
-	private ShowUnfilteredEventAction showUnfilteredEventAction;
-	private JPopupMenu popup;
-	private GotoSourceAction gotoSourceAction;
-	private JMenu sendToPopupMenu;
-	private FocusMenu focusMenu;
-	private ExcludeMenu excludeMenu;
-	private FocusMenu focusPopupMenu;
-	private ExcludeMenu excludePopupMenu;
-	private JMenu filterPopupMenu;
-	private JMenu copyPopupMenu;
-	private PropertyChangeListener containerPropertyChangeListener;
 	private EventWrapper eventWrapper;
-	private JMenuItem showTaskManagerItem;
-	private JMenuItem closeAllItem;
-	private JMenuItem minimizeAllItem;
-	private JMenuItem closeAllOtherItem;
-	private JMenuItem minimizeAllOtherItem;
-	private JMenu editMenu;
-	private JMenu recentFilesMenu;
-	private ClearRecentFilesAction clearRecentFilesAction;
-	private JMenu customCopyMenu;
-	private JMenu customCopyPopupMenu;
 	private Map<String, CopyToClipboardAction> groovyClipboardActions;
 	private Map<String, ClipboardFormatterData> groovyClipboardData;
-	private List<CopyToClipboardAction> copyLoggingActions;
-	private List<CopyToClipboardAction> copyAccessActions;
-	private Map<KeyStroke, CopyToClipboardAction> keyStrokeActionMapping;
 
 	public ViewActions(MainFrame mainFrame, ViewContainer viewContainer)
 	{
-		this(mainFrame);
-		setViewContainer(viewContainer);
-	}
+		this.mainFrame = Objects.requireNonNull(mainFrame, "mainFrame must not be null!");
+		this.applicationPreferences = mainFrame.getApplicationPreferences();
+		// usingScreenMenuBar is used to determine whether HTML tooltips in menu are supported or not
+		// swing supports HTML tooltip, native macOS menu bar isn't.
+		final boolean usingScreenMenuBar = applicationPreferences.isUsingScreenMenuBar();
 
-	public ViewActions(MainFrame mainFrame)
-	{
-		this.mainFrame = mainFrame;
+		containerChangeListener = e -> updateActions();
 
-		containerChangeListener = new ChangeListener()
-		{
-			/**
-			 * Invoked when the target of the listener has changed its state.
-			 *
-			 * @param e a ChangeEvent object
-			 */
-			public void stateChanged(ChangeEvent e)
+		containerPropertyChangeListener = evt -> {
+			if(ViewContainer.SELECTED_EVENT_PROPERTY_NAME.equals(evt.getPropertyName()))
 			{
-				updateActions();
+				setEventWrapper((EventWrapper) evt.getNewValue());
 			}
+
 		};
 
-		containerPropertyChangeListener = new PropertyChangeListener()
-		{
-
-			/**
-			 * This method gets called when a bound property is changed.
-			 *
-			 * @param evt A PropertyChangeEvent object describing the event source
-			 *            and the property that has changed.
-			 */
-
-			public void propertyChange(PropertyChangeEvent evt)
-			{
-				if(ViewContainer.SELECTED_EVENT_PROPERTY_NAME.equals(evt.getPropertyName()))
-				{
-					setEventWrapper((EventWrapper) evt.getNewValue());
-				}
-
-			}
-		};
-
-		keyStrokeActionMapping = new HashMap<KeyStroke, CopyToClipboardAction>();
+		keyStrokeActionMapping = new HashMap<>();
 		// ##### Menu Actions #####
 		// File
 		OpenMenuAction openMenuAction = new OpenMenuAction();
@@ -253,62 +252,67 @@ public class ViewActions
 		ImportMenuAction importMenuAction = new ImportMenuAction();
 		exportMenuAction = new ExportMenuAction();
 		CleanAllInactiveLogsMenuAction cleanAllInactiveLogsMenuAction = new CleanAllInactiveLogsMenuAction();
-		preferencesMenuAction = new PreferencesMenuAction();
+		PreferencesAction preferencesMenuAction = new PreferencesAction(false);
 		ExitMenuAction exitMenuAction = new ExitMenuAction();
 
 		// Edit
 		showUnfilteredEventAction = new ShowUnfilteredEventAction();
-		gotoSourceAction = new GotoSourceAction();
+		goToSourceAction = new GoToSourceAction();
 		copySelectionAction = new CopySelectionAction();
-		copyEventAction = new CopyToClipboardAction(new EventFormatter());
-		copyLoggingActions = new ArrayList<CopyToClipboardAction>();
-		copyLoggingActions.add(new CopyToClipboardAction(new EventJsonFormatter()));
-		copyLoggingActions.add(new CopyToClipboardAction(new EventXmlFormatter()));
+		copyEventAction = new CopyToClipboardAction(new EventHtmlFormatter(mainFrame));
+		copyLoggingActions = new ArrayList<>();
+		copyLoggingActions.add(new CopyToClipboardAction(new LoggingEventJsonFormatter()));
+		copyLoggingActions.add(new CopyToClipboardAction(new LoggingEventXmlFormatter()));
 		copyLoggingActions.add(new CopyToClipboardAction(new LoggingMessageFormatter()));
 		copyLoggingActions.add(new CopyToClipboardAction(new LoggingMessagePatternFormatter()));
 		copyLoggingActions.add(new CopyToClipboardAction(new LoggingLoggerNameFormatter()));
 		copyLoggingActions.add(new CopyToClipboardAction(new LoggingThrowableFormatter()));
-		copyLoggingActions.add(new CopyToClipboardAction(new LoggingCallStackFormatter()));
+		copyLoggingActions.add(new CopyToClipboardAction(new LoggingThrowableNameFormatter()));
 		copyLoggingActions.add(new CopyToClipboardAction(new LoggingCallLocationFormatter()));
+		copyLoggingActions.add(new CopyToClipboardAction(new LoggingCallStackFormatter()));
+		copyLoggingActions.add(new CopyToClipboardAction(new LoggingThreadNameFormatter()));
+		copyLoggingActions.add(new CopyToClipboardAction(new LoggingThreadGroupNameFormatter()));
 		copyLoggingActions.add(new CopyToClipboardAction(new LoggingMarkerFormatter()));
 		copyLoggingActions.add(new CopyToClipboardAction(new LoggingMdcFormatter()));
 		copyLoggingActions.add(new CopyToClipboardAction(new LoggingNdcFormatter()));
-		copyAccessActions = new ArrayList<CopyToClipboardAction>();
-		copyAccessActions.add(new CopyToClipboardAction(new AccessUriFormatter()));
+		copyAccessActions = new ArrayList<>();
+		copyAccessActions.add(new CopyToClipboardAction(new AccessRequestUriFormatter()));
+		copyAccessActions.add(new CopyToClipboardAction(new AccessRequestUrlFormatter()));
+		copyAccessActions.add(new CopyToClipboardAction(new AccessRequestHeadersFormatter()));
+		copyAccessActions.add(new CopyToClipboardAction(new AccessRequestParametersFormatter()));
+		copyAccessActions.add(new CopyToClipboardAction(new AccessResponseHeadersFormatter()));
 
 		prepareClipboardActions(copyLoggingActions, keyStrokeActionMapping);
 		prepareClipboardActions(copyAccessActions, keyStrokeActionMapping);
 
 		// Search
-		findMenuAction = new FindMenuAction();
-		findPreviousAction = new FindPreviousAction();
-		findNextAction = new FindNextAction();
-		findPreviousActiveAction = new FindPreviousActiveAction();
-		findNextActiveAction = new FindNextActiveAction();
+		findMenuAction = new FindAction(false);
+		findPreviousMenuAction = new FindPreviousAction(false);
+		findNextMenuAction = new FindNextAction(false);
+		findPreviousActiveAction = new FindPreviousActiveAction(false);
+		findNextActiveAction = new FindNextActiveAction(false);
 		resetFindAction = new ResetFindAction();
 
 		// View
-		scrollToBottomMenuAction = new ScrollToBottomMenuAction();
-		pauseMenuAction = new PauseMenuAction();
-		clearMenuAction = new ClearMenuAction();
-		attachMenuAction = new AttachMenuAction();
-		disconnectMenuAction = new DisconnectMenuAction();
+		tailMenuAction = new TailAction(false);
+		clearMenuAction = new ClearAction(false);
+		attachMenuAction = new AttachAction(false);
+		disconnectMenuAction = new DisconnectAction(false);
 
 		focusMessageAction = new FocusMessageAction();
 		focusEventsAction = new FocusEventsAction();
 
-		//statisticsMenuAction = new StatisticsMenuAction();
 		editSourceNameMenuAction = new EditSourceNameMenuAction();
 		saveLayoutAction = new SaveLayoutAction();
 		resetLayoutAction = new ResetLayoutAction();
-		saveConditionMenuAction = new SaveConditionMenuAction();
+		saveConditionMenuAction = new SaveConditionMenuAction(!usingScreenMenuBar);
 
 		zoomInMenuAction = new ZoomInMenuAction();
 		zoomOutMenuAction = new ZoomOutMenuAction();
 		resetZoomMenuAction = new ResetZoomMenuAction();
 
-		previousTabAction = new PreviousTabAction();
-		nextTabAction = new NextTabAction();
+		previousViewAction = new PreviousViewAction();
+		nextViewAction = new NextViewAction();
 		closeFilterAction = new CloseFilterAction();
 		closeOtherFiltersAction = new CloseOtherFiltersAction();
 		closeAllFiltersAction = new CloseAllFiltersAction();
@@ -323,22 +327,27 @@ public class ViewActions
 		//clearAndRemoveInactiveAction=new ClearAndRemoveInactiveAction();
 
 		// Help
-		KeyboardHelpAction keyboardHelpAction = new KeyboardHelpAction();
-		ShowLoveMenuAction showLoveMenuAction = new ShowLoveMenuAction();
+		HelpTopicsAction helpTopicsAction = new HelpTopicsAction();
 		TipOfTheDayAction tipOfTheDayAction = new TipOfTheDayAction();
 		DebugAction debugAction = new DebugAction();
-		aboutAction = new AboutAction();
+		AboutAction aboutAction = new AboutAction();
 		CheckForUpdateAction checkForUpdateAction = new CheckForUpdateAction();
 		TroubleshootingAction troubleshootingAction = new TroubleshootingAction();
 
 		// ##### ToolBar Actions #####
-		scrollToBottomToolBarAction = new ScrollToBottomToolBarAction();
-		pauseToolBarAction = new PauseToolBarAction();
-		clearToolBarAction = new ClearToolBarAction();
-		findToolBarAction = new FindToolBarAction();
-		//statisticsToolBarAction = new StatisticsToolBarAction();
-		attachToolBarAction = new AttachToolBarAction();
-		disconnectToolBarAction = new DisconnectToolBarAction();
+		tailToolBarAction = new TailAction(true);
+		clearToolBarAction = new ClearAction(true);
+		disconnectToolBarAction = new DisconnectAction(true);
+
+		findToolBarAction = new FindAction(true);
+		findPreviousToolBarAction = new FindPreviousAction(true);
+		findNextToolBarAction = new FindNextAction(true);
+		findPreviousActiveToolBarAction = new FindPreviousActiveAction(true);
+		findNextActiveToolBarAction = new FindNextActiveAction(true);
+
+		attachToolBarAction = new AttachAction(true);
+
+		PreferencesAction preferencesToolBarAction = new PreferencesAction(true);
 
 		showTaskManagerItem = new JMenuItem(showTaskManagerAction);
 		closeAllItem = new JMenuItem(closeAllAction);
@@ -346,64 +355,46 @@ public class ViewActions
 		minimizeAllItem = new JMenuItem(minimizeAllAction);
 		minimizeAllOtherItem = new JMenuItem(minimizeAllOtherAction);
 		removeInactiveItem = new JMenuItem(removeInactiveAction);
-		//clearAndRemoveInactiveItem = new JMenuItem(clearAndRemoveInactiveAction);
 
-		toolbar = new JToolBar(SwingConstants.HORIZONTAL);
-		toolbar.setFloatable(false);
+		toolBar = new JToolBar(SwingConstants.HORIZONTAL);
+		toolBar.setFloatable(false);
 
+		tailButton = new JToggleButton(tailToolBarAction);
+		toolBar.add(tailButton);
+		toolBar.add(new JButton(clearToolBarAction));
+		toolBar.add(new JButton(disconnectToolBarAction));
 
-		scrollToBottomButton = new JToggleButton(scrollToBottomToolBarAction);
-		toolbar.add(scrollToBottomButton);
+		toolBar.addSeparator();
 
-		JButton pauseButton = new JButton(pauseToolBarAction);
-		toolbar.add(pauseButton);
+		toolBar.add(new JButton(findToolBarAction));
+		toolBar.add(new JButton(findPreviousToolBarAction));
+		toolBar.add(new JButton(findNextToolBarAction));
+		toolBar.add(new JButton(findPreviousActiveToolBarAction));
+		toolBar.add(new JButton(findNextActiveToolBarAction));
 
-		JButton clearButton = new JButton(clearToolBarAction);
-		toolbar.add(clearButton);
+		toolBar.addSeparator();
 
-		JButton findButton = new JButton(findToolBarAction);
-		toolbar.add(findButton);
+		toolBar.add(new JButton(attachToolBarAction));
 
-		JButton disconnectButton = new JButton(disconnectToolBarAction);
-		toolbar.add(disconnectButton);
+		toolBar.addSeparator();
 
-		toolbar.addSeparator();
+		toolBar.add(new JButton(preferencesToolBarAction));
 
-		//JButton statisticsButton = new JButton(statisticsToolBarAction);
-		//toolbar.add(statisticsButton);
-		//toolbar.addSeparator();
+		toolBar.addSeparator();
 
-		JButton attachButton = new JButton(attachToolBarAction);
-		toolbar.add(attachButton);
+		recentFilesMenu=new JMenu(new RecentFilesAction());
 
-		toolbar.addSeparator();
-
-		PreferencesToolBarAction preferencesToolBarAction = new PreferencesToolBarAction();
-		JButton preferencesButton = new JButton(preferencesToolBarAction);
-		toolbar.add(preferencesButton);
-
-		toolbar.addSeparator();
-
-		ShowLoveToolbarAction showLoveToolbarAction = new ShowLoveToolbarAction();
-		JButton showLoveButton = new JButton(showLoveToolbarAction);
-		toolbar.add(showLoveButton);
-
-		recentFilesMenu=new JMenu("Recent Files");
-
-		Application app = mainFrame.getApplication();
-
-		menubar = new JMenuBar();
+		menuBar = new JMenuBar();
 
 		// File
-		JMenu fileMenu = new JMenu("File");
-		fileMenu.setMnemonic('f');
+		JMenu fileMenu = new JMenu(new FileAction());
 		fileMenu.add(openMenuAction);
 		fileMenu.add(recentFilesMenu);
 		fileMenu.add(openInactiveLogMenuAction);
 		fileMenu.add(cleanAllInactiveLogsMenuAction);
 		fileMenu.add(importMenuAction);
 		fileMenu.add(exportMenuAction);
-		if(!app.isMac())
+		// TODO if(!app.isMac())
 		{
 			fileMenu.addSeparator();
 			fileMenu.add(preferencesMenuAction);
@@ -412,131 +403,172 @@ public class ViewActions
 		}
 
 		// Edit
-		editMenu = new JMenu("Edit");
-		editMenu.setMnemonic('e');
+		JMenu editMenu = new JMenu(new EditAction());
 		editMenu.add(copySelectionAction);
 		editMenu.addSeparator();
 		editMenu.add(copyEventAction);
 		editMenu.addSeparator();
-		for(CopyToClipboardAction current : copyLoggingActions)
-		{
-			editMenu.add(current);
-		}
+
+		copyLoggingActions.forEach(editMenu::add);
+
 		editMenu.addSeparator();
-		for(CopyToClipboardAction current : copyAccessActions)
-		{
-			editMenu.add(current);
-		}
+
+		copyAccessActions.forEach(editMenu::add);
+
 		editMenu.addSeparator();
-		customCopyMenu = new JMenu("Custom copy");
-		customCopyPopupMenu = new JMenu("Custom copy");
+		CustomCopyAction customCopyAction = new CustomCopyAction();
+		customCopyMenu = new JMenu(customCopyAction);
+		customCopyPopupMenu = new JMenu(customCopyAction);
 		editMenu.add(customCopyMenu);
 		editMenu.addSeparator();
 		PasteStackTraceElementAction pasteStackTraceElementAction = new PasteStackTraceElementAction();
+		editMenu.add(goToSourceAction);
 		editMenu.add(pasteStackTraceElementAction);
 
 		// Search
-		searchMenu = new JMenu("Search");
-		searchMenu.setMnemonic('s');
+		searchMenu = new JMenu(new SearchAction());
 		searchMenu.add(findMenuAction);
 		searchMenu.add(resetFindAction);
-		searchMenu.add(findPreviousAction);
-		searchMenu.add(findNextAction);
+		searchMenu.add(findPreviousMenuAction);
+		searchMenu.add(findNextMenuAction);
 		searchMenu.add(findPreviousActiveAction);
 		searchMenu.add(findNextActiveAction);
 		searchMenu.addSeparator();
 		searchMenu.add(saveConditionMenuAction);
 		searchMenu.addSeparator();
 
-		focusMenu = new FocusMenu(mainFrame.getApplicationPreferences());
-		excludeMenu = new ExcludeMenu(mainFrame.getApplicationPreferences());
+		focusMenu = new FocusMenu(applicationPreferences, !usingScreenMenuBar);
+		excludeMenu = new ExcludeMenu(applicationPreferences, !usingScreenMenuBar);
 		searchMenu.add(focusMenu);
 		searchMenu.add(excludeMenu);
+		searchMenu.addSeparator();
+		searchMenu.add(showUnfilteredEventAction);
 
 		// View
-		viewMenu = new JMenu("View");
-		viewMenu.setMnemonic('v');
-		viewMenu.add(scrollToBottomMenuAction);
-		viewMenu.add(pauseMenuAction);
+		viewMenu = new JMenu(new ViewAction());
+		viewMenu.add(tailMenuAction);
 		viewMenu.add(clearMenuAction);
 		viewMenu.add(attachMenuAction);
 		viewMenu.add(disconnectMenuAction);
 		viewMenu.add(focusEventsAction);
 		viewMenu.add(focusMessageAction);
-		//viewMenu.add(statisticsMenuAction);
 		viewMenu.add(editSourceNameMenuAction);
 		viewMenu.addSeparator();
 		viewMenu.add(zoomInMenuAction);
 		viewMenu.add(zoomOutMenuAction);
 		viewMenu.add(resetZoomMenuAction);
 		viewMenu.addSeparator();
-		JMenu layoutMenu = new JMenu("Layout");
-		columnsMenu = new JMenu("Columns");
+		JMenu layoutMenu = new JMenu(new LayoutAction());
+		columnsMenu = new JMenu(new ColumnsAction());
 		layoutMenu.add(columnsMenu);
 		layoutMenu.addSeparator();
 		layoutMenu.add(saveLayoutAction);
 		layoutMenu.add(resetLayoutAction);
 		viewMenu.add(layoutMenu);
 		viewMenu.addSeparator();
-		viewMenu.add(previousTabAction);
-		viewMenu.add(nextTabAction);
+		viewMenu.add(nextViewAction);
+		viewMenu.add(previousViewAction);
 		viewMenu.addSeparator();
 		viewMenu.add(closeFilterAction);
 		viewMenu.add(closeOtherFiltersAction);
 		viewMenu.add(closeAllFiltersAction);
 
 		// Window
-		windowMenu = new JMenu("Window");
-		windowMenu.setMnemonic('w');
+		windowMenu = new JMenu(new WindowAction());
 
 		// Help
-		JMenu helpMenu = new JMenu("Help");
-		helpMenu.setMnemonic('h');
+		JMenu helpMenu = new JMenu(new HelpAction());
 
-		helpMenu.add(keyboardHelpAction);
-		helpMenu.add(showLoveMenuAction);
+		helpMenu.add(helpTopicsAction);
 		helpMenu.add(tipOfTheDayAction);
 		helpMenu.add(checkForUpdateAction);
 		helpMenu.add(troubleshootingAction);
 		helpMenu.addSeparator();
 		helpMenu.add(debugAction);
-		if(!app.isMac())
+		// TODO if(!app.isMac())
 		{
 			helpMenu.addSeparator();
 			helpMenu.add(aboutAction);
 		}
 
 
-		menubar.add(fileMenu);
-		menubar.add(editMenu);
-		menubar.add(searchMenu);
-		menubar.add(viewMenu);
-		menubar.add(windowMenu);
-		menubar.add(helpMenu);
+		menuBar.add(fileMenu);
+		menuBar.add(editMenu);
+		menuBar.add(searchMenu);
+		menuBar.add(viewMenu);
+		menuBar.add(windowMenu);
+		menuBar.add(helpMenu);
 
 		updateWindowMenu();
 		updateRecentFiles();
-		updateActions();
+
+		popup = new JPopupMenu();
+		JMenuItem showUnfilteredMenuItem = new JMenuItem(showUnfilteredEventAction);
+		Font f = showUnfilteredMenuItem.getFont();
+		Font boldFont = f.deriveFont(Font.BOLD);
+		showUnfilteredMenuItem.setFont(boldFont);
+
+		popup.add(showUnfilteredMenuItem);
+
+		filterPopupMenu = new JMenu("Filter");
+		popup.add(filterPopupMenu);
+		filterPopupMenu.add(closeFilterAction);
+		filterPopupMenu.add(closeOtherFiltersAction);
+		filterPopupMenu.add(closeAllFiltersAction);
+
+		popup.addSeparator();
+		popup.add(saveConditionMenuAction);
+		popup.addSeparator();
+
+		focusPopupMenu = new FocusMenu(applicationPreferences, true);
+		excludePopupMenu = new ExcludeMenu(applicationPreferences, true);
+
+		popup.add(focusPopupMenu);
+		popup.add(excludePopupMenu);
+		popup.addSeparator();
+
+		updateCustomCopyMenu(this.eventWrapper);
+
+		copyPopupMenu = new JMenu("Copy");
+		popup.add(copyPopupMenu);
+		copyPopupMenu.add(copySelectionAction);
+		copyPopupMenu.addSeparator();
+		copyPopupMenu.add(copyEventAction);
+
+		copyPopupMenu.addSeparator();
+
+		copyLoggingActions.forEach(copyPopupMenu::add);
+
+		copyPopupMenu.addSeparator();
+
+		copyAccessActions.forEach(copyPopupMenu::add);
+
+		copyPopupMenu.addSeparator();
+		copyPopupMenu.add(customCopyPopupMenu);
+
+		popup.add(goToSourceAction);
+
+		setViewContainer(viewContainer, false);
 	}
 
-	public PreferencesMenuAction getPreferencesAction()
+	JToolBar getToolBar()
 	{
-		return preferencesMenuAction;
+		return toolBar;
 	}
 
-	public JToolBar getToolbar()
+	JMenuBar getMenuBar()
 	{
-		return toolbar;
-	}
-
-	public JMenuBar getMenuBar()
-	{
-		return menubar;
+		return menuBar;
 	}
 
 	public void setViewContainer(ViewContainer viewContainer)
 	{
-		if(this.viewContainer != viewContainer)
+		setViewContainer(viewContainer, true);
+	}
+
+	private void setViewContainer(ViewContainer viewContainer, boolean initialized)
+	{
+		if(this.viewContainer != viewContainer || !initialized)
 		{
 			if(this.viewContainer != null)
 			{
@@ -549,9 +581,11 @@ public class ViewActions
 				this.viewContainer.addChangeListener(containerChangeListener);
 				this.viewContainer.addPropertyChangeListener(containerPropertyChangeListener);
 
-				//EventWrapperViewPanel zview = viewContainer.getSelectedView();
-
 				setEventWrapper(this.viewContainer.getSelectedEvent());
+			}
+			else
+			{
+				setEventWrapper(null);
 			}
 			updateActions();
 		}
@@ -567,12 +601,11 @@ public class ViewActions
 		updateWindowMenu(windowMenu);
 	}
 
-	public void updateActions()
+	private void updateActions()
 	{
 		boolean hasView = false;
 		boolean hasFilter = false;
 		boolean isActive = false;
-		//boolean hasFilteredBuffer = false;
 		EventSource eventSource = null;
 		EventWrapperViewPanel eventWrapperViewPanel=null;
 		if(viewContainer != null)
@@ -584,10 +617,9 @@ public class ViewActions
 				eventSource = eventWrapperViewPanel.getEventSource();
 				hasFilter = eventWrapperViewPanel.getFilterCondition() != null;
 				isActive = eventWrapperViewPanel.getState() == LoggingViewState.ACTIVE;
-				//hasFilteredBuffer = eventWrapperViewPanel.getBufferCondition() != null;
 			}
-			copySelectionAction.setView(eventWrapperViewPanel);
 		}
+		copySelectionAction.setView(eventWrapperViewPanel);
 
 		if(logger.isDebugEnabled()) logger.debug("updateActions() eventSource={}", eventSource);
 
@@ -598,54 +630,54 @@ public class ViewActions
 		searchMenu.setEnabled(hasView);
 		findMenuAction.setEnabled(hasView);
 		resetFindAction.setEnabled(hasFilter);
-		findPreviousAction.setEnabled(hasFilter);
-		findNextAction.setEnabled(hasFilter);
+		findPreviousMenuAction.setEnabled(hasFilter);
+		findPreviousToolBarAction.setEnabled(hasFilter);
+		findNextMenuAction.setEnabled(hasFilter);
+		findNextToolBarAction.setEnabled(hasFilter);
 
 		Condition condition = mainFrame.getFindActiveCondition();
-		findPreviousActiveAction.setEnabled(hasView && condition != null);
-		findNextActiveAction.setEnabled(hasView && condition != null);
+		boolean activeEnabled = hasView && condition != null;
+		findPreviousActiveAction.setEnabled(activeEnabled);
+		findPreviousActiveToolBarAction.setEnabled(activeEnabled);
+		findNextActiveAction.setEnabled(activeEnabled);
+		findNextActiveToolBarAction.setEnabled(activeEnabled);
 
 		// View
 		viewMenu.setEnabled(hasView);
-		scrollToBottomMenuAction.setEnabled(hasView);
+		tailMenuAction.setEnabled(hasView);
 		editSourceNameMenuAction.setEnabled(hasView);
 		saveLayoutAction.setEnabled(hasView);
 		resetLayoutAction.setEnabled(hasView);
-		pauseMenuAction.setEnabled(hasView);
 		clearMenuAction.setEnabled(hasView/* && !hasFilteredBuffer*/);
 		attachMenuAction.setEnabled(hasView);
 		disconnectMenuAction.setEnabled(isActive);
 		focusEventsAction.setEnabled(hasView);
 		focusMessageAction.setEnabled(hasView);
 		updateShowHideMenu();
-		previousTabAction.updateAction();
-		nextTabAction.updateAction();
+		previousViewAction.updateAction();
+		nextViewAction.updateAction();
 
 		disconnectToolBarAction.setEnabled(isActive);
 
-		scrollToBottomMenuAction.updateAction();
+		tailMenuAction.updateAction();
 		editSourceNameMenuAction.updateAction();
 		saveConditionMenuAction.updateAction();
 		zoomInMenuAction.updateAction();
 		zoomOutMenuAction.updateAction();
 		resetZoomMenuAction.updateAction();
 
-		pauseMenuAction.updateAction();
 		attachMenuAction.updateAction();
 
 		closeFilterAction.updateAction();
 		closeOtherFiltersAction.updateAction();
 		closeAllFiltersAction.updateAction();
 
-		scrollToBottomButton.setSelected(isScrollingToBottom());
-		pauseToolBarAction.updateAction();
+		tailButton.setSelected(isScrollingToBottom());
 		attachToolBarAction.updateAction();
 
-		scrollToBottomToolBarAction.setEnabled(hasView);
-		pauseToolBarAction.setEnabled(hasView);
+		tailToolBarAction.setEnabled(hasView);
 		clearToolBarAction.setEnabled(hasView/* && !hasFilteredBuffer*/);
 		findToolBarAction.setEnabled(hasView);
-		//statisticsToolBarAction.setEnabled(hasView);
 		attachToolBarAction.setEnabled(hasView);
 		disconnectToolBarAction.setEnabled(isActive);
 
@@ -676,9 +708,9 @@ public class ViewActions
 					for(PersistentTableColumnModel.TableColumnLayoutInfo current : cli)
 					{
 						boolean visible = current.isVisible();
-						JCheckBoxMenuItem cbmi = new JCheckBoxMenuItem(new ShowHideAction(tableColumnModel, current.getColumnName(), visible));
-						cbmi.setSelected(visible);
-						columnsMenu.add(cbmi);
+						JCheckBoxMenuItem checkBoxMenuItem = new JCheckBoxMenuItem(new ShowHideAction(tableColumnModel, current.getColumnName(), visible)); // NOPMD - AvoidInstantiatingObjectsInLoops
+						checkBoxMenuItem.setSelected(visible);
+						columnsMenu.add(checkBoxMenuItem);
 					}
 				}
 			}
@@ -686,19 +718,7 @@ public class ViewActions
 		}
 	}
 
-	void setShowingFilters(boolean showingFilters)
-	{
-		if(viewContainer != null)
-		{
-			EventWrapperViewPanel eventWrapperViewPanel = viewContainer.getSelectedView();
-			if(eventWrapperViewPanel != null)
-			{
-				eventWrapperViewPanel.setShowingFilters(showingFilters);
-			}
-		}
-	}
-
-	boolean isScrollingToBottom()
+	private boolean isScrollingToBottom()
 	{
 		if(viewContainer != null)
 		{
@@ -711,7 +731,7 @@ public class ViewActions
 		return false;
 	}
 
-	void setScrollingToBottom(boolean scrollingToBottom)
+	private void setScrollingToBottom(boolean scrollingToBottom)
 	{
 		if(viewContainer != null)
 		{
@@ -719,32 +739,6 @@ public class ViewActions
 			if(eventWrapperViewPanel != null)
 			{
 				eventWrapperViewPanel.setScrollingToBottom(scrollingToBottom);
-			}
-		}
-	}
-
-
-	boolean isPaused()
-	{
-		if(viewContainer != null)
-		{
-			EventWrapperViewPanel eventWrapperViewPanel = viewContainer.getSelectedView();
-			if(eventWrapperViewPanel != null)
-			{
-				return eventWrapperViewPanel.isPaused();
-			}
-		}
-		return false;
-	}
-
-	void setPaused(boolean paused)
-	{
-		if(viewContainer != null)
-		{
-			EventWrapperViewPanel eventWrapperViewPanel = viewContainer.getSelectedView();
-			if(eventWrapperViewPanel != null)
-			{
-				eventWrapperViewPanel.setPaused(paused);
 			}
 		}
 	}
@@ -761,7 +755,7 @@ public class ViewActions
 		}
 	}
 
-	void focusTable()
+	private void focusTable()
 	{
 		if(viewContainer != null)
 		{
@@ -791,22 +785,6 @@ public class ViewActions
 		}
 	}
 
-	private void editSourceName()
-	{
-		if(viewContainer != null)
-		{
-			EventWrapperViewPanel eventWrapperViewPanel = viewContainer.getSelectedView();
-			if(eventWrapperViewPanel != null)
-			{
-				String sourceIdentifier = eventWrapperViewPanel.getEventSource().getSourceIdentifier().getIdentifier();
-				if(!"global".equals(sourceIdentifier) && !"Lilith".equals(sourceIdentifier))
-				{
-					mainFrame.getPreferencesDialog().editSourceName(sourceIdentifier);
-				}
-			}
-		}
-	}
-
 	private void attachDetach()
 	{
 		ViewContainer container = getViewContainer();
@@ -828,27 +806,6 @@ public class ViewActions
 		}
 		focusTable();
 	}
-
-/*
-	public void requestMenuBarFocus()
-	{
-		menubar.getComponent().requestFocusInWindow();
-	}
-*/
-/*
-	private void showStatistics()
-	{
-		if(viewContainer != null)
-		{
-			EventWrapperViewPanel eventWrapperViewPanel = viewContainer.getSelectedView();
-			if(eventWrapperViewPanel != null)
-			{
-				MainFrame mainFrame = viewContainer.getMainFrame();
-				mainFrame.showStatistics(eventWrapperViewPanel.getEventSource().getSourceIdentifier());
-			}
-		}
-	}
-*/
 
 	private void disconnect()
 	{
@@ -1033,67 +990,11 @@ public class ViewActions
 		}
 	}
 
-	private void initPopup()
-	{
-		if(logger.isDebugEnabled()) logger.debug("initPopup()");
-		popup = new JPopupMenu();
-		JMenuItem showUnfilteredMenuItem = new JMenuItem(showUnfilteredEventAction);
-		Font f = showUnfilteredMenuItem.getFont();
-		Font boldFont = f.deriveFont(Font.BOLD);
-		showUnfilteredMenuItem.setFont(boldFont);
-
-		popup.add(showUnfilteredMenuItem);
-
-		filterPopupMenu = new JMenu("Filter");
-		popup.add(filterPopupMenu);
-		filterPopupMenu.add(closeFilterAction);
-		filterPopupMenu.add(closeOtherFiltersAction);
-		filterPopupMenu.add(closeAllFiltersAction);
-
-		popup.addSeparator();
-		popup.add(saveConditionMenuAction);
-		popup.addSeparator();
-
-		focusPopupMenu = new FocusMenu(mainFrame.getApplicationPreferences());
-		excludePopupMenu = new ExcludeMenu(mainFrame.getApplicationPreferences());
-
-		popup.add(focusPopupMenu);
-		popup.add(excludePopupMenu);
-		popup.addSeparator();
-
-		updateCustomCopyMenu(this.eventWrapper);
-
-		copyPopupMenu = new JMenu("Copy");
-		popup.add(copyPopupMenu);
-		copyPopupMenu.add(copySelectionAction);
-		copyPopupMenu.addSeparator();
-		copyPopupMenu.add(copyEventAction);
-		copyPopupMenu.addSeparator();
-		for(CopyToClipboardAction current : copyLoggingActions)
-		{
-			copyPopupMenu.add(current);
-		}
-
-		copyPopupMenu.addSeparator();
-		for(CopyToClipboardAction current : copyAccessActions)
-		{
-			copyPopupMenu.add(current);
-		}
-
-		copyPopupMenu.addSeparator();
-		copyPopupMenu.add(customCopyPopupMenu);
-
-		sendToPopupMenu = new JMenu("Send to");
-		popup.add(sendToPopupMenu);
-
-		popup.add(gotoSourceAction);
-	}
-
 	private void setEventWrapper(EventWrapper wrapper)
 	{
 		if(logger.isDebugEnabled()) logger.debug("setEventWrapper: {}", wrapper);
 		this.eventWrapper = wrapper;
-		gotoSourceAction.setEventWrapper(eventWrapper);
+		goToSourceAction.setEventWrapper(eventWrapper);
 		copyEventAction.setEventWrapper(eventWrapper);
 		for(CopyToClipboardAction current : copyLoggingActions)
 		{
@@ -1103,17 +1004,6 @@ public class ViewActions
 		{
 			current.setEventWrapper(eventWrapper);
 		}
-		boolean enableEditMenu;
-		if(eventWrapper == null)
-		{
-			enableEditMenu = false;
-		}
-		else
-		{
-			Serializable event = eventWrapper.getEvent();
-			enableEditMenu = event instanceof LoggingEvent || event instanceof AccessEvent;
-		}
-		editMenu.setEnabled(enableEditMenu);
 		updateCustomCopyMenu(eventWrapper);
 		focusMenu.setViewContainer(viewContainer);
 		focusMenu.setEventWrapper(eventWrapper);
@@ -1123,22 +1013,21 @@ public class ViewActions
 
 	private void updateCustomCopyMenu(EventWrapper wrapper)
 	{
-		ApplicationPreferences prefs = mainFrame.getApplicationPreferences();
-		String[] scripts = prefs.getClipboardFormatterScriptFiles();
+		String[] scripts = applicationPreferences.getClipboardFormatterScriptFiles();
 		boolean changed = false;
 		if(groovyClipboardActions == null)
 		{
-			groovyClipboardActions = new HashMap<String, CopyToClipboardAction>();
+			groovyClipboardActions = new HashMap<>();
 			changed = true;
 		}
 		if(groovyClipboardData == null)
 		{
-			groovyClipboardData = new HashMap<String, ClipboardFormatterData>();
+			groovyClipboardData = new HashMap<>();
 			changed = true;
 		}
 		if(scripts == null || scripts.length == 0)
 		{
-			if(groovyClipboardActions.size() > 0)
+			if(!groovyClipboardActions.isEmpty())
 			{
 				groovyClipboardActions.clear();
 				groovyClipboardData.clear();
@@ -1153,23 +1042,19 @@ public class ViewActions
 			{
 				if(!groovyClipboardActions.containsKey(current))
 				{
-					GroovyFormatter newFormatter = new GroovyFormatter();
-					newFormatter.setGroovyFileName(prefs.resolveClipboardFormatterScriptFile(current).getAbsolutePath());
-					CopyToClipboardAction newAction = new CopyToClipboardAction(newFormatter);
+					GroovyFormatter newFormatter = new GroovyFormatter(); // NOPMD - AvoidInstantiatingObjectsInLoops
+					newFormatter.setGroovyFileName(applicationPreferences.resolveClipboardFormatterScriptFile(current).getAbsolutePath());
+					CopyToClipboardAction newAction = new CopyToClipboardAction(newFormatter); // NOPMD - AvoidInstantiatingObjectsInLoops
 					groovyClipboardActions.put(current, newAction);
 					changed = true;
 				}
 			}
 
 			// find deleted formatters
-			List<String> deletedList = new ArrayList<String>();
-			for(Map.Entry<String, CopyToClipboardAction> current : groovyClipboardActions.entrySet())
-			{
-				if(!scriptsList.contains(current.getKey()))
-				{
-					deletedList.add(current.getKey());
-				}
-			}
+			List<String> deletedList = groovyClipboardActions.entrySet().stream()
+					.filter(current -> !scriptsList.contains(current.getKey()))
+					.map(Map.Entry::getKey)
+					.collect(Collectors.toList());
 
 			// remove deleted formatters
 			for(String current : deletedList)
@@ -1188,30 +1073,30 @@ public class ViewActions
 			{
 				continue;
 			}
-			ClipboardFormatterData data = new ClipboardFormatterData(formatter);
+			ClipboardFormatterData data = new ClipboardFormatterData(formatter); // NOPMD - AvoidInstantiatingObjectsInLoops
 			if(!data.equals(groovyClipboardData.get(key)))
 			{
 				changed = true;
 				groovyClipboardData.put(key, data);
-				value.setClipboardFormatter(formatter); // this reinitializes the action
+				value.setClipboardFormatter(formatter); // this re-initializes the action
 			}
 		}
-		
+
 		if(changed)
 		{
 			customCopyMenu.removeAll();
 			customCopyPopupMenu.removeAll();
 			boolean enabled = false;
-			if(groovyClipboardActions.size() > 0)
+			if(!groovyClipboardActions.isEmpty())
 			{
 				enabled = true;
-				SortedSet<CopyToClipboardAction> sorted = new TreeSet<CopyToClipboardAction>(CopyToClipboardByNameComparator.INSTANCE);
+				SortedSet<CopyToClipboardAction> sorted = new TreeSet<>(CopyToClipboardByNameComparator.INSTANCE);
 				// sort the actions by name
-				for(Map.Entry<String, CopyToClipboardAction> current : groovyClipboardActions.entrySet())
-				{
-					sorted.add(current.getValue());
-				}
-				HashMap<KeyStroke, CopyToClipboardAction> freshMapping = new HashMap<KeyStroke, CopyToClipboardAction>(keyStrokeActionMapping);
+				sorted.addAll(groovyClipboardActions.entrySet().stream()
+						.map(Map.Entry::getValue)
+						.collect(Collectors.toList()));
+
+				Map<KeyStroke, CopyToClipboardAction> freshMapping = new HashMap<>(keyStrokeActionMapping);
 				prepareClipboardActions(sorted, freshMapping);
 
 				// add the sorted actions to the menus.
@@ -1225,19 +1110,11 @@ public class ViewActions
 			customCopyPopupMenu.setEnabled(enabled);
 		}
 
-//		boolean enabled=false;
 		for(Map.Entry<String, CopyToClipboardAction> current : groovyClipboardActions.entrySet())
 		{
 			CopyToClipboardAction value = current.getValue();
 			value.setEventWrapper(wrapper);
-//			if(value.isEnabled())
-//			{
-//				enabled = true;
-//			}
 		}
-//
-//		customCopyMenu.setEnabled(enabled);
-//		customCopyPopupMenu.setEnabled(enabled);
 	}
 
 	private void prepareClipboardActions(Collection<CopyToClipboardAction> actions, Map<KeyStroke, CopyToClipboardAction> mapping)
@@ -1267,11 +1144,15 @@ public class ViewActions
 			boolean reset = false;
 			String name = formatter.getName();
 			KeyStroke currentKeyStroke = (KeyStroke) obj;
-			String existingActionName = LilithKeyStrokes.getActionName(currentKeyStroke);
-			if(existingActionName != null)
+			if(!formatter.isNative())
 			{
-				if(logger.isWarnEnabled()) logger.warn("KeyStroke '{}' of formatter '{}' would collide with native Lilith action '{}'. Ignoring...", currentKeyStroke, name, existingActionName);
-				reset = true;
+				String existingActionName = LilithKeyStrokes.getActionName(currentKeyStroke);
+				if (existingActionName != null)
+				{
+					if (logger.isWarnEnabled())
+						logger.warn("KeyStroke '{}' of formatter '{}' would collide with native Lilith action '{}'. Ignoring...", currentKeyStroke, name, existingActionName);
+					reset = true;
+				}
 			}
 			CopyToClipboardAction existingAction = mapping.get(currentKeyStroke);
 			if(existingAction != null)
@@ -1298,79 +1179,23 @@ public class ViewActions
 		}
 	}
 
-	public void updateWindowMenu(JMenu windowMenu)
+	private void updateWindowMenu(JMenu windowMenu)
 	{
 		// must be executed later because the ancestor-change-event is fired
 		// while parent is still != null...
 		// see JComponent.removeNotify source for comment.
-		SwingUtilities.invokeLater(new UpdateWindowMenuRunnable(windowMenu));
-	}
-
-	public ActionListener getAboutAction()
-	{
-		return aboutAction;
+		EventQueue.invokeLater(new UpdateWindowMenuRunnable(windowMenu));
 	}
 
 	private void updatePopup()
 	{
 		if(logger.isDebugEnabled()) logger.debug("updatePopup()");
-		if(popup == null)
+		boolean enableCopyMenu = false;
+		if(eventWrapper != null)
 		{
-			initPopup();
-		}
-		sendToPopupMenu.removeAll();
-		boolean enableCopyMenu;
-		if(eventWrapper == null)
-		{
-			sendToPopupMenu.setEnabled(false);
-			enableCopyMenu = false;
-		}
-		else
-		{
-			Serializable eventObj = eventWrapper.getEvent();
-			if(eventObj instanceof LoggingEvent)
-			{
-				enableCopyMenu = true;
-				Map<String, EventSender<LoggingEvent>> senders = mainFrame.getLoggingEventSenders();
-				if(logger.isDebugEnabled()) logger.debug("Senders: {}", senders);
-				if(senders.size() == 0)
-				{
-					sendToPopupMenu.setEnabled(false);
-				}
-				else
-				{
-					sendToPopupMenu.setEnabled(true);
-					for(Map.Entry<String, EventSender<LoggingEvent>> current : senders.entrySet())
-					{
-						//noinspection unchecked
-						sendToPopupMenu.add(new SendAction<LoggingEvent>(current.getKey(), current.getValue(), eventWrapper));
-					}
-				}
-			}
-			else if(eventObj instanceof AccessEvent)
-			{
-				enableCopyMenu = true;
-				Map<String, EventSender<AccessEvent>> senders = mainFrame.getAccessEventSenders();
-				if(logger.isDebugEnabled()) logger.debug("Senders: {}", senders);
-				if(senders.size() == 0)
-				{
-					sendToPopupMenu.setEnabled(false);
-				}
-				else
-				{
-					sendToPopupMenu.setEnabled(true);
-					for(Map.Entry<String, EventSender<AccessEvent>> current : senders.entrySet())
-					{
-						//noinspection unchecked
-						sendToPopupMenu.add(new SendAction<AccessEvent>(current.getKey(), current.getValue(), eventWrapper));
-					}
-				}
-			}
-			else
-			{
-				enableCopyMenu = false;
-				sendToPopupMenu.setEnabled(false);
-			}
+			EventWrapper<LoggingEvent> loggingEventWrapper = asLoggingEventWrapper(eventWrapper);
+			EventWrapper<AccessEvent> accessEventWrapper = asAccessEventWrapper(eventWrapper);
+			enableCopyMenu = loggingEventWrapper != null || accessEventWrapper != null;
 		}
 		boolean enableFilterMenu = closeFilterAction.isEnabled() || closeOtherFiltersAction.isEnabled() || closeAllFiltersAction.isEnabled();
 		filterPopupMenu.setEnabled(enableFilterMenu);
@@ -1381,7 +1206,7 @@ public class ViewActions
 		excludePopupMenu.setEventWrapper(eventWrapper);
 	}
 
-	public JPopupMenu getPopupMenu()
+	JPopupMenu getPopupMenu()
 	{
 		updatePopup();
 
@@ -1390,22 +1215,21 @@ public class ViewActions
 
 	public void updateRecentFiles()
 	{
-		ApplicationPreferences prefs = mainFrame.getApplicationPreferences();
-		List<String> recentFilesStrings = prefs.getRecentFiles();
-		if(recentFilesStrings == null || recentFilesStrings.size()==0)
+		List<String> recentFilesStrings = applicationPreferences.getRecentFiles();
+		if(recentFilesStrings == null || recentFilesStrings.isEmpty())
 		{
 			recentFilesMenu.removeAll();
 			recentFilesMenu.setEnabled(false);
 		}
 		else
 		{
-			boolean fullPath=prefs.isShowingFullRecentPath();
+			boolean fullPath=applicationPreferences.isShowingFullRecentPath();
 
 			recentFilesMenu.removeAll();
 
 			for(String current:recentFilesStrings)
 			{
-				recentFilesMenu.add(new OpenFileAction(current, fullPath));
+				recentFilesMenu.add(new OpenFileAction(current, fullPath)); // NOPMD - AvoidInstantiatingObjectsInLoops
 			}
 			recentFilesMenu.addSeparator();
 			recentFilesMenu.add(clearRecentFilesAction);
@@ -1426,9 +1250,9 @@ public class ViewActions
 	{
 		private static final long serialVersionUID = 3138705799791457944L;
 
-		private String absoluteName;
+		private final String absoluteName;
 
-		public OpenFileAction(String absoluteName, boolean fullPath)
+		OpenFileAction(String absoluteName, boolean fullPath)
 		{
 			super();
 
@@ -1440,10 +1264,11 @@ public class ViewActions
 				name=f.getName();
 			}
 			putValue(Action.NAME, name);
-			putValue(Action.SMALL_ICON, Icons.EMPTY_16_ICON);
+			putValue(Action.SMALL_ICON, Icons.resolveEmptyMenuIcon());
 			putValue(Action.SHORT_DESCRIPTION, absoluteName);
 		}
 
+		@Override
 		public void actionPerformed(ActionEvent e)
 		{
 			mainFrame.open(new File(absoluteName));
@@ -1451,81 +1276,51 @@ public class ViewActions
 	}
 
 	private class ClearRecentFilesAction
-		extends AbstractAction
+			extends AbstractLilithAction
 	{
-		private static final long serialVersionUID = 2330892725802760973L;
+		private static final long serialVersionUID = 5931366119837395385L;
 
-		public ClearRecentFilesAction()
+		ClearRecentFilesAction()
 		{
-			super("Clear Recent Files");
-			putValue(Action.SMALL_ICON, Icons.EMPTY_16_ICON);
-			putValue(Action.MNEMONIC_KEY, Integer.valueOf('c'));
+			super(LilithActionId.CLEAR_RECENT_FILES);
 		}
 
+		@Override
 		public void actionPerformed(ActionEvent e)
 		{
-			mainFrame.getApplicationPreferences().clearRecentFiles();
+			applicationPreferences.clearRecentFiles();
 		}
 	}
-/*
-	private class ClearAndRemoveInactiveAction
-		extends AbstractAction
-	{
-
-		public ClearAndRemoveInactiveAction()
-		{
-			super("Clean and remove inactive");
-			putValue(Action.SMALL_ICON, EMPTY_16_ICON);
-			KeyStroke accelerator= KeyStrokes.resolveAcceleratorKeyStroke(KeyStrokes.COMMAND_ALIAS+" shift R");
-			if(logger.isDebugEnabled()) logger.debug("accelerator: {}", accelerator);
-			putValue(Action.ACCELERATOR_KEY, accelerator);
-			putValue(Action.MNEMONIC_KEY, Integer.valueOf('c'));
-		}
-
-		public void actionPerformed(ActionEvent e)
-		{
-			mainFrame.removeInactiveViews(false, true);
-			mainFrame.updateWindowMenus();
-		}
-	}
-*/
 
 	private class RemoveInactiveAction
-		extends AbstractAction
+			extends AbstractLilithAction
 	{
-		private static final long serialVersionUID = -6662970580652310690L;
+		private static final long serialVersionUID = -4899555487517384044L;
 
-		public RemoveInactiveAction()
+		RemoveInactiveAction()
 		{
-			super("Remove inactive");
-			putValue(Action.SMALL_ICON, Icons.EMPTY_16_ICON);
-			KeyStroke accelerator = LilithKeyStrokes.getKeyStroke(LilithKeyStrokes.REMOVE_INACTIVE_ACTION);
-			putValue(Action.ACCELERATOR_KEY, accelerator);
-			putValue(Action.MNEMONIC_KEY, Integer.valueOf('r'));
+			super(LilithActionId.REMOVE_INACTIVE);
 		}
 
+		@Override
 		public void actionPerformed(ActionEvent e)
 		{
-			mainFrame.removeInactiveViews(false, false);
+			mainFrame.removeInactiveViews(false);
 			mainFrame.updateWindowMenus();
 		}
 	}
 
 	private class ShowTaskManagerAction
-		extends AbstractAction
+			extends AbstractLilithAction
 	{
-		private static final long serialVersionUID = -8228641057263498624L;
+		private static final long serialVersionUID = 8903964233879357068L;
 
-		public ShowTaskManagerAction()
+		ShowTaskManagerAction()
 		{
-			super("Task Manager");
-			putValue(Action.SMALL_ICON, Icons.EMPTY_16_ICON);
-			//KeyStroke accelerator= KeyStrokes.resolveAcceleratorKeyStroke(KeyStrokes.COMMAND_ALIAS+" R");
-			//if(logger.isDebugEnabled()) logger.debug("accelerator: {}", accelerator);
-			//putValue(Action.ACCELERATOR_KEY, accelerator);
-			//putValue(Action.MNEMONIC_KEY, Integer.valueOf('r'));
+			super(LilithActionId.TASK_MANAGER);
 		}
 
+		@Override
 		public void actionPerformed(ActionEvent e)
 		{
 			mainFrame.showTaskManager();
@@ -1533,19 +1328,16 @@ public class ViewActions
 	}
 
 	private class CloseAllAction
-		extends AbstractAction
+			extends AbstractLilithAction
 	{
-		private static final long serialVersionUID = -1587444647880660196L;
+		private static final long serialVersionUID = -1422391104698136853L;
 
-		public CloseAllAction()
+		CloseAllAction()
 		{
-			super("Close all");
-			putValue(Action.SMALL_ICON, Icons.EMPTY_16_ICON);
-			KeyStroke accelerator = LilithKeyStrokes.getKeyStroke(LilithKeyStrokes.CLOSE_ALL_ACTION);
-			putValue(Action.ACCELERATOR_KEY, accelerator);
-			//putValue(Action.MNEMONIC_KEY, Integer.valueOf('r'));
+			super(LilithActionId.CLOSE_ALL);
 		}
 
+		@Override
 		public void actionPerformed(ActionEvent e)
 		{
 			mainFrame.closeAllViews(null);
@@ -1554,20 +1346,16 @@ public class ViewActions
 	}
 
 	private class CloseOtherAction
-		extends AbstractAction
+			extends AbstractLilithAction
 	{
-		private static final long serialVersionUID = -3031217070975763827L;
+		private static final long serialVersionUID = 7428424871185431400L;
 
-		public CloseOtherAction()
+		CloseOtherAction()
 		{
-			super("Close all other");
-			putValue(Action.SMALL_ICON, Icons.EMPTY_16_ICON);
-			//KeyStroke accelerator= KeyStrokes.resolveAcceleratorKeyStroke(KeyStrokes.COMMAND_ALIAS+" R");
-			//if(logger.isDebugEnabled()) logger.debug("accelerator: {}", accelerator);
-			//putValue(Action.ACCELERATOR_KEY, accelerator);
-			//putValue(Action.MNEMONIC_KEY, Integer.valueOf('r'));
+			super(LilithActionId.CLOSE_ALL_OTHER);
 		}
 
+		@Override
 		public void actionPerformed(ActionEvent e)
 		{
 			mainFrame.closeAllViews(viewContainer);
@@ -1576,20 +1364,16 @@ public class ViewActions
 	}
 
 	private class MinimizeAllAction
-		extends AbstractAction
+			extends AbstractLilithAction
 	{
-		private static final long serialVersionUID = -8828005158469519472L;
+		private static final long serialVersionUID = -5691488945878472747L;
 
-		public MinimizeAllAction()
+		MinimizeAllAction()
 		{
-			super("Minimize all");
-			putValue(Action.SMALL_ICON, Icons.EMPTY_16_ICON);
-			//KeyStroke accelerator= KeyStrokes.resolveAcceleratorKeyStroke(KeyStrokes.COMMAND_ALIAS+" R");
-			//if(logger.isDebugEnabled()) logger.debug("accelerator: {}", accelerator);
-			//putValue(Action.ACCELERATOR_KEY, accelerator);
-			//putValue(Action.MNEMONIC_KEY, Integer.valueOf('r'));
+			super(LilithActionId.MINIMIZE_ALL);
 		}
 
+		@Override
 		public void actionPerformed(ActionEvent e)
 		{
 			mainFrame.minimizeAllViews(null);
@@ -1598,20 +1382,16 @@ public class ViewActions
 	}
 
 	private class MinimizeAllOtherAction
-		extends AbstractAction
+			extends AbstractLilithAction
 	{
-		private static final long serialVersionUID = -2357859864329239268L;
+		private static final long serialVersionUID = 4359591467723034614L;
 
-		public MinimizeAllOtherAction()
+		MinimizeAllOtherAction()
 		{
-			super("Minimize all other");
-			putValue(Action.SMALL_ICON, Icons.EMPTY_16_ICON);
-			//KeyStroke accelerator= KeyStrokes.resolveAcceleratorKeyStroke(KeyStrokes.COMMAND_ALIAS+" R");
-			//if(logger.isDebugEnabled()) logger.debug("accelerator: {}", accelerator);
-			//putValue(Action.ACCELERATOR_KEY, accelerator);
-			//putValue(Action.MNEMONIC_KEY, Integer.valueOf('r'));
+			super(LilithActionId.MINIMIZE_OTHER);
 		}
 
+		@Override
 		public void actionPerformed(ActionEvent e)
 		{
 			mainFrame.minimizeAllViews(viewContainer);
@@ -1619,36 +1399,17 @@ public class ViewActions
 		}
 	}
 
-	private class ClearToolBarAction
-		extends AbstractAction
+	private class ClearAction
+			extends AbstractLilithAction
 	{
 		private static final long serialVersionUID = -4713267797278778997L;
 
-		public ClearToolBarAction()
+		ClearAction(boolean toolbar)
 		{
-			super();
-			putValue(Action.SMALL_ICON, Icons.CLEAR_TOOLBAR_ICON);
-			putValue(Action.SHORT_DESCRIPTION, "Clear");
+			super(LilithActionId.CLEAR, toolbar);
 		}
 
-		public void actionPerformed(ActionEvent e)
-		{
-			clear();
-		}
-	}
-
-	private class ClearMenuAction
-		extends AbstractAction
-	{
-		private static final long serialVersionUID = 776175842981192877L;
-
-		public ClearMenuAction()
-		{
-			super("Clear");
-			putValue(Action.SMALL_ICON, Icons.CLEAR_MENU_ICON);
-			putValue(Action.SHORT_DESCRIPTION, "Clear this view.");
-		}
-
+		@Override
 		public void actionPerformed(ActionEvent e)
 		{
 			clear();
@@ -1656,25 +1417,22 @@ public class ViewActions
 	}
 
 	private class ZoomInMenuAction
-		extends AbstractAction
+			extends AbstractLilithAction
 	{
-		private static final long serialVersionUID = -8380709624103338783L;
+		private static final long serialVersionUID = -7888485901625353999L;
 
-		public ZoomInMenuAction()
+		ZoomInMenuAction()
 		{
-			super("Zoom in");
-			KeyStroke accelerator = LilithKeyStrokes.getKeyStroke(LilithKeyStrokes.ZOOM_IN_ACTION);
-			putValue(Action.ACCELERATOR_KEY, accelerator);
-			putValue(Action.SMALL_ICON, Icons.EMPTY_16_ICON);
-			putValue(Action.SHORT_DESCRIPTION, "Zoom in on the details view.");
+			super(LilithActionId.ZOOM_IN);
 		}
 
+		@Override
 		public void actionPerformed(ActionEvent e)
 		{
 			mainFrame.zoomIn();
 		}
 
-		public void updateAction()
+		void updateAction()
 		{
 			boolean enable = false;
 			if(viewContainer != null)
@@ -1690,25 +1448,22 @@ public class ViewActions
 	}
 
 	private class ZoomOutMenuAction
-		extends AbstractAction
+			extends AbstractLilithAction
 	{
-		private static final long serialVersionUID = -8380709624103338783L;
+		private static final long serialVersionUID = 4775486230433866870L;
 
-		public ZoomOutMenuAction()
+		ZoomOutMenuAction()
 		{
-			super("Zoom out");
-			KeyStroke accelerator = LilithKeyStrokes.getKeyStroke(LilithKeyStrokes.ZOOM_OUT_ACTION);
-			putValue(Action.ACCELERATOR_KEY, accelerator);
-			putValue(Action.SMALL_ICON, Icons.EMPTY_16_ICON);
-			putValue(Action.SHORT_DESCRIPTION, "Zoom out on the details view.");
+			super(LilithActionId.ZOOM_OUT);
 		}
 
+		@Override
 		public void actionPerformed(ActionEvent e)
 		{
 			mainFrame.zoomOut();
 		}
 
-		public void updateAction()
+		void updateAction()
 		{
 			boolean enable = false;
 			if(viewContainer != null)
@@ -1724,26 +1479,22 @@ public class ViewActions
 	}
 
 	private class ResetZoomMenuAction
-		extends AbstractAction
+			extends AbstractLilithAction
 	{
-		private static final long serialVersionUID = -8380709624103338783L;
+		private static final long serialVersionUID = 2666064072732620530L;
 
-		public ResetZoomMenuAction()
+		ResetZoomMenuAction()
 		{
-			super("Reset Zoom");
-			//KeyStroke accelerator = KeyStrokes.resolveAcceleratorKeyStroke(KeyStrokes.COMMAND_ALIAS + " +");
-			//if(logger.isDebugEnabled()) logger.debug("accelerator: {}", accelerator);
-			//putValue(Action.ACCELERATOR_KEY, accelerator);
-			putValue(Action.SMALL_ICON, Icons.EMPTY_16_ICON);
-			putValue(Action.SHORT_DESCRIPTION, "Reset Zoom of the details view.");
+			super(LilithActionId.RESET_ZOOM);
 		}
 
+		@Override
 		public void actionPerformed(ActionEvent e)
 		{
 			mainFrame.resetZoom();
 		}
 
-		public void updateAction()
+		void updateAction()
 		{
 			boolean enable = false;
 			if(viewContainer != null)
@@ -1759,28 +1510,26 @@ public class ViewActions
 	}
 
 	private class SaveConditionMenuAction
-		extends AbstractAction
+			extends AbstractLilithAction
 	{
-		private static final long serialVersionUID = -8380709624103338783L;
+		private static final long serialVersionUID = -5736668292947348845L;
 
-		public SaveConditionMenuAction()
+		private final boolean htmlTooltip;
+
+		SaveConditionMenuAction(boolean htmlTooltip)
 		{
-			super("Save condition...");
-			KeyStroke accelerator = LilithKeyStrokes.getKeyStroke(LilithKeyStrokes.EDIT_CONDITION_ACTION);
-			putValue(Action.ACCELERATOR_KEY, accelerator);
-			putValue(Action.SMALL_ICON, Icons.EMPTY_16_ICON);
-			putValue(Action.SHORT_DESCRIPTION, "Add the condition of the current view.");
+			super(LilithActionId.SAVE_CONDITION);
+			this.htmlTooltip = htmlTooltip;
 		}
 
+		@Override
 		public void actionPerformed(ActionEvent e)
 		{
 			editCondition();
 		}
 
-		public void updateAction()
+		void updateAction()
 		{
-			boolean enable = false;
-			String tooltip = null;
 			if(viewContainer != null)
 			{
 				EventWrapperViewPanel eventWrapperViewPanel = viewContainer.getSelectedView();
@@ -1791,37 +1540,56 @@ public class ViewActions
 					Condition condition = eventWrapperViewPanel.getCombinedCondition(currentFilter);
 					if(condition != null)
 					{
-						tooltip = TextPreprocessor.preformattedTooltip(TextPreprocessor.cropTextBlock(TextPreprocessor.formatCondition(condition)));
-						enable = true;
+						ActionTooltips.initializeConditionTooltip(condition, this, htmlTooltip);
+						setEnabled(true);
+						return;
 					}
 				}
 			}
-			putValue(Action.SHORT_DESCRIPTION, tooltip);
-			setEnabled(enable);
+			putValue(Action.SHORT_DESCRIPTION, getId().getDescription());
+			setEnabled(false);
 		}
 	}
 
 	private class EditSourceNameMenuAction
-		extends AbstractAction
+			extends AbstractLilithAction
 	{
-		private static final long serialVersionUID = 2807692748192366344L;
+		private static final long serialVersionUID = -1769963136846922348L;
 
-		public EditSourceNameMenuAction()
+		EditSourceNameMenuAction()
 		{
-			super("Edit source name...");
-			KeyStroke accelerator = LilithKeyStrokes.getKeyStroke(LilithKeyStrokes.EDIT_SOURCE_NAME_ACTION);
-			putValue(Action.ACCELERATOR_KEY, accelerator);
-			putValue(Action.SMALL_ICON, Icons.EMPTY_16_ICON);
-			putValue(Action.SHORT_DESCRIPTION, "Edit the source name of the current view.");
+			super(LilithActionId.EDIT_SOURCE_NAME);
 		}
 
+		@Override
 		public void actionPerformed(ActionEvent e)
 		{
-			editSourceName();
+			if(viewContainer == null)
+			{
+				return;
+			}
+			EventWrapperViewPanel eventWrapperViewPanel = viewContainer.getSelectedView();
+			if(eventWrapperViewPanel == null)
+			{
+				return;
+			}
+
+			EventSource eventSource = eventWrapperViewPanel.getEventSource();
+			if(eventSource.isGlobal())
+			{
+				return;
+			}
+
+			String identifier = eventSource.getSourceIdentifier().getIdentifier();
+			if(InternalLilithAppender.IDENTIFIER_NAME.equals(identifier))
+			{
+				return;
+			}
+			mainFrame.getPreferencesDialog().editSourceName(identifier);
 		}
 
 
-		public void updateAction()
+		void updateAction()
 		{
 			boolean enable = false;
 			if(viewContainer != null)
@@ -1829,11 +1597,14 @@ public class ViewActions
 				EventWrapperViewPanel eventWrapperViewPanel = viewContainer.getSelectedView();
 				if(eventWrapperViewPanel != null)
 				{
-					String sourceIdentifier = eventWrapperViewPanel.getEventSource().getSourceIdentifier()
-						.getIdentifier();
-					if(!"global".equals(sourceIdentifier) && !"Lilith".equals(sourceIdentifier))
+					EventSource eventSource = eventWrapperViewPanel.getEventSource();
+					if(!eventSource.isGlobal())
 					{
-						enable = true;
+						String identifier = eventSource.getSourceIdentifier().getIdentifier();
+						if (!InternalLilithAppender.IDENTIFIER_NAME.equals(identifier))
+						{
+							enable = true;
+						}
 					}
 				}
 			}
@@ -1841,318 +1612,110 @@ public class ViewActions
 		}
 	}
 
-
-	private class AttachMenuAction
-		extends AbstractAction
+	private class AttachAction
+			extends AbstractLilithAction
 	{
 		private static final long serialVersionUID = -6686061036755515933L;
 
-		private Icon attachIcon = Icons.ATTACH_MENU_ICON;
-		private Icon detachIcon = Icons.DETACH_MENU_ICON;
-
-		public AttachMenuAction()
+		AttachAction(boolean toolbar)
 		{
-			super();
-			KeyStroke accelerator = LilithKeyStrokes.getKeyStroke(LilithKeyStrokes.ATTACH_ACTION);
-			putValue(Action.ACCELERATOR_KEY, accelerator);
+			super(LilithActionId.ATTACH, toolbar);
 			updateAction();
 		}
 
+		@Override
 		public void actionPerformed(ActionEvent e)
 		{
 			attachDetach();
 			updateAction();
 		}
 
-		public void updateAction()
+		final void updateAction()
 		{
 			ViewContainer container = getViewContainer();
 			if(container != null)
 			{
 				ViewWindow window = container.resolveViewWindow();
-				if(window instanceof JInternalFrame)
+				if(window instanceof JFrame)
 				{
-					putValue(Action.SMALL_ICON, detachIcon);
-					putValue(Action.NAME, "Detach");
-				}
-				else if(window instanceof JFrame)
-				{
-					putValue(Action.SMALL_ICON, attachIcon);
-					putValue(Action.NAME, "Attach");
-				}
-			}
-
-		}
-	}
-
-
-	private class AttachToolBarAction
-		extends AbstractAction
-	{
-		private static final long serialVersionUID = -6338324258055926639L;
-
-		private Icon attachIcon = Icons.ATTACH_TOOLBAR_ICON;
-		private Icon detachIcon = Icons.DETACH_TOOLBAR_ICON;
-
-		public AttachToolBarAction()
-		{
-			super();
-			updateAction();
-		}
-
-		public void actionPerformed(ActionEvent e)
-		{
-			attachDetach();
-			updateAction();
-		}
-
-		public void updateAction()
-		{
-			ViewContainer container = getViewContainer();
-			if(container != null)
-			{
-				ViewWindow window = container.resolveViewWindow();
-				if(window instanceof JInternalFrame)
-				{
-					putValue(Action.SMALL_ICON, detachIcon);
-					putValue(Action.SHORT_DESCRIPTION, "Detach");
-					return;
-				}
-				else if(window instanceof JFrame)
-				{
-					putValue(Action.SMALL_ICON, attachIcon);
-					putValue(Action.SHORT_DESCRIPTION, "Attach");
+					if(isToolbar())
+					{
+						putValue(Action.SMALL_ICON, Icons.ATTACH_TOOLBAR_ICON);
+					}
+					else
+					{
+						putValue(Action.SMALL_ICON, Icons.ATTACH_MENU_ICON);
+						putValue(Action.NAME, "Attach");
+					}
 					return;
 				}
 			}
-			// update anyway
-			putValue(Action.SMALL_ICON, detachIcon);
-			putValue(Action.SHORT_DESCRIPTION, "Detach");
-		}
-	}
-
-	private class PauseMenuAction
-		extends AbstractAction
-	{
-		private static final long serialVersionUID = -5242236903640590549L;
-
-		private Icon pausedIcon = Icons.PAUSED_MENU_ICON;
-		private Icon unpausedIcon = Icons.UNPAUSED_MENU_ICON;
-
-		public PauseMenuAction()
-		{
-			super();
-			updateAction();
-			KeyStroke accelerator = LilithKeyStrokes.getKeyStroke(LilithKeyStrokes.PAUSE_ACTION);
-			putValue(Action.ACCELERATOR_KEY, accelerator);
-		}
-
-		public void actionPerformed(ActionEvent e)
-		{
-			setPaused(!isPaused());
-			updateAction();
-			focusTable();
-		}
-
-		public void updateAction()
-		{
-			if(isPaused())
+			// default/init to Detach
+			if(isToolbar())
 			{
-				putValue(Action.SMALL_ICON, pausedIcon);
-				putValue(Action.NAME, "Unpause");
+				putValue(Action.SMALL_ICON, Icons.DETACH_TOOLBAR_ICON);
 			}
 			else
 			{
-				putValue(Action.SMALL_ICON, unpausedIcon);
-				putValue(Action.NAME, "Pause");
+				putValue(Action.SMALL_ICON, Icons.DETACH_MENU_ICON);
+				putValue(Action.NAME, "Detach");
 			}
 		}
 	}
 
-	private class PauseToolBarAction
-		extends AbstractAction
+	private class FindAction
+			extends AbstractLilithAction
 	{
-		private static final long serialVersionUID = -5118623805829814815L;
+		private static final long serialVersionUID = 8686689881059491581L;
 
-		private Icon pausedIcon = Icons.PAUSED_TOOLBAR_ICON;
-		private Icon unpausedIcon = Icons.UNPAUSED_TOOLBAR_ICON;
-
-		public PauseToolBarAction()
+		FindAction(boolean toolbar)
 		{
-			super();
-			updateAction();
-			KeyStroke accelerator = LilithKeyStrokes.getKeyStroke(LilithKeyStrokes.PAUSE_ACTION);
-			putValue(Action.ACCELERATOR_KEY, accelerator);
+			super(LilithActionId.FIND, toolbar);
 		}
 
+		@Override
 		public void actionPerformed(ActionEvent e)
 		{
-			setPaused(!isPaused());
-			updateAction();
-			focusTable();
-		}
-
-		public void updateAction()
-		{
-			if(isPaused())
+			if(viewContainer != null)
 			{
-				putValue(Action.SMALL_ICON, pausedIcon);
-				putValue(Action.SHORT_DESCRIPTION, "Unpause");
-			}
-			else
-			{
-				putValue(Action.SMALL_ICON, unpausedIcon);
-				putValue(Action.SHORT_DESCRIPTION, "Pause");
+				EventWrapperViewPanel eventWrapperViewPanel = viewContainer.getSelectedView();
+				if(eventWrapperViewPanel != null)
+				{
+					eventWrapperViewPanel.setShowingFilters(true);
+				}
 			}
 		}
 	}
 
-	private class FindMenuAction
-		extends AbstractAction
+	private class DisconnectAction
+			extends AbstractLilithAction
 	{
-		private static final long serialVersionUID = 2241714830900044485L;
+		private static final long serialVersionUID = -7608467965704213937L;
 
-		public FindMenuAction()
+		DisconnectAction(boolean toolbar)
 		{
-			super("Find");
-			putValue(Action.SMALL_ICON, Icons.FIND_MENU_ITEM);
-			putValue(Action.SHORT_DESCRIPTION, "Opens the Find panel.");
-			KeyStroke accelerator = LilithKeyStrokes.getKeyStroke(LilithKeyStrokes.FIND_ACTION);
-			putValue(Action.ACCELERATOR_KEY, accelerator);
+			super(LilithActionId.DISCONNECT, toolbar);
 		}
 
-		public void actionPerformed(ActionEvent e)
-		{
-			setShowingFilters(true);
-		}
-	}
-
-	private class FindToolBarAction
-		extends AbstractAction
-	{
-		private static final long serialVersionUID = -4080152597948489206L;
-
-		public FindToolBarAction()
-		{
-			super();
-			putValue(Action.SMALL_ICON, Icons.FIND_TOOLBAR_ICON);
-			putValue(Action.SHORT_DESCRIPTION, "Find");
-			KeyStroke accelerator = LilithKeyStrokes.getKeyStroke(LilithKeyStrokes.FIND_ACTION);
-			putValue(Action.ACCELERATOR_KEY, accelerator);
-		}
-
-		public void actionPerformed(ActionEvent e)
-		{
-			setShowingFilters(true);
-		}
-	}
-
-	private static class StatisticsMenuAction
-		extends AbstractAction
-	{
-		private static final long serialVersionUID = -6336357605789928345L;
-
-		public StatisticsMenuAction()
-		{
-			super("Statistics");
-			putValue(Action.SMALL_ICON, Icons.STATISTICS_MENU_ICON);
-			putValue(Action.SHORT_DESCRIPTION, "Statistics");
-		}
-
-		public void actionPerformed(ActionEvent e)
-		{
-		}
-	}
-/*
-	private class StatisticsMenuAction
-		extends AbstractAction
-	{
-		private static final long serialVersionUID = -6336357605789928345L;
-
-		public StatisticsMenuAction()
-		{
-			super("Statistics");
-			putValue(Action.SMALL_ICON, STATISTICS_MENU_ICON);
-			putValue(Action.SHORT_DESCRIPTION, "Statistics");
-		}
-
-		public void actionPerformed(ActionEvent e)
-		{
-			showStatistics();
-		}
-	}
-
-	private class StatisticsToolBarAction
-		extends AbstractAction
-	{
-		private static final long serialVersionUID = 2394035359331601001L;
-
-		public StatisticsToolBarAction()
-		{
-			super();
-			putValue(Action.SMALL_ICON, STATISTICS_TOOLBAR_ICON);
-			putValue(Action.SHORT_DESCRIPTION, "Statistics");
-		}
-
-		public void actionPerformed(ActionEvent e)
-		{
-			showStatistics();
-		}
-	}
-*/
-
-	private class DisconnectMenuAction
-		extends AbstractAction
-	{
-		private static final long serialVersionUID = 8971640305824353589L;
-
-		public DisconnectMenuAction()
-		{
-			super("Disconnect");
-			KeyStroke accelerator = LilithKeyStrokes.getKeyStroke(LilithKeyStrokes.DISCONNECT_ACTION);
-			putValue(Action.ACCELERATOR_KEY, accelerator);
-			putValue(Action.SMALL_ICON, Icons.DISCONNECT_MENU_ICON);
-			putValue(Action.SHORT_DESCRIPTION, "Terminates this connection");
-		}
-
+		@Override
 		public void actionPerformed(ActionEvent e)
 		{
 			disconnect();
 		}
 	}
 
-	private class DisconnectToolBarAction
-		extends AbstractAction
-	{
-		private static final long serialVersionUID = -8665004340745035737L;
-
-		public DisconnectToolBarAction()
-		{
-			super();
-			putValue(Action.SMALL_ICON, Icons.DISCONNECT_TOOLBAR_ICON);
-			putValue(Action.SHORT_DESCRIPTION, "Disconnect");
-		}
-
-		public void actionPerformed(ActionEvent e)
-		{
-			disconnect();
-		}
-	}
 
 	private class FocusMessageAction
-		extends AbstractAction
+			extends AbstractLilithAction
 	{
-		private static final long serialVersionUID = -421929316399318971L;
+		private static final long serialVersionUID = -7138801117961747361L;
 
-		public FocusMessageAction()
+		FocusMessageAction()
 		{
-			super("Focus message");
-			putValue(Action.SMALL_ICON, Icons.EMPTY_16_ICON);
-			putValue(Action.SHORT_DESCRIPTION, "Focus detailed message view.");
-			KeyStroke accelerator = LilithKeyStrokes.getKeyStroke(LilithKeyStrokes.FOCUS_MESSAGE_ACTION);
-			putValue(Action.ACCELERATOR_KEY, accelerator);
+			super(LilithActionId.FOCUS_MESSAGE);
 		}
 
+		@Override
 		public void actionPerformed(ActionEvent e)
 		{
 			focusMessage();
@@ -2160,19 +1723,16 @@ public class ViewActions
 	}
 
 	private class FocusEventsAction
-		extends AbstractAction
+			extends AbstractLilithAction
 	{
-		private static final long serialVersionUID = 4207817900003297701L;
+		private static final long serialVersionUID = -8861583468969887725L;
 
-		public FocusEventsAction()
+		FocusEventsAction()
 		{
-			super("Focus events");
-			putValue(Action.SMALL_ICON, Icons.EMPTY_16_ICON);
-			putValue(Action.SHORT_DESCRIPTION, "Focus the table containing the events.");
-			KeyStroke accelerator = LilithKeyStrokes.getKeyStroke(LilithKeyStrokes.FOCUS_EVENTS_ACTION);
-			putValue(Action.ACCELERATOR_KEY, accelerator);
+			super(LilithActionId.FOCUS_EVENTS);
 		}
 
+		@Override
 		public void actionPerformed(ActionEvent e)
 		{
 			focusEvents();
@@ -2180,19 +1740,16 @@ public class ViewActions
 	}
 
 	private class FindNextAction
-		extends AbstractAction
+			extends AbstractLilithAction
 	{
-		private static final long serialVersionUID = 4771628062043742857L;
+		private static final long serialVersionUID = -8423353519237402903L;
 
-		public FindNextAction()
+		FindNextAction(boolean toolbar)
 		{
-			super("Find next");
-			putValue(Action.SMALL_ICON, Icons.FIND_NEXT_MENU_ICON);
-			putValue(Action.SHORT_DESCRIPTION, "Find next match of the current filter.");
-			KeyStroke accelerator = LilithKeyStrokes.getKeyStroke(LilithKeyStrokes.FIND_NEXT_ACTION);
-			putValue(Action.ACCELERATOR_KEY, accelerator);
+			super(LilithActionId.FIND_NEXT, toolbar);
 		}
 
+		@Override
 		public void actionPerformed(ActionEvent e)
 		{
 			findNext();
@@ -2201,19 +1758,16 @@ public class ViewActions
 	}
 
 	private class FindPreviousAction
-		extends AbstractAction
+			extends AbstractLilithAction
 	{
-		private static final long serialVersionUID = -284066693780808511L;
+		private static final long serialVersionUID = 5500344754940498682L;
 
-		public FindPreviousAction()
+		FindPreviousAction(boolean toolbar)
 		{
-			super("Find previous");
-			putValue(Action.SMALL_ICON, Icons.FIND_PREV_MENU_ICON);
-			putValue(Action.SHORT_DESCRIPTION, "Find previous match of the current filter.");
-			KeyStroke accelerator = LilithKeyStrokes.getKeyStroke(LilithKeyStrokes.FIND_PREVIOUS_ACTION);
-			putValue(Action.ACCELERATOR_KEY, accelerator);
+			super(LilithActionId.FIND_PREVIOUS, toolbar);
 		}
 
+		@Override
 		public void actionPerformed(ActionEvent e)
 		{
 			findPrevious();
@@ -2221,19 +1775,16 @@ public class ViewActions
 	}
 
 	private class FindNextActiveAction
-		extends AbstractAction
+			extends AbstractLilithAction
 	{
-		private static final long serialVersionUID = 8153060295931745089L;
+		private static final long serialVersionUID = 5173104146045140691L;
 
-		public FindNextActiveAction()
+		FindNextActiveAction(boolean toolbar)
 		{
-			super("Find next active");
-			putValue(Action.SMALL_ICON, Icons.FIND_NEXT_MENU_ICON);
-			putValue(Action.SHORT_DESCRIPTION, "Find next match of any active condition.");
-			KeyStroke accelerator = LilithKeyStrokes.getKeyStroke(LilithKeyStrokes.FIND_NEXT_ACTIVE_ACTION);
-			putValue(Action.ACCELERATOR_KEY, accelerator);
+			super(LilithActionId.FIND_NEXT_ACTIVE, toolbar);
 		}
 
+		@Override
 		public void actionPerformed(ActionEvent e)
 		{
 			findNextActive();
@@ -2242,19 +1793,16 @@ public class ViewActions
 	}
 
 	private class FindPreviousActiveAction
-		extends AbstractAction
+			extends AbstractLilithAction
 	{
-		private static final long serialVersionUID = 2473715367685180389L;
+		private static final long serialVersionUID = 2678420403434984064L;
 
-		public FindPreviousActiveAction()
+		FindPreviousActiveAction(boolean toolbar)
 		{
-			super("Find previous active");
-			putValue(Action.SMALL_ICON, Icons.FIND_PREV_MENU_ICON);
-			putValue(Action.SHORT_DESCRIPTION, "Find previous match of any active condition.");
-			KeyStroke accelerator = LilithKeyStrokes.getKeyStroke(LilithKeyStrokes.FIND_PREVIOUS_ACTIVE_ACTION);
-			putValue(Action.ACCELERATOR_KEY, accelerator);
+			super(LilithActionId.FIND_PREVIOUS_ACTIVE, toolbar);
 		}
 
+		@Override
 		public void actionPerformed(ActionEvent e)
 		{
 			findPreviousActive();
@@ -2262,100 +1810,245 @@ public class ViewActions
 	}
 
 	private class ResetFindAction
-		extends AbstractAction
+			extends AbstractLilithAction
 	{
-		private static final long serialVersionUID = -1245378100755440576L;
+		private static final long serialVersionUID = 4133654759522587356L;
 
-		public ResetFindAction()
+		ResetFindAction()
 		{
-			super("Reset find");
-			putValue(Action.SMALL_ICON, Icons.EMPTY_16_ICON);
-			KeyStroke accelerator = LilithKeyStrokes.getKeyStroke(LilithKeyStrokes.RESET_FIND_ACTION);
-			putValue(Action.ACCELERATOR_KEY, accelerator);
+			super(LilithActionId.RESET_FIND);
 		}
 
+		@Override
 		public void actionPerformed(ActionEvent e)
 		{
 			resetFind();
 		}
 	}
 
-	private class ScrollToBottomMenuAction
-		extends AbstractAction
+	private static class FileAction
+			extends AbstractLilithAction
 	{
-		private static final long serialVersionUID = -6698886479454486019L;
+		private static final long serialVersionUID = 6713037299656243140L;
 
-		private Icon selectedIcon = Icons.TAIL_MENU_ICON;
-		private Icon unselectedIcon = Icons.EMPTY_16_ICON;
-
-		public ScrollToBottomMenuAction()
+		FileAction()
 		{
-			super("Tail");
-			updateAction();
-			putValue(Action.SHORT_DESCRIPTION, "Tail (\"scroll to bottom\")");
-			KeyStroke accelerator = LilithKeyStrokes.getKeyStroke(LilithKeyStrokes.SCROLL_TO_BOTTOM_ACTION);
-			putValue(Action.ACCELERATOR_KEY, accelerator);
+			super(LilithActionId.FILE);
+			putValue(Action.SMALL_ICON, null);
 		}
 
+		@Override
 		public void actionPerformed(ActionEvent e)
 		{
-			boolean tail = !isScrollingToBottom();
-			setScrollingToBottom(tail);
-			if(logger.isDebugEnabled()) logger.debug("tail={}", tail);
-			focusTable();
-		}
-
-		public void updateAction()
-		{
-			if(isScrollingToBottom())
-			{
-				putValue(Action.SMALL_ICON, selectedIcon);
-			}
-			else
-			{
-				putValue(Action.SMALL_ICON, unselectedIcon);
-			}
+			// nothing
 		}
 	}
 
-	private class ScrollToBottomToolBarAction
-		extends AbstractAction
+	private static class EditAction
+			extends AbstractLilithAction
 	{
-		private static final long serialVersionUID = -7793074053120455264L;
+		private static final long serialVersionUID = -2716967152517099080L;
 
-		public ScrollToBottomToolBarAction()
+		EditAction()
 		{
-			super();
-			putValue(Action.SMALL_ICON, Icons.TAIL_TOOLBAR_ICON);
-			putValue(Action.SHORT_DESCRIPTION, "Tail (\"scroll to bottom\")");
-			KeyStroke accelerator = LilithKeyStrokes.getKeyStroke(LilithKeyStrokes.SCROLL_TO_BOTTOM_ACTION);
-			putValue(Action.ACCELERATOR_KEY, accelerator);
+			super(LilithActionId.EDIT);
+			putValue(Action.SMALL_ICON, null);
 		}
 
+		@Override
+		public void actionPerformed(ActionEvent e)
+		{
+			// nothing
+		}
+	}
+
+	private static class SearchAction
+			extends AbstractLilithAction
+	{
+		private static final long serialVersionUID = 4657376136768632219L;
+
+		SearchAction()
+		{
+			super(LilithActionId.SEARCH);
+			putValue(Action.SMALL_ICON, null);
+		}
+
+		@Override
+		public void actionPerformed(ActionEvent e)
+		{
+			// nothing
+		}
+	}
+
+	private static class ViewAction
+			extends AbstractLilithAction
+	{
+		private static final long serialVersionUID = 3606162173106275568L;
+
+		ViewAction()
+		{
+			super(LilithActionId.VIEW);
+			putValue(Action.SMALL_ICON, null);
+		}
+
+		@Override
+		public void actionPerformed(ActionEvent e)
+		{
+			// nothing
+		}
+	}
+
+	private static class WindowAction
+			extends AbstractLilithAction
+	{
+		private static final long serialVersionUID = 9045231748351787117L;
+
+		WindowAction()
+		{
+			super(LilithActionId.WINDOW);
+			putValue(Action.SMALL_ICON, null);
+		}
+
+		@Override
+		public void actionPerformed(ActionEvent e)
+		{
+			// nothing
+		}
+	}
+
+	private static class HelpAction
+			extends AbstractLilithAction
+	{
+		private static final long serialVersionUID = 2294357096466137621L;
+
+		HelpAction()
+		{
+			super(LilithActionId.HELP);
+			putValue(Action.SMALL_ICON, null);
+		}
+
+		@Override
+		public void actionPerformed(ActionEvent e)
+		{
+			// nothing
+		}
+	}
+
+	private static class LayoutAction
+			extends AbstractLilithAction
+	{
+		private static final long serialVersionUID = 2989496510791574495L;
+
+		LayoutAction()
+		{
+			super(LilithActionId.LAYOUT);
+		}
+
+		@Override
+		public void actionPerformed(ActionEvent e)
+		{
+			// nothing
+		}
+	}
+
+	private static class ColumnsAction
+			extends AbstractLilithAction
+	{
+		private static final long serialVersionUID = 4884985802967711064L;
+
+		ColumnsAction()
+		{
+			super(LilithActionId.COLUMNS);
+		}
+
+		@Override
+		public void actionPerformed(ActionEvent e)
+		{
+			// nothing
+		}
+	}
+
+	private static class RecentFilesAction
+			extends AbstractLilithAction
+	{
+		private static final long serialVersionUID = 3479806600315336050L;
+
+		RecentFilesAction()
+		{
+			super(LilithActionId.RECENT_FILES);
+		}
+
+		@Override
+		public void actionPerformed(ActionEvent e)
+		{
+			// nothing
+		}
+	}
+
+	private static class CustomCopyAction
+			extends AbstractLilithAction
+	{
+		private static final long serialVersionUID = -5009668707700082616L;
+
+		CustomCopyAction()
+		{
+			super(LilithActionId.CUSTOM_COPY);
+		}
+
+		@Override
+		public void actionPerformed(ActionEvent e)
+		{
+			// nothing
+		}
+	}
+
+	private class TailAction
+			extends AbstractLilithAction
+	{
+		private static final long serialVersionUID = -8499706451642163124L;
+
+		TailAction(boolean toolbar)
+		{
+			super(LilithActionId.TAIL, toolbar);
+		}
+
+		@Override
 		public void actionPerformed(ActionEvent e)
 		{
 			boolean tail = !isScrollingToBottom();
 			setScrollingToBottom(tail);
 			if(logger.isDebugEnabled()) logger.debug("tail={}", tail);
 			focusTable();
+		}
+
+		void updateAction()
+		{
+			if(isToolbar())
+			{
+				return;
+			}
+			if(isScrollingToBottom())
+			{
+				putValue(Action.SMALL_ICON, Icons.resolveMenuIcon(getId()));
+			}
+			else
+			{
+				putValue(Action.SMALL_ICON, Icons.resolveEmptyMenuIcon());
+			}
 		}
 	}
 
 	private class CloseFilterAction
-		extends AbstractAction
+		extends AbstractLilithAction
 	{
 		private static final long serialVersionUID = -842677137302613585L;
 
-		public CloseFilterAction()
+		CloseFilterAction()
 		{
-			super("Close this filter");
-			putValue(Action.SMALL_ICON, Icons.EMPTY_16_ICON);
-			putValue(Action.MNEMONIC_KEY, Integer.valueOf('c'));
-			KeyStroke accelerator = LilithKeyStrokes.getKeyStroke(LilithKeyStrokes.CLOSE_FILTER_ACTION);
-			putValue(Action.ACCELERATOR_KEY, accelerator);
+			super(LilithActionId.CLOSE_FILTER);
 		}
 
-		public void updateAction()
+		void updateAction()
 		{
 			if(viewContainer != null)
 			{
@@ -2375,6 +2068,7 @@ public class ViewActions
 			}
 		}
 
+		@Override
 		public void actionPerformed(ActionEvent e)
 		{
 			closeCurrentFilter();
@@ -2383,20 +2077,16 @@ public class ViewActions
 	}
 
 	private class CloseOtherFiltersAction
-		extends AbstractAction
+			extends AbstractLilithAction
 	{
 		private static final long serialVersionUID = -6399148183817841417L;
 
-		public CloseOtherFiltersAction()
+		CloseOtherFiltersAction()
 		{
-			super("Close all other filters");
-			putValue(Action.SMALL_ICON, Icons.EMPTY_16_ICON);
-			putValue(Action.MNEMONIC_KEY, Integer.valueOf('o'));
-			KeyStroke accelerator = LilithKeyStrokes.getKeyStroke(LilithKeyStrokes.CLOSE_OTHER_FILTERS_ACTION);
-			putValue(Action.ACCELERATOR_KEY, accelerator);
+			super(LilithActionId.CLOSE_OTHER_FILTERS);
 		}
 
-		public void updateAction()
+		void updateAction()
 		{
 			if(viewContainer != null)
 			{
@@ -2417,6 +2107,7 @@ public class ViewActions
 			}
 		}
 
+		@Override
 		public void actionPerformed(ActionEvent e)
 		{
 			closeOtherFilters();
@@ -2425,18 +2116,16 @@ public class ViewActions
 	}
 
 	private class CloseAllFiltersAction
-		extends AbstractAction
+			extends AbstractLilithAction
 	{
-		private static final long serialVersionUID = 1212878326080544663L;
+		private static final long serialVersionUID = -5157911937552703061L;
 
-		public CloseAllFiltersAction()
+		CloseAllFiltersAction()
 		{
-			super("Close all filters");
-			putValue(Action.SMALL_ICON, Icons.EMPTY_16_ICON);
-			putValue(Action.MNEMONIC_KEY, Integer.valueOf('a'));
+			super(LilithActionId.CLOSE_ALL_FILTERS);
 		}
 
-		public void updateAction()
+		void updateAction()
 		{
 			int viewCount = 0;
 			if(viewContainer != null)
@@ -2453,6 +2142,7 @@ public class ViewActions
 			}
 		}
 
+		@Override
 		public void actionPerformed(ActionEvent e)
 		{
 			closeAllFilters();
@@ -2465,29 +2155,39 @@ public class ViewActions
 	{
 		private static final long serialVersionUID = 6967472316665780683L;
 
-		private EventSource<LoggingEvent> eventSource;
+		private final EventSource<LoggingEvent> eventSource;
 
-		public ViewLoggingAction(ViewContainer<LoggingEvent> container)
+		ViewLoggingAction(String title, String tooltipText, EventSource<LoggingEvent> eventSource)
 		{
-			super(mainFrame.resolveSourceTitle(container));
-			this.eventSource = container.getEventSource();
+			super(title);
+			this.eventSource = eventSource;
+
+			LilithActionId actionId = null;
 			if(eventSource.isGlobal())
 			{
-				KeyStroke accelerator = LilithKeyStrokes.getKeyStroke(LilithKeyStrokes.VIEW_GLOBAL_CLASSIC_LOGS_ACTION);
-				putValue(Action.ACCELERATOR_KEY, accelerator);
+				actionId = LilithActionId.VIEW_GLOBAL_CLASSIC_LOGS;
 			}
 			else
 			{
 				SourceIdentifier si = eventSource.getSourceIdentifier();
-				if(si != null && "Lilith".equals(si.getIdentifier()))
+				if(InternalLilithAppender.IDENTIFIER_NAME.equals(si.getIdentifier()))
 				{
 					// internal Lilith log
-					KeyStroke accelerator = LilithKeyStrokes.getKeyStroke(LilithKeyStrokes.VIEW_LILITH_LOGS_ACTION);
-					putValue(Action.ACCELERATOR_KEY, accelerator);
+					actionId = LilithActionId.VIEW_LILITH_LOGS;
 				}
+			}
+
+			if(actionId != null)
+			{
+				AbstractLilithAction.initMenuActionFromActionId(this, actionId);
+			}
+			else
+			{
+				putValue(Action.SHORT_DESCRIPTION, tooltipText);
 			}
 		}
 
+		@Override
 		public void actionPerformed(ActionEvent evt)
 		{
 			mainFrame.showLoggingView(eventSource);
@@ -2500,19 +2200,30 @@ public class ViewActions
 	{
 		private static final long serialVersionUID = 8054851261518410946L;
 
-		private EventSource<AccessEvent> eventSource;
+		private final EventSource<AccessEvent> eventSource;
 
-		public ViewAccessAction(ViewContainer<AccessEvent> container)
+		ViewAccessAction(String title, String tooltipText, EventSource<AccessEvent> eventSource)
 		{
-			super(mainFrame.resolveSourceTitle(container));
-			this.eventSource = container.getEventSource();
+			super(title);
+			this.eventSource = eventSource;
+
+			LilithActionId actionId = null;
 			if(eventSource.isGlobal())
 			{
-				KeyStroke accelerator = LilithKeyStrokes.getKeyStroke(LilithKeyStrokes.VIEW_GLOBAL_ACCESS_LOGS_ACTION);
-				putValue(Action.ACCELERATOR_KEY, accelerator);
+				actionId = LilithActionId.VIEW_GLOBAL_ACCESS_LOGS;
+			}
+
+			if(actionId != null)
+			{
+				AbstractLilithAction.initMenuActionFromActionId(this, actionId);
+			}
+			else
+			{
+				putValue(Action.SHORT_DESCRIPTION, tooltipText);
 			}
 		}
 
+		@Override
 		public void actionPerformed(ActionEvent evt)
 		{
 			mainFrame.showAccessView(eventSource);
@@ -2520,62 +2231,158 @@ public class ViewActions
 
 	}
 
-	class ViewStatisticsAction
-		extends AbstractAction
+	static String resolveSourceTitle(ViewContainer container, Map<String, String> sourceNames, boolean showingPrimaryIdentifier, boolean showingSecondaryIdentifier)
 	{
-		private static final long serialVersionUID = 4453230971326526165L;
+		EventWrapperViewPanel defaultView = container.getDefaultView();
+		EventSource eventSource = defaultView.getEventSource();
+		boolean global=eventSource.isGlobal();
 
-		private SourceIdentifier sourceIentifier;
-
-		public ViewStatisticsAction(String name, SourceIdentifier sourceIdentifier)
+		String name=null;
+		if(!global)
 		{
-			super(name);
-			this.sourceIentifier = sourceIdentifier;
+			name = resolveApplicationName(defaultView.getSourceBuffer());
 		}
 
-		public void actionPerformed(ActionEvent e)
+		SourceIdentifier si = eventSource.getSourceIdentifier();
+		String title = resolveSourceTitle(si, name, sourceNames, showingPrimaryIdentifier, showingSecondaryIdentifier);
+
+		Class clazz = container.getWrappedClass();
+		if (clazz == LoggingEvent.class)
 		{
-			mainFrame.showStatistics(sourceIentifier);
+			title = title + " (Logging)";
 		}
+		else if (clazz == AccessEvent.class)
+		{
+			title = title + " (Access)";
+		}
+
+		return title;
 	}
 
-/*
-	static class StatisticsSubMenuAction
-		extends AbstractAction
+	private static String resolveSourceTitle(SourceIdentifier identifier, String name, Map<String, String> sourceNames, boolean showingPrimaryIdentifier, boolean showingSecondaryIdentifier)
 	{
-		private static final long serialVersionUID = -8180660223848656769L;
-
-		public StatisticsSubMenuAction()
+		String primary = getPrimarySourceTitle(identifier.getIdentifier(), sourceNames, showingPrimaryIdentifier);
+		String secondary = identifier.getSecondaryIdentifier();
+		if(secondary == null || !showingSecondaryIdentifier || secondary.equals(primary))
 		{
-			super("Statistics");
-			putValue(Action.SMALL_ICON, STATISTICS_MENU_ICON);
+			if(name == null)
+			{
+				return primary;
+			}
+			return primary + " - " + name;
 		}
 
-		public void actionPerformed(ActionEvent e)
+		if(name == null)
 		{
+			return primary + " - " + secondary;
 		}
+		return primary + " - " +name + " - " + secondary;
 	}
-*/
+
+	static String resolveApplicationName(Buffer<?> buffer)
+	{
+		Object event=null;
+		if(buffer != null)
+		{
+			event = buffer.get(0);
+		}
+		return resolveName(event);
+	}
+
+	private static String resolveName(Object eventWrapperObj)
+	{
+		String name;
+		String appId=null;
+		if(eventWrapperObj instanceof EventWrapper)
+		{
+			EventWrapper wrapper= (EventWrapper) eventWrapperObj;
+			Serializable evtObject = wrapper.getEvent();
+			LoggerContext context = null;
+			if(evtObject instanceof LoggingEvent)
+			{
+				context = ((LoggingEvent) evtObject).getLoggerContext();
+			}
+			else if(evtObject instanceof AccessEvent)
+			{
+				context = ((AccessEvent) evtObject).getLoggerContext();
+			}
+			if(context != null)
+			{
+				name=context.getName();
+				if("default".equals(name) || "".equals(name))
+				{
+					name = null;
+				}
+				Map<String, String> props = context.getProperties();
+				if(props!= null)
+				{
+					appId=props.get(LoggerContext.APPLICATION_IDENTIFIER_PROPERTY_NAME);
+				}
+
+				if(name != null)
+				{
+					if(appId == null || name.equals(appId))
+					{
+						return name;
+					}
+					return name+"/"+appId;
+				}
+				return appId;
+			}
+		}
+		return null;
+	}
+
+	static String getPrimarySourceTitle(String primaryIdentifier, Map<String, String> sourceNames, boolean showingPrimaryIdentifier)
+	{
+		if(primaryIdentifier == null)
+		{
+			return null;
+		}
+
+		String resolvedName = null;
+		if(sourceNames != null)
+		{
+			resolvedName = sourceNames.get(primaryIdentifier);
+		}
+		if(resolvedName != null && !resolvedName.equals(primaryIdentifier))
+		{
+			if(showingPrimaryIdentifier)
+			{
+				return resolvedName + " [" + primaryIdentifier + "]";
+			}
+			else
+			{
+				return resolvedName;
+			}
+		}
+		return primaryIdentifier;
+	}
 
 	class UpdateWindowMenuRunnable
 		implements Runnable
 	{
-		private JMenu windowMenu;
+		private final JMenu windowMenu;
 
-		public UpdateWindowMenuRunnable(JMenu windowMenu)
+		UpdateWindowMenuRunnable(JMenu windowMenu)
 		{
 			this.windowMenu = windowMenu;
 		}
 
+		@Override
 		public void run()
 		{
 			// remove loggingViews that were closed in the meantime...
-			mainFrame.removeInactiveViews(true, false);
-			if(logger.isDebugEnabled()) logger.debug("Updating Views-Menu.");
+			mainFrame.removeInactiveViews(true);
+
+			Map<String, String> sourceNames = applicationPreferences.getSourceNames();
+			boolean showingPrimaryIdentifier = applicationPreferences.isShowingPrimaryIdentifier();
+			boolean showingSecondaryIdentifier = applicationPreferences.isShowingSecondaryIdentifier();
+			boolean globalLoggingEnabled = applicationPreferences.isGlobalLoggingEnabled();
+
+			if(logger.isDebugEnabled()) logger.debug("Updating Window-Menu.");
 
 			windowMenu.removeAll();
-			JMenu statisticsMenu = createStatisticsMenu();
-			windowMenu.add(statisticsMenu);
 			windowMenu.add(showTaskManagerItem);
 			windowMenu.addSeparator();
 			windowMenu.add(closeAllItem);
@@ -2583,7 +2390,6 @@ public class ViewActions
 			windowMenu.add(minimizeAllItem);
 			windowMenu.add(minimizeAllOtherItem);
 			windowMenu.add(removeInactiveItem);
-//			windowMenu.add(clearAndRemoveInactiveItem);
 
 			int activeCounter = 0;
 			int inactiveCounter = 0;
@@ -2603,7 +2409,7 @@ public class ViewActions
 			{
 				EventSource<LoggingEvent> key = entry.getKey();
 				SourceIdentifier si = key.getSourceIdentifier();
-				if("Lilith".equals(si.getIdentifier()))
+				if(InternalLilithAppender.IDENTIFIER_NAME.equals(si.getIdentifier()))
 				{
 					ViewContainer<LoggingEvent> value = entry.getValue();
 					if(value.resolveViewWindow() != null)
@@ -2615,7 +2421,7 @@ public class ViewActions
 						first = false;
 						windowMenu.addSeparator();
 					}
-					JMenuItem menuItem = createLoggingMenuItem(key, value);
+					JMenuItem menuItem = createLoggingMenuItem(value, sourceNames, showingPrimaryIdentifier, showingSecondaryIdentifier);
 					windowMenu.add(menuItem);
 				}
 			}
@@ -2624,7 +2430,7 @@ public class ViewActions
 			{
 				EventSource<LoggingEvent> key = entry.getKey();
 				SourceIdentifier si = key.getSourceIdentifier();
-				if(!"Lilith".equals(si.getIdentifier()))
+				if(!InternalLilithAppender.IDENTIFIER_NAME.equals(si.getIdentifier()))
 				{
 					ViewContainer<LoggingEvent> value = entry.getValue();
 					if(value.resolveViewWindow() != null)
@@ -2638,7 +2444,8 @@ public class ViewActions
 							first = false;
 							windowMenu.addSeparator();
 						}
-						JMenuItem menuItem = createLoggingMenuItem(key, value);
+						JMenuItem menuItem = createLoggingMenuItem(value, sourceNames, showingPrimaryIdentifier, showingSecondaryIdentifier);
+						menuItem.setEnabled(globalLoggingEnabled);
 						windowMenu.add(menuItem);
 					}
 				}
@@ -2659,7 +2466,8 @@ public class ViewActions
 						first = false;
 						windowMenu.addSeparator();
 					}
-					JMenuItem menuItem = createAccessMenuItem(key, value);
+					JMenuItem menuItem = createAccessMenuItem(value, sourceNames, showingPrimaryIdentifier, showingSecondaryIdentifier);
+					menuItem.setEnabled(globalLoggingEnabled);
 					windowMenu.add(menuItem);
 				}
 			}
@@ -2670,7 +2478,7 @@ public class ViewActions
 			{
 				EventSource<LoggingEvent> key = entry.getKey();
 				SourceIdentifier si = key.getSourceIdentifier();
-				if(!"Lilith".equals(si.getIdentifier()))
+				if(!InternalLilithAppender.IDENTIFIER_NAME.equals(si.getIdentifier()))
 				{
 					ViewContainer<LoggingEvent> value = entry.getValue();
 					EventWrapperViewPanel<LoggingEvent> panel = value.getDefaultView();
@@ -2681,7 +2489,7 @@ public class ViewActions
 							first = false;
 							windowMenu.addSeparator();
 						}
-						JMenuItem menuItem = createLoggingMenuItem(key, value);
+						JMenuItem menuItem = createLoggingMenuItem(value, sourceNames, showingPrimaryIdentifier, showingSecondaryIdentifier);
 						windowMenu.add(menuItem);
 						activeCounter++;
 					}
@@ -2692,7 +2500,7 @@ public class ViewActions
 			{
 				EventSource<LoggingEvent> key = entry.getKey();
 				SourceIdentifier si = key.getSourceIdentifier();
-				if(!"Lilith".equals(si.getIdentifier()))
+				if(!InternalLilithAppender.IDENTIFIER_NAME.equals(si.getIdentifier()))
 				{
 					ViewContainer<LoggingEvent> value = entry.getValue();
 					EventWrapperViewPanel<LoggingEvent> panel = value.getDefaultView();
@@ -2703,7 +2511,7 @@ public class ViewActions
 							first = false;
 							windowMenu.addSeparator();
 						}
-						JMenuItem menuItem = createLoggingMenuItem(key, value);
+						JMenuItem menuItem = createLoggingMenuItem(value, sourceNames, showingPrimaryIdentifier, showingSecondaryIdentifier);
 						windowMenu.add(menuItem);
 						inactiveCounter++;
 					}
@@ -2724,7 +2532,7 @@ public class ViewActions
 						first = false;
 						windowMenu.addSeparator();
 					}
-					JMenuItem menuItem = createAccessMenuItem(key, value);
+					JMenuItem menuItem = createAccessMenuItem(value, sourceNames, showingPrimaryIdentifier, showingSecondaryIdentifier);
 					windowMenu.add(menuItem);
 					activeCounter++;
 				}
@@ -2742,7 +2550,7 @@ public class ViewActions
 						first = false;
 						windowMenu.addSeparator();
 					}
-					JMenuItem menuItem = createAccessMenuItem(key, value);
+					JMenuItem menuItem = createAccessMenuItem(value, sourceNames, showingPrimaryIdentifier, showingSecondaryIdentifier);
 					windowMenu.add(menuItem);
 					inactiveCounter++;
 				}
@@ -2777,82 +2585,55 @@ public class ViewActions
 			}
 		}
 
-
-		private JMenuItem createLoggingMenuItem(EventSource<LoggingEvent> key, ViewContainer<LoggingEvent> viewContainer)
+		private JMenuItem createLoggingMenuItem(ViewContainer<LoggingEvent> viewContainer, Map<String, String> sourceNames, boolean showingPrimaryIdentifier, boolean showingSecondaryIdentifier)
 		{
-			JMenuItem result = new JMenuItem(new ViewLoggingAction(viewContainer));
+			EventSource<LoggingEvent> eventSource = viewContainer.getEventSource();
+			String title=resolveSourceTitle(viewContainer, sourceNames, showingPrimaryIdentifier, showingSecondaryIdentifier);
+			String tooltipText=resolveSourceTitle(viewContainer, sourceNames, true, true);
+			JMenuItem result = new JMenuItem(new ViewLoggingAction(title, tooltipText, eventSource));
 			Container compParent = viewContainer.getParent();
-			if(logger.isDebugEnabled()) logger.debug("\n\nParent for {}: {}\n", key.getSourceIdentifier(), compParent);
+			if(logger.isDebugEnabled()) logger.debug("\n\nParent for {}: {}\n", eventSource.getSourceIdentifier(), compParent);
 
 			boolean disabled = false;
 			if(compParent == null)
 			{
 				disabled = true;
 			}
-			LoggingViewState state = viewContainer.getState();
-			result.setIcon(LoggingViewStateIcons.resolveIconForState(state, disabled));
+			result.setIcon(Icons.resolveFrameIcon(viewContainer.getState(), disabled));
 			return result;
 		}
 
-		private JMenuItem createAccessMenuItem(EventSource<AccessEvent> key, ViewContainer<AccessEvent> viewContainer)
+		private JMenuItem createAccessMenuItem(ViewContainer<AccessEvent> viewContainer, Map<String, String> sourceNames, boolean showingPrimaryIdentifier, boolean showingSecondaryIdentifier)
 		{
-			JMenuItem result = new JMenuItem(new ViewAccessAction(viewContainer));
+			EventSource<AccessEvent> eventSource = viewContainer.getEventSource();
+			String title=resolveSourceTitle(viewContainer, sourceNames, showingPrimaryIdentifier, showingSecondaryIdentifier);
+			String tooltipText=resolveSourceTitle(viewContainer, sourceNames, true, true);
+			JMenuItem result = new JMenuItem(new ViewAccessAction(title, tooltipText, eventSource));
 			Container compParent = viewContainer.getParent();
-			if(logger.isDebugEnabled()) logger.debug("\n\nParent for {}: {}\n", key.getSourceIdentifier(), compParent);
+			if(logger.isDebugEnabled()) logger.debug("\n\nParent for {}: {}\n", eventSource.getSourceIdentifier(), compParent);
 
 			boolean disabled = false;
 			if(compParent == null)
 			{
 				disabled = true;
 			}
-			LoggingViewState state = viewContainer.getState();
-			result.setIcon(LoggingViewStateIcons.resolveIconForState(state, disabled));
-			return result;
-		}
-
-		private JMenu createStatisticsMenu()
-		{
-			StatisticsMenuAction statisticsMenuAction = new StatisticsMenuAction();
-			JMenu result = new JMenu(statisticsMenuAction);
-			if(!SystemUtils.IS_JAVA_1_6)
-			{
-				statisticsMenuAction.setEnabled(false);
-			}
-			else
-			{
-				SortedMap<String, SourceIdentifier> sources = mainFrame.getAvailableStatistics();
-
-				{
-					JMenuItem menuItem = new JMenuItem(new ViewStatisticsAction("Global", new SourceIdentifier("global")));
-					result.add(menuItem);
-					result.addSeparator();
-				}
-
-				for(Map.Entry<String, SourceIdentifier> current : sources.entrySet())
-				{
-					String key = current.getKey();
-					SourceIdentifier value = current.getValue();
-
-					JMenuItem menuItem = new JMenuItem(new ViewStatisticsAction(key, value));
-					result.add(menuItem);
-				}
-			}
+			result.setIcon(Icons.resolveFrameIcon(viewContainer.getState(), disabled));
 			return result;
 		}
 	}
 
 
 	class AboutAction
-		extends AbstractAction
+			extends AbstractLilithAction
 	{
 		private static final long serialVersionUID = -372250750198620913L;
 
-		public AboutAction()
+		AboutAction()
 		{
-			super("About...");
-			putValue(Action.SMALL_ICON, Icons.EMPTY_16_ICON);
+			super(LilithActionId.ABOUT);
 		}
 
+		@Override
 		public void actionPerformed(ActionEvent e)
 		{
 			mainFrame.showAboutDialog();
@@ -2860,16 +2641,16 @@ public class ViewActions
 	}
 
 	class SaveLayoutAction
-		extends AbstractAction
+			extends AbstractLilithAction
 	{
-		private static final long serialVersionUID = 6135867758474252484L;
+		private static final long serialVersionUID = 5923537670097606664L;
 
-		public SaveLayoutAction()
+		SaveLayoutAction()
 		{
-			super("Save layout");
-			putValue(Action.SMALL_ICON, Icons.EMPTY_16_ICON);
+			super(LilithActionId.SAVE_LAYOUT);
 		}
 
+		@Override
 		public void actionPerformed(ActionEvent e)
 		{
 			if(viewContainer != null)
@@ -2888,16 +2669,16 @@ public class ViewActions
 	}
 
 	class ResetLayoutAction
-		extends AbstractAction
+			extends AbstractLilithAction
 	{
-		private static final long serialVersionUID = -8396518428359553649L;
+		private static final long serialVersionUID = 7012243855415503341L;
 
-		public ResetLayoutAction()
+		ResetLayoutAction()
 		{
-			super("Reset layout");
-			putValue(Action.SMALL_ICON, Icons.EMPTY_16_ICON);
+			super(LilithActionId.RESET_LAYOUT);
 		}
 
+		@Override
 		public void actionPerformed(ActionEvent e)
 		{
 			if(viewContainer != null)
@@ -2916,16 +2697,16 @@ public class ViewActions
 	}
 
 	class CheckForUpdateAction
-		extends AbstractAction
+		extends AbstractLilithAction
 	{
 		private static final long serialVersionUID = 529742851501771901L;
 
-		public CheckForUpdateAction()
+		CheckForUpdateAction()
 		{
-			super("Check for Update...");
-			putValue(Action.SMALL_ICON, Icons.CHECK_UPDATE_ICON);
+			super(LilithActionId.CHECK_FOR_UPDATE);
 		}
 
+		@Override
 		public void actionPerformed(ActionEvent e)
 		{
 			mainFrame.checkForUpdate(true);
@@ -2933,36 +2714,33 @@ public class ViewActions
 	}
 
 	class TroubleshootingAction
-		extends AbstractAction
+			extends AbstractLilithAction
 	{
-		private static final long serialVersionUID = 529742851501771901L;
+		private static final long serialVersionUID = 7272512675892611518L;
 
-		public TroubleshootingAction()
+		TroubleshootingAction()
 		{
-			super("Troubleshooting...");
-			putValue(Action.SMALL_ICON, Icons.EMPTY_16_ICON);
+			super(LilithActionId.TROUBLESHOOTING);
 		}
 
+		@Override
 		public void actionPerformed(ActionEvent e)
 		{
 			mainFrame.troubleshooting();
 		}
 	}
 
-	class KeyboardHelpAction
-		extends AbstractAction
+	class HelpTopicsAction
+		extends AbstractLilithAction
 	{
-		private static final long serialVersionUID = 6942092383339768508L;
+		private static final long serialVersionUID = 4151080083718877643L;
 
-		public KeyboardHelpAction()
+		HelpTopicsAction()
 		{
-			super("Help Topics");
-			putValue(Action.SMALL_ICON, Icons.HELP_MENU_ICON);
-			KeyStroke accelerator = LilithKeyStrokes.getKeyStroke(LilithKeyStrokes.HELP_ACTION);
-			putValue(Action.ACCELERATOR_KEY, accelerator);
-
+			super(LilithActionId.HELP_TOPICS);
 		}
 
+		@Override
 		public void actionPerformed(ActionEvent e)
 		{
 			mainFrame.showHelp();
@@ -2970,109 +2748,50 @@ public class ViewActions
 	}
 
 	class TipOfTheDayAction
-		extends AbstractAction
+		extends AbstractLilithAction
 	{
-		private static final long serialVersionUID = -3703967582739382172L;
+		private static final long serialVersionUID = -3353245047244667056L;
 
-		public TipOfTheDayAction()
+		TipOfTheDayAction()
 		{
-			super("Tip of the Day...");
-			putValue(Action.SMALL_ICON, Icons.TOTD_ICON);
+			super(LilithActionId.TIP_OF_THE_DAY);
 		}
 
+		@Override
 		public void actionPerformed(ActionEvent e)
 		{
 			mainFrame.showTipOfTheDayDialog();
 		}
 	}
 
-	class PreferencesMenuAction
-		extends AbstractAction
+	class PreferencesAction
+			extends AbstractLilithAction
 	{
-		private static final long serialVersionUID = -196036112324455446L;
+		private static final long serialVersionUID = -3163817872447126174L;
 
-		public PreferencesMenuAction()
+		PreferencesAction(boolean toolbar)
 		{
-			super("Preferences...");
-			putValue(Action.SMALL_ICON, Icons.PREFERENCES_MENU_ICON);
-			KeyStroke accelerator = LilithKeyStrokes.getKeyStroke(LilithKeyStrokes.PREFERENCES_ACTION);
-			putValue(Action.ACCELERATOR_KEY, accelerator);
-			putValue(Action.MNEMONIC_KEY, Integer.valueOf('p'));
+			super(LilithActionId.PREFERENCES, toolbar);
 		}
 
+		@Override
 		public void actionPerformed(ActionEvent e)
 		{
 			mainFrame.showPreferencesDialog();
-		}
-	}
-
-	class PreferencesToolBarAction
-		extends AbstractAction
-	{
-		private static final long serialVersionUID = 8353604009441967874L;
-
-		public PreferencesToolBarAction()
-		{
-			super();
-			putValue(Action.SMALL_ICON, Icons.PREFERENCES_TOOLBAR_ICON);
-			putValue(Action.SHORT_DESCRIPTION, "Preferences...");
-			KeyStroke accelerator = LilithKeyStrokes.getKeyStroke(LilithKeyStrokes.PREFERENCES_ACTION);
-			putValue(Action.ACCELERATOR_KEY, accelerator);
-			putValue(Action.MNEMONIC_KEY, Integer.valueOf('p'));
-		}
-
-		public void actionPerformed(ActionEvent e)
-		{
-			mainFrame.showPreferencesDialog();
-		}
-	}
-
-	class ShowLoveMenuAction
-			extends AbstractAction
-	{
-		private static final long serialVersionUID = 7535022992770523208L;
-
-		public ShowLoveMenuAction()
-		{
-			super("Show some Love...");
-			putValue(Action.SMALL_ICON, Icons.LOVE_MENU_ICON);
-		}
-
-		public void actionPerformed(ActionEvent e)
-		{
-			mainFrame.openHelp("love.xhtml");
-		}
-	}
-
-	class ShowLoveToolbarAction
-			extends AbstractAction
-	{
-		private static final long serialVersionUID = -8956952034828513214L;
-
-		public ShowLoveToolbarAction()
-		{
-			super();
-			putValue(Action.SMALL_ICON, Icons.LOVE_TOOLBAR_ICON);
-			putValue(Action.SHORT_DESCRIPTION, "Show some Love...");
-		}
-
-		public void actionPerformed(ActionEvent e)
-		{
-			mainFrame.openHelp("love.xhtml");
 		}
 	}
 
 	class DebugAction
-		extends AbstractAction
+		extends AbstractLilithAction
 	{
-		private static final long serialVersionUID = -1837786931224404611L;
+		private static final long serialVersionUID = -8094926165037948097L;
 
-		public DebugAction()
+		DebugAction()
 		{
-			super("Debug");
-			putValue(Action.SMALL_ICON, Icons.EMPTY_16_ICON);
+			super(LilithActionId.DEBUG);
 		}
 
+		@Override
 		public void actionPerformed(ActionEvent e)
 		{
 			mainFrame.showDebugDialog();
@@ -3080,19 +2799,16 @@ public class ViewActions
 	}
 
 	class ExitMenuAction
-		extends AbstractAction
+			extends AbstractLilithAction
 	{
-		private static final long serialVersionUID = 6693131597277483031L;
+		private static final long serialVersionUID = -2089144337780503904L;
 
-		public ExitMenuAction()
+		ExitMenuAction()
 		{
-			super("Exit");
-			putValue(Action.SMALL_ICON, Icons.EXIT_MENU_ICON);
-			KeyStroke accelerator = LilithKeyStrokes.getKeyStroke(LilithKeyStrokes.EXIT_ACTION);
-			putValue(Action.ACCELERATOR_KEY, accelerator);
-			putValue(Action.MNEMONIC_KEY, Integer.valueOf('x'));
+			super(LilithActionId.EXIT);
 		}
 
+		@Override
 		public void actionPerformed(ActionEvent e)
 		{
 			mainFrame.exit();
@@ -3100,19 +2816,16 @@ public class ViewActions
 	}
 
 	class OpenInactiveLogMenuAction
-		extends AbstractAction
+			extends AbstractLilithAction
 	{
-		private static final long serialVersionUID = 7500131416548647712L;
+		private static final long serialVersionUID = 2115685255203253178L;
 
-		public OpenInactiveLogMenuAction()
+		OpenInactiveLogMenuAction()
 		{
-			super("Open inactive log...");
-			putValue(Action.SMALL_ICON, Icons.OPEN_INACTIVE_MENU_ICON);
-			KeyStroke accelerator = LilithKeyStrokes.getKeyStroke(LilithKeyStrokes.OPEN_INACTIVE_ACTION);
-			putValue(Action.ACCELERATOR_KEY, accelerator);
-			putValue(Action.MNEMONIC_KEY, Integer.valueOf('o'));
+			super(LilithActionId.OPEN_INACTIVE);
 		}
 
+		@Override
 		public void actionPerformed(ActionEvent e)
 		{
 			mainFrame.openInactiveLogs();
@@ -3120,19 +2833,16 @@ public class ViewActions
 	}
 
 	class OpenMenuAction
-		extends AbstractAction
+			extends AbstractLilithAction
 	{
-		private static final long serialVersionUID = 7500131416548647712L;
+		private static final long serialVersionUID = 8743907596320539587L;
 
-		public OpenMenuAction()
+		OpenMenuAction()
 		{
-			super("Open...");
-			putValue(Action.SMALL_ICON, Icons.OPEN_INACTIVE_MENU_ICON);
-			KeyStroke accelerator = LilithKeyStrokes.getKeyStroke(LilithKeyStrokes.OPEN_ACTION);
-			putValue(Action.ACCELERATOR_KEY, accelerator);
-			putValue(Action.MNEMONIC_KEY, Integer.valueOf('o'));
+			super(LilithActionId.OPEN);
 		}
 
+		@Override
 		public void actionPerformed(ActionEvent e)
 		{
 			mainFrame.open();
@@ -3140,19 +2850,16 @@ public class ViewActions
 	}
 
 	class ImportMenuAction
-		extends AbstractAction
+			extends AbstractLilithAction
 	{
-		private static final long serialVersionUID = 7500131416548647712L;
+		private static final long serialVersionUID = -6465137339088031499L;
 
-		public ImportMenuAction()
+		ImportMenuAction()
 		{
-			super("Import...");
-			putValue(Action.SMALL_ICON, Icons.OPEN_INACTIVE_MENU_ICON);
-			KeyStroke accelerator = LilithKeyStrokes.getKeyStroke(LilithKeyStrokes.IMPORT_ACTION);
-			putValue(Action.ACCELERATOR_KEY, accelerator);
-			putValue(Action.MNEMONIC_KEY, Integer.valueOf('i'));
+			super(LilithActionId.IMPORT);
 		}
 
+		@Override
 		public void actionPerformed(ActionEvent e)
 		{
 			mainFrame.importFile();
@@ -3160,21 +2867,18 @@ public class ViewActions
 	}
 
 	class ExportMenuAction
-		extends AbstractAction
+			extends AbstractLilithAction
 	{
-		private static final long serialVersionUID = -5912177735718627089L;
+		private static final long serialVersionUID = 2447331397548766700L;
 
 		private EventWrapperViewPanel view;
 
-		public ExportMenuAction()
+		ExportMenuAction()
 		{
-			super("Export...");
-			putValue(Action.SMALL_ICON, Icons.EXPORT_MENU_ICON);
-			KeyStroke accelerator = LilithKeyStrokes.getKeyStroke(LilithKeyStrokes.EXPORT_ACTION);
-			putValue(Action.ACCELERATOR_KEY, accelerator);
-			putValue(Action.MNEMONIC_KEY, Integer.valueOf('e'));
+			super(LilithActionId.EXPORT);
 		}
 
+		@Override
 		public void actionPerformed(ActionEvent e)
 		{
 			mainFrame.exportFile(view);
@@ -3188,98 +2892,65 @@ public class ViewActions
 	}
 
 	class CleanAllInactiveLogsMenuAction
-		extends AbstractAction
+			extends AbstractLilithAction
 	{
 		private static final long serialVersionUID = 626049491764655228L;
 
-		public CleanAllInactiveLogsMenuAction()
+		CleanAllInactiveLogsMenuAction()
 		{
-			super("Clean all inactive logs");
-			putValue(Action.SMALL_ICON, Icons.CLEAR_MENU_ICON);
-			KeyStroke accelerator = LilithKeyStrokes.getKeyStroke(LilithKeyStrokes.CLEAN_ALL_INACTIVE_LOGS_ACTION);
-			putValue(Action.ACCELERATOR_KEY, accelerator);
-			putValue(Action.MNEMONIC_KEY, Integer.valueOf('c'));
+			super(LilithActionId.CLEAN_ALL_INACTIVE_LOGS);
 		}
 
+		@Override
 		public void actionPerformed(ActionEvent e)
 		{
-			if(logger.isInfoEnabled()) logger.info("Clean all inactive logs");
 			mainFrame.cleanAllInactiveLogs();
 		}
 	}
 
-	private class PreviousTabAction
-		extends AbstractAction
+	private boolean hasMultipleViews()
 	{
-		private static final long serialVersionUID = 3841435361964210123L;
+		return viewContainer != null && viewContainer.getViewCount() > 1;
+	}
 
-		public PreviousTabAction()
+	private class PreviousViewAction
+			extends AbstractLilithAction
+	{
+		private static final long serialVersionUID = -8929161486658826998L;
+
+		PreviousViewAction()
 		{
-			super("Previous tab");
-			KeyStroke accelerator = LilithKeyStrokes.getKeyStroke(LilithKeyStrokes.PREVIOUS_TAB_ACTION);
-			putValue(Action.ACCELERATOR_KEY, accelerator);
-			putValue(Action.SMALL_ICON, Icons.EMPTY_16_ICON);
+			super(LilithActionId.PREVIOUS_VIEW);
 		}
 
-		public void updateAction()
+		void updateAction()
 		{
-			if(viewContainer != null)
-			{
-				int viewCount = viewContainer.getViewCount();
-				if(viewCount > 1)
-				{
-					setEnabled(true);
-				}
-				else
-				{
-					setEnabled(false);
-				}
-			}
-			else
-			{
-				setEnabled(false);
-			}
+			setEnabled(hasMultipleViews());
 		}
 
+		@Override
 		public void actionPerformed(ActionEvent e)
 		{
 			previousTab();
 		}
 	}
 
-	private class NextTabAction
-		extends AbstractAction
+	private class NextViewAction
+			extends AbstractLilithAction
 	{
-		private static final long serialVersionUID = 6997026628818486446L;
+		private static final long serialVersionUID = -6274063652679458643L;
 
-		public NextTabAction()
+		NextViewAction()
 		{
-			super("Next tab");
-			KeyStroke accelerator = LilithKeyStrokes.getKeyStroke(LilithKeyStrokes.NEXT_TAB_ACTION);
-			putValue(Action.ACCELERATOR_KEY, accelerator);
-			putValue(Action.SMALL_ICON, Icons.EMPTY_16_ICON);
+			super(LilithActionId.NEXT_VIEW);
 		}
 
-		public void updateAction()
+		void updateAction()
 		{
-			if(viewContainer != null)
-			{
-				int viewCount = viewContainer.getViewCount();
-				if(viewCount > 1)
-				{
-					setEnabled(true);
-				}
-				else
-				{
-					setEnabled(false);
-				}
-			}
-			else
-			{
-				setEnabled(false);
-			}
+			setEnabled(hasMultipleViews());
 		}
 
+		@Override
 		public void actionPerformed(ActionEvent e)
 		{
 			nextTab();
@@ -3288,21 +2959,18 @@ public class ViewActions
 
 
 	private class CopySelectionAction
-		extends AbstractAction
+			extends AbstractLilithAction
 	{
-		private static final long serialVersionUID = -551520865313383753L;
-
+		private static final long serialVersionUID = -349395646886330659L;
 		private EventWrapperViewPanel view;
 
-		public CopySelectionAction()
+		CopySelectionAction()
 		{
-			super("Copy selection");
-			putValue(Action.SHORT_DESCRIPTION, "Copies the selection to the clipboard.");
-			KeyStroke accelerator = LilithKeyStrokes.getKeyStroke(LilithKeyStrokes.COPY_SELECTION_ACTION);
-			putValue(Action.ACCELERATOR_KEY, accelerator);
+			super(LilithActionId.COPY_SELECTION);
 			setView(null);
 		}
 
+		@Override
 		public void actionPerformed(ActionEvent e)
 		{
 			if(view != null)
@@ -3319,35 +2987,24 @@ public class ViewActions
 	}
 
 	private class PasteStackTraceElementAction
-		extends AbstractAction
+			extends AbstractLilithAction
 	{
-		private static final long serialVersionUID = -7630719409103575849L;
-		private static final String AT_PREFIX="at ";
+		private static final long serialVersionUID = 2254657459692349413L;
+
 		private final Logger logger = LoggerFactory.getLogger(PasteStackTraceElementAction.class);
 
 		private Clipboard clipboard;
 
-		private PasteStackTraceElementAction()
+		PasteStackTraceElementAction()
 		{
-			super("Paste StackTraceElement");
-			putValue(Action.SHORT_DESCRIPTION, "Paste StackTraceElement from clipboard and open code in IDE if available.");
-			KeyStroke accelerator = LilithKeyStrokes.getKeyStroke(LilithKeyStrokes.PASTE_STACK_TRACE_ELEMENT_ACTION);
-			putValue(Action.ACCELERATOR_KEY, accelerator);
+			super(LilithActionId.PASTE_STACK_TRACE_ELEMENT);
 			boolean enable = true;
 			try
 			{
 				Toolkit toolkit = Toolkit.getDefaultToolkit();
 				clipboard = toolkit.getSystemClipboard();
 			}
-			catch(AWTError ex)
-			{
-				enable = false;
-			}
-			catch(HeadlessException ex)
-			{
-				enable = false;
-			}
-			catch(SecurityException ex)
+			catch(AWTError | HeadlessException | SecurityException ex)
 			{
 				enable = false;
 			}
@@ -3357,224 +3014,40 @@ public class ViewActions
 		@Override
 		public void actionPerformed(ActionEvent e)
 		{
-			String text = null;
-			BufferedReader reader = null;
+			if(clipboard == null)
+			{
+				return;
+			}
 			try
 			{
 				Transferable transferable = clipboard.getContents(null /*unused*/);
-				if(transferable != null)
+				if(transferable == null)
 				{
-					reader = new BufferedReader(DataFlavor.getTextPlainUnicodeFlavor().getReaderForText(transferable));
-					text = reader.readLine();
-					if(text != null)
-					{
-						text = text.trim();
-						if(text.startsWith(AT_PREFIX))
-						{
-							text = text.substring(AT_PREFIX.length());
-						}
-					}
+					return;
+				}
+				DataFlavor[] dataFlavors = transferable.getTransferDataFlavors();
+				if(logger.isDebugEnabled()) logger.debug("DataFlavors on clipboard: {}", (Object)dataFlavors);
+				DataFlavor bestTextFlavor = DataFlavor.selectBestTextFlavor(dataFlavors);
+				if(logger.isDebugEnabled()) logger.debug("bestTextFlavor from clipboard: {}", bestTextFlavor);
+				if(bestTextFlavor == null)
+				{
+					// no text on clipboard
+					return;
+				}
+
+				try(BufferedReader reader = new BufferedReader(bestTextFlavor.getReaderForText(transferable)))
+				{
+					reader.lines()
+							.map(CallLocationCondition::parseStackTraceElement)
+							.filter(Objects::nonNull)
+							.findFirst()
+							.ifPresent(mainFrame::goToSource);
 				}
 			}
-			catch(IllegalStateException ex)
+			catch(Throwable ex)
 			{
-				// ignore
+				if(logger.isWarnEnabled()) logger.warn("Exception while obtaining StackTraceElement from clipboard!", ex);
 			}
-			catch(IllegalArgumentException ex)
-			{
-				// ignore
-			}
-			catch (UnsupportedFlavorException ex)
-			{
-				// ignore
-			}
-			catch (IOException ex)
-			{
-				// ignore
-			}
-			finally
-			{
-				if(reader != null)
-				{
-					try
-					{
-						reader.close();
-					}
-					catch (IOException e1)
-					{
-						// ignore
-					}
-				}
-			}
-			// wtf? :D
-
-			if(logger.isDebugEnabled()) logger.debug("Line from clipboard: {}", text);
-			if(text != null)
-			{
-				ExtendedStackTraceElement xste = ExtendedStackTraceElement.parseStackTraceElement(text);
-				if(xste != null)
-				{
-					StackTraceElement ste = xste.getStackTraceElement();
-					if(logger.isDebugEnabled()) logger.debug("Parsed StackTraceElement: {}", ste);
-					mainFrame.goToSource(ste);
-				}
-			}
-		}
-	}
-
-	private class EventFormatter
-		implements ClipboardFormatter
-	{
-		private static final long serialVersionUID = 2263706767713579277L;
-
-		public String getName()
-		{
-			return "Copy event";
-		}
-
-		public String getDescription()
-		{
-			return "Copies the HTML code of this events details view to the clipboard.";
-		}
-
-		public String getAccelerator()
-		{
-			return null;
-		}
-
-		public boolean isCompatible(Object object)
-		{
-			if(object instanceof EventWrapper)
-			{
-				EventWrapper wrapper = (EventWrapper) object;
-				Object eventObj = wrapper.getEvent();
-				return eventObj instanceof LoggingEvent || eventObj instanceof AccessEvent;
-			}
-			return false;
-		}
-
-		public String toString(Object object)
-		{
-			if(object instanceof EventWrapper)
-			{
-				EventWrapper wrapper = (EventWrapper) object;
-				return mainFrame.createMessage(wrapper);
-			}
-			return null;
-		}
-	}
-
-	private class EventJsonFormatter
-		implements ClipboardFormatter
-	{
-		private static final long serialVersionUID = 2263706767713579277L;
-
-		private LoggingJsonEncoder encoder = new LoggingJsonEncoder(false, true, true);
-
-		public String getName()
-		{
-			return "Copy event as JSON";
-		}
-
-		public String getDescription()
-		{
-			return "Copies the JSON representation of the event to the clipboard.";
-		}
-
-		public String getAccelerator()
-		{
-			return null;
-		}
-
-		public boolean isCompatible(Object object)
-		{
-			if(object instanceof EventWrapper)
-			{
-				EventWrapper wrapper = (EventWrapper) object;
-				Object eventObj = wrapper.getEvent();
-				return eventObj instanceof LoggingEvent;
-			}
-			return false;
-		}
-
-		public String toString(Object object)
-		{
-			if(object instanceof EventWrapper)
-			{
-				EventWrapper wrapper = (EventWrapper) object;
-				Serializable ser = wrapper.getEvent();
-				if(ser instanceof LoggingEvent)
-				{
-					LoggingEvent event = (LoggingEvent) ser;
-					byte[] bytes = encoder.encode(event);
-					try
-					{
-						return new String(bytes, "UTF-8");
-					}
-					catch(UnsupportedEncodingException e)
-					{
-						if(logger.isErrorEnabled()) logger.error("Couldn't create UTF-8 string!", e);
-					}
-				}
-			}
-			return null;
-		}
-	}
-
-	private class EventXmlFormatter
-		implements ClipboardFormatter
-	{
-		private static final long serialVersionUID = 2263706767713579277L;
-
-		private LoggingXmlEncoder encoder = new LoggingXmlEncoder(false, true);
-
-		public String getName()
-		{
-			return "Copy event as XML";
-		}
-
-		public String getDescription()
-		{
-			return "Copies the XML representation of the event to the clipboard.";
-		}
-
-		public String getAccelerator()
-		{
-			return null;
-		}
-
-		public boolean isCompatible(Object object)
-		{
-			if(object instanceof EventWrapper)
-			{
-				EventWrapper wrapper = (EventWrapper) object;
-				Object eventObj = wrapper.getEvent();
-				return eventObj instanceof LoggingEvent;
-			}
-			return false;
-		}
-
-		public String toString(Object object)
-		{
-			if(object instanceof EventWrapper)
-			{
-				EventWrapper wrapper = (EventWrapper) object;
-				Serializable ser = wrapper.getEvent();
-				if(ser instanceof LoggingEvent)
-				{
-					LoggingEvent event = (LoggingEvent) ser;
-					byte[] bytes = encoder.encode(event);
-					try
-					{
-						return new String(bytes, "UTF-8");
-					}
-					catch(UnsupportedEncodingException e)
-					{
-						if(logger.isErrorEnabled()) logger.error("Couldn't create UTF-8 string!", e);
-					}
-				}
-			}
-			return null;
 		}
 	}
 
@@ -3588,18 +3061,18 @@ public class ViewActions
 		private ClipboardFormatter clipboardFormatter;
 		private transient EventWrapper wrapper;
 
-		private CopyToClipboardAction(ClipboardFormatter clipboardFormatter)
+		CopyToClipboardAction(ClipboardFormatter clipboardFormatter)
 		{
 			setClipboardFormatter(clipboardFormatter);
 			setEventWrapper(null);
 		}
 
-		public ClipboardFormatter getClipboardFormatter()
+		ClipboardFormatter getClipboardFormatter()
 		{
 			return clipboardFormatter;
 		}
 
-		public void setClipboardFormatter(ClipboardFormatter clipboardFormatter)
+		final void setClipboardFormatter(ClipboardFormatter clipboardFormatter)
 		{
 			if(clipboardFormatter == null)
 			{
@@ -3608,6 +3081,7 @@ public class ViewActions
 			this.clipboardFormatter = clipboardFormatter;
 			putValue(Action.NAME, clipboardFormatter.getName());
 			putValue(Action.SHORT_DESCRIPTION, clipboardFormatter.getDescription());
+			putValue(Action.MNEMONIC_KEY, clipboardFormatter.getMnemonic());
 			String acc = clipboardFormatter.getAccelerator();
 			if(acc != null)
 			{
@@ -3636,6 +3110,7 @@ public class ViewActions
 			this.wrapper = wrapper;
 		}
 
+		@Override
 		public void actionPerformed(ActionEvent e)
 		{
 			if(clipboardFormatter == null)
@@ -3651,16 +3126,16 @@ public class ViewActions
 	}
 
 	private class ShowUnfilteredEventAction
-		extends AbstractAction
+			extends AbstractLilithAction
 	{
-		private static final long serialVersionUID = -3282222163767568550L;
+		private static final long serialVersionUID = 1802581771634584229L;
 
-		public ShowUnfilteredEventAction()
+		ShowUnfilteredEventAction()
 		{
-			super("Show unfiltered");
-			putValue(Action.SHORT_DESCRIPTION, "Show unfiltered event.");
+			super(LilithActionId.SHOW_UNFILTERED_EVENT);
 		}
 
+		@Override
 		public void actionPerformed(ActionEvent e)
 		{
 			showUnfilteredEvent();
@@ -3668,23 +3143,24 @@ public class ViewActions
 
 	}
 
-	private class GotoSourceAction
-		extends AbstractAction
+	private class GoToSourceAction
+			extends AbstractLilithAction
 	{
-		private static final long serialVersionUID = 4284532761807647658L;
-		private ExtendedStackTraceElement stackTraceElement;
+		private static final long serialVersionUID = -877335742021967857L;
 
-		public GotoSourceAction()
+		private StackTraceElement stackTraceElement;
+
+		GoToSourceAction()
 		{
-			super("Go to source");
-			putValue(Action.SHORT_DESCRIPTION, "Show source in IDEA if everything is ok ;)");
+			super(LilithActionId.GO_TO_SOURCE);
+			setEventWrapper(null);
 		}
 
 		public void setEventWrapper(EventWrapper wrapper)
 		{
 			if(wrapper == null)
 			{
-				setStackTraceElement(null);
+				setExtendedStackTraceElement(null);
 				return;
 			}
 			Serializable event = wrapper.getEvent();
@@ -3694,46 +3170,30 @@ public class ViewActions
 				ExtendedStackTraceElement[] callStack = loggingEvent.getCallStack();
 				if(callStack != null && callStack.length > 0)
 				{
-					setStackTraceElement(callStack[0]);
+					setExtendedStackTraceElement(callStack[0]);
 					return;
 				}
 			}
-			setStackTraceElement(null);
+			setExtendedStackTraceElement(null);
 		}
 
-		public void setStackTraceElement(ExtendedStackTraceElement stackTraceElement)
+		private void setExtendedStackTraceElement(ExtendedStackTraceElement extendedStackTraceElement)
 		{
-			this.stackTraceElement = stackTraceElement;
+			if(extendedStackTraceElement == null)
+			{
+				this.stackTraceElement = null;
+			}
+			else
+			{
+				this.stackTraceElement = extendedStackTraceElement.getStackTraceElement();
+			}
 			setEnabled(this.stackTraceElement != null);
 		}
 
+		@Override
 		public void actionPerformed(ActionEvent e)
 		{
-			mainFrame.goToSource(stackTraceElement.getStackTraceElement());
-		}
-	}
-
-	protected static class SendAction<T extends Serializable>
-		extends AbstractAction
-	{
-		private static final long serialVersionUID = 6612401555757959404L;
-		private EventSender<T> sender;
-		private T event;
-
-		public SendAction(String name, EventSender<T> sender, EventWrapper<T> wrapper)
-		{
-			super(name);
-			this.sender = sender;
-			this.event = wrapper.getEvent();
-			setEnabled(event != null);
-		}
-
-		/**
-		 * Invoked when an action occurs.
-		 */
-		public void actionPerformed(ActionEvent e)
-		{
-			sender.send(event);
+			mainFrame.goToSource(stackTraceElement);
 		}
 	}
 
@@ -3742,10 +3202,10 @@ public class ViewActions
 	{
 		private static final long serialVersionUID = 7775753128032553866L;
 		private boolean visible;
-		private String columnName;
-		private PersistentTableColumnModel tableColumnModel;
+		private final String columnName;
+		private final PersistentTableColumnModel tableColumnModel;
 
-		public ShowHideAction(PersistentTableColumnModel tableColumnModel, String columnName, boolean visible)
+		ShowHideAction(PersistentTableColumnModel tableColumnModel, String columnName, boolean visible)
 		{
 			super(columnName);
 			this.columnName = columnName;
@@ -3755,6 +3215,7 @@ public class ViewActions
 			// selection must be set manually
 		}
 
+		@Override
 		public void actionPerformed(ActionEvent e)
 		{
 			visible = !visible;
@@ -3779,11 +3240,12 @@ public class ViewActions
 	private static class CopyToClipboardByNameComparator
 		implements Comparator<CopyToClipboardAction>
 	{
-		public static final CopyToClipboardByNameComparator INSTANCE = new CopyToClipboardByNameComparator();
+		static final CopyToClipboardByNameComparator INSTANCE = new CopyToClipboardByNameComparator();
 
+		@Override
 		public int compare(CopyToClipboardAction o1, CopyToClipboardAction o2)
 		{
-			if(o1 == o2)
+			if(o1 == o2) // NOPMD
 			{
 				return 0;
 			}
@@ -3797,7 +3259,7 @@ public class ViewActions
 			}
 			ClipboardFormatter f1 = o1.getClipboardFormatter();
 			ClipboardFormatter f2 = o2.getClipboardFormatter();
-			if(f1 == f2)
+			if(f1 == f2) // NOPMD
 			{
 				return 0;
 			}
@@ -3812,7 +3274,7 @@ public class ViewActions
 			String n1 = f1.getName();
 			String n2 = f2.getName();
 			//noinspection StringEquality
-			if(n1 == n2)
+			if(n1 == n2) // NOPMD
 			{
 				return 0;
 			}
@@ -3836,6 +3298,7 @@ public class ViewActions
 
 		private int step = 0;
 
+		@Override
 		public boolean dispatchKeyEvent(KeyEvent e)
 		{
 			if (e.getID() == KeyEvent.KEY_RELEASED)
@@ -3888,5 +3351,35 @@ public class ViewActions
 			}
 			return false;
 		}
+	}
+
+	@SuppressWarnings("unchecked")
+	private static EventWrapper<LoggingEvent> asLoggingEventWrapper(EventWrapper original)
+	{
+		if(original == null)
+		{
+			return null;
+		}
+		Serializable wrapped = original.getEvent();
+		if(wrapped instanceof LoggingEvent)
+		{
+			return (EventWrapper<LoggingEvent>) original;
+		}
+		return null;
+	}
+
+	@SuppressWarnings("unchecked")
+	private static EventWrapper<AccessEvent> asAccessEventWrapper(EventWrapper original)
+	{
+		if(original == null)
+		{
+			return null;
+		}
+		Serializable wrapped = original.getEvent();
+		if(wrapped instanceof AccessEvent)
+		{
+			return (EventWrapper<AccessEvent>) original;
+		}
+		return null;
 	}
 }

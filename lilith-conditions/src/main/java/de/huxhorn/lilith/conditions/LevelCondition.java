@@ -1,6 +1,6 @@
 /*
  * Lilith - a log event viewer.
- * Copyright (C) 2007-2013 Joern Huxhorn
+ * Copyright (C) 2007-2017 Joern Huxhorn
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,15 +15,15 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package de.huxhorn.lilith.conditions;
 
 import de.huxhorn.lilith.data.eventsource.EventWrapper;
 import de.huxhorn.lilith.data.logging.LoggingEvent;
-
 import java.io.ObjectStreamException;
 
-public class LevelCondition
-	implements LilithCondition, SearchStringCondition
+public final class LevelCondition
+	implements LilithCondition, SearchStringCondition, Cloneable
 {
 	private static final long serialVersionUID = -5498023202272568557L;
 
@@ -55,26 +55,26 @@ public class LevelCondition
 		}
 	}
 
+	@Override
 	public String getSearchString()
 	{
 		return searchString;
 	}
 
+	@Override
 	public String getDescription()
 	{
 		return DESCRIPTION;
 	}
 
+	public LoggingEvent.Level getLevel()
+	{
+		return level;
+	}
+
+	@Override
 	public boolean isTrue(Object value)
 	{
-		if(searchString == null)
-		{
-			return false;
-		}
-		if(searchString.length() == 0)
-		{
-			return true;
-		}
 		if(level == null)
 		{
 			return false;
@@ -94,6 +94,7 @@ public class LevelCondition
 		return false;
 	}
 
+	@Override
 	public boolean equals(Object o)
 	{
 		if(this == o) return true;
@@ -104,11 +105,13 @@ public class LevelCondition
 		return level == that.level;
 	}
 
+	@Override
 	public int hashCode()
 	{
 		return (level != null ? level.hashCode() : 0);
 	}
 
+	@Override
 	public LevelCondition clone()
 		throws CloneNotSupportedException
 	{
@@ -127,9 +130,6 @@ public class LevelCondition
 	@Override
 	public String toString()
 	{
-		StringBuilder result = new StringBuilder();
-		result.append(getDescription());
-		result.append(level);
-		return result.toString();
+		return getDescription() + level;
 	}
 }

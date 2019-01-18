@@ -1,6 +1,6 @@
 /*
  * Lilith - a log event viewer.
- * Copyright (C) 2007-2011 Joern Huxhorn
+ * Copyright (C) 2007-2017 Joern Huxhorn
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,52 +15,34 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package de.huxhorn.lilith.services.clipboard;
 
-import de.huxhorn.lilith.data.eventsource.EventWrapper;
-import de.huxhorn.lilith.data.logging.LoggingEvent;
+import de.huxhorn.lilith.swing.LilithActionId;
+
+import static de.huxhorn.lilith.services.clipboard.FormatterTools.isNullOrEmpty;
+import static de.huxhorn.lilith.services.clipboard.FormatterTools.resolveLoggingEvent;
+import static de.huxhorn.lilith.services.clipboard.FormatterTools.toStringOrNull;
 
 public class LoggingLoggerNameFormatter
-	implements ClipboardFormatter
+		extends AbstractNativeClipboardFormatter
 {
-	private static final long serialVersionUID = -7850932739151085487L;
+	private static final long serialVersionUID = 3657795032988439671L;
 
-	public String getName()
+	public LoggingLoggerNameFormatter()
 	{
-		return "Copy logger name";
+		super(LilithActionId.COPY_LOGGER_NAME);
 	}
 
-	public String getDescription()
-	{
-		return "Copies the logger name of the logging event to the clipboard.";
-	}
-
-	public String getAccelerator()
-	{
-		return null;
-	}
-
+	@Override
 	public boolean isCompatible(Object object)
 	{
-		return toString(object) != null;
+		return resolveLoggingEvent(object).map(it -> !isNullOrEmpty(it.getLogger())).orElse(false);
 	}
 
+	@Override
 	public String toString(Object object)
 	{
-		if(object instanceof EventWrapper)
-		{
-			EventWrapper wrapper = (EventWrapper) object;
-			if(wrapper.getEvent() != null)
-			{
-				Object eventObj = wrapper.getEvent();
-				if(eventObj instanceof LoggingEvent)
-				{
-					LoggingEvent loggingEvent = (LoggingEvent) eventObj;
-					return loggingEvent.getLogger();
-				}
-			}
-		}
-
-		return null;
+		return resolveLoggingEvent(object).map(it -> toStringOrNull(it.getLogger())).orElse(null);
 	}
 }

@@ -1,39 +1,41 @@
 /*
  * Lilith - a log event viewer.
- * Copyright (C) 2007-2011 Joern Huxhorn
- * 
+ * Copyright (C) 2007-2016 Joern Huxhorn
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 package de.huxhorn.lilith.swing;
 
-import org.apache.commons.io.IOUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Frame;
+import java.awt.Rectangle;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.IOException;
 import java.io.InputStream;
-
-import javax.swing.*;
+import java.nio.charset.StandardCharsets;
+import javax.swing.JDialog;
+import org.apache.commons.io.IOUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class AboutDialog
 	extends JDialog
 {
 
+	private static final long serialVersionUID = -1777026913356705300L;
 	private boolean wasScrolling;
 	private AboutPanel aboutPanel;
 
@@ -49,7 +51,7 @@ public class AboutDialog
 		{
 			try
 			{
-				aboutText = IOUtils.toString(is, "UTF-8");
+				aboutText = IOUtils.toString(is, StandardCharsets.UTF_8);
 			}
 			catch(IOException e)
 			{

@@ -1,46 +1,53 @@
-project.ext.sulkyBaseVersion = '0.9.18'
+def sulkyVersion = '8.3.0'
+
+def prereleaseIdentifier = System.properties.'prerelease'
+if(prereleaseIdentifier) {
+	sulkyVersion = sulkyVersion + '-' + prereleaseIdentifier
+} else if(!System.properties.'release') {
+	sulkyVersion = sulkyVersion + '-SNAPSHOT'
+}
 
 project.ext.versions = [
-'aspectj':        '1.8.5',
-'groovy':         '2.4.3',
-'httpClient':     '4.4.1',
-'httpCore':       '4.4.1',
-'jackson':        '2.5.2',
-'jacksonModule':  '2.5.2',
+'aspectj':        '1.9.2',
+'bytebuddy':      '1.9.7',
+'groovy':         '2.5.5',
+'httpClient':     '4.5.6',
+'httpCore':       '4.4.10',
+'jackson':        '2.9.8',
+'jacksonModule':  '2.9.8',
 'log4j':          '1.2.17',
-'log4j2':         '2.2',
-'logback':        '1.1.3',
-'slf4j':          '1.7.12',
-'spock':          '1.0-groovy-2.4',
-'spring':         '4.1.6.RELEASE',
-'substance':      '7.3',
-'sulky':          "${System.properties.'release' ? sulkyBaseVersion : sulkyBaseVersion+'-SNAPSHOT'}",
-'thymeleaf':      '2.1.4.RELEASE'
+'log4j2':         '2.11.1',
+'logback':        '1.2.3',
+'slf4j':          '1.7.25',
+'spock':          '1.2-groovy-2.5',
+'spring':         '5.1.4.RELEASE',
+'sulky':          sulkyVersion,
+'thymeleaf':      '2.1.5.RELEASE',
+'woodstox':       '5.2.0',
 ]
 
 project.ext.libraries = [
 'aspectjrt':                "org.aspectj:aspectjrt:${versions.aspectj}",
 'aspectjweaver':            "org.aspectj:aspectjweaver:${versions.aspectj}",
-'cglib-nodep':              'cglib:cglib-nodep:3.0',
-'commons-io':               'commons-io:commons-io:2.4',
-'commons-lang':             'org.apache.commons:commons-lang3:3.4',
-//'disruptor':                'com.lmax:disruptor:3.3.0',
-'flyingsaucer':             'org.xhtmlrenderer:flying-saucer-core:9.0.4',
-'glazedlists':              'net.java.dev.glazedlists:glazedlists_java15:1.9.1',
+'byte-buddy':               "net.bytebuddy:byte-buddy:${versions.bytebuddy}",
+'commons-io':               'commons-io:commons-io:2.6',
+'commons-lang':             'org.apache.commons:commons-lang3:3.8.1',
+'commons-text':             'org.apache.commons:commons-text:1.5',
+'flyingsaucer':             'org.xhtmlrenderer:flying-saucer-core:9.1.16',
+'glazedlists':              'net.java.dev.glazedlists:glazedlists_java16:1.10.0',
 'groovy':                   "org.codehaus.groovy:groovy:${versions.groovy}",
 'groovy-console':           "org.codehaus.groovy:groovy-console:${versions.groovy}",
 'groovy-xml':               "org.codehaus.groovy:groovy-xml:${versions.groovy}",
 'httpclient':               "org.apache.httpcomponents:httpclient:${versions.httpClient}",
 'httpcore':                 "org.apache.httpcomponents:httpcore:${versions.httpCore}",
 'jcl-over-slf4j':           "org.slf4j:jcl-over-slf4j:${versions.slf4j}",
-//'jgroups':                  'org.jgroups:jgroups:3.3.3.Final',
-'jmdns':                    'de.huxhorn.lilith:de.huxhorn.lilith.3rdparty.jmdns:3.0',
 'jackson-afterburner':      "com.fasterxml.jackson.module:jackson-module-afterburner:${versions.jacksonModule}",
 'jackson-databind':         "com.fasterxml.jackson.core:jackson-databind:${versions.jackson}",
-'jcommander':               'com.beust:jcommander:1.47',
-'jgoodies-looks':           'com.jgoodies:jgoodies-looks:2.5.3',
-'joda-time':                'joda-time:joda-time:2.7',
-'junique':                  'de.huxhorn.lilith:de.huxhorn.lilith.3rdparty.junique:1.0.2',
+'jackson-dataformat-xml':   "com.fasterxml.jackson.dataformat:jackson-dataformat-xml:${versions.jackson}",
+'jackson-dataformat-yaml':  "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:${versions.jackson}",
+'jcommander':               'com.beust:jcommander:1.72',
+'jul-to-slf4j':             "org.slf4j:jul-to-slf4j:${versions.slf4j}",
+'junique':                  'de.huxhorn.lilith:de.huxhorn.lilith.3rdparty.junique:1.0.4',
 'junit':                    'junit:junit:4.12',
 'log4j':                    "log4j:log4j:${versions.log4j}",
 'log4j-over-slf4j':         "org.slf4j:log4j-over-slf4j:${versions.slf4j}",
@@ -49,10 +56,9 @@ project.ext.libraries = [
 'logback-access':           "ch.qos.logback:logback-access:${versions.logback}",
 'logback-classic':          "ch.qos.logback:logback-classic:${versions.logback}",
 'logback-core':             "ch.qos.logback:logback-core:${versions.logback}",
-'macify':                   'org.simplericity.macify:macify:1.6',
-'protobuf':                 'com.google.protobuf:protobuf-java:2.6.1',
-'rrd4j':                    'org.rrd4j:rrd4j:2.2',
-'servlet-api':              'javax.servlet:javax.servlet-api:3.0.1', // 3.1.0 requires Java 7
+'objenesis':                'org.objenesis:objenesis:2.6',
+'protobuf':                 'com.google.protobuf:protobuf-java:3.6.1',
+'servlet-api':              'javax.servlet:javax.servlet-api:3.1.0',
 'slf4j-api':                "org.slf4j:slf4j-api:${versions.slf4j}",
 'spock-core':               "org.spockframework:spock-core:${versions.spock}",
 'spring-aop':               "org.springframework:spring-aop:${versions.spring}",
@@ -60,9 +66,7 @@ project.ext.libraries = [
 'spring-context':           "org.springframework:spring-context:${versions.spring}",
 'spring-core':              "org.springframework:spring-core:${versions.spring}",
 'spring-instrument':        "org.springframework:spring-instrument:${versions.spring}",
-'stax':                     'stax:stax:1.2.0',
-'stax-api':                 'stax:stax-api:1.0.1',
-'substance':                "com.github.insubstantial:substance:${versions.substance}",
+'spring-webmvc':            "org.springframework:spring-webmvc:${versions.spring}",
 'sulky-buffers':            "de.huxhorn.sulky:de.huxhorn.sulky.buffers:${versions.sulky}",
 'sulky-buffers-filtering':  "de.huxhorn.sulky:de.huxhorn.sulky.buffers.filtering:${versions.sulky}",
 'sulky-buffers-table':      "de.huxhorn.sulky:de.huxhorn.sulky.buffers.table:${versions.sulky}",
@@ -70,6 +74,7 @@ project.ext.libraries = [
 'sulky-codec-filebuffer':   "de.huxhorn.sulky:de.huxhorn.sulky.codec.filebuffer:${versions.sulky}",
 'sulky-conditions':         "de.huxhorn.sulky:de.huxhorn.sulky.conditions:${versions.sulky}",
 'sulky-formatting':         "de.huxhorn.sulky:de.huxhorn.sulky.formatting:${versions.sulky}",
+'sulky-groovy':             "de.huxhorn.sulky:de.huxhorn.sulky.groovy:${versions.sulky}",
 'sulky-io':                 "de.huxhorn.sulky:de.huxhorn.sulky.io:${versions.sulky}",
 'sulky-junit':              "de.huxhorn.sulky:de.huxhorn.sulky.junit:${versions.sulky}",
 'sulky-logging':            "de.huxhorn.sulky:de.huxhorn.sulky.logging:${versions.sulky}",
@@ -78,8 +83,11 @@ project.ext.libraries = [
 'sulky-stax':               "de.huxhorn.sulky:de.huxhorn.sulky.stax:${versions.sulky}",
 'sulky-swing':              "de.huxhorn.sulky:de.huxhorn.sulky.swing:${versions.sulky}",
 'sulky-tasks':              "de.huxhorn.sulky:de.huxhorn.sulky.tasks:${versions.sulky}",
-'sulky-plist':              "de.huxhorn.sulky:de.huxhorn.sulky.plist:${versions.sulky}",
-'sulky-groovy':             "de.huxhorn.sulky:de.huxhorn.sulky.groovy:${versions.sulky}",
-'thymeleaf':                "org.thymeleaf:thymeleaf:${versions.thymeleaf}"
+'sulky-ulid':               "de.huxhorn.sulky:de.huxhorn.sulky.ulid:${versions.sulky}",
+'sulky-version':            "de.huxhorn.sulky:de.huxhorn.sulky.version:${versions.sulky}",
+'thymeleaf':                "org.thymeleaf:thymeleaf:${versions.thymeleaf}",
+'woodstox':                 "com.fasterxml.woodstox:woodstox-core:${versions.woodstox}",
+
+'spring-boot-ext-logback-access': 'net.rakugakibox.springbootext:spring-boot-ext-logback-access:1.6',
 ]
 

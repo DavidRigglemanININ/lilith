@@ -1,6 +1,6 @@
 /*
  * Lilith - a log event viewer.
- * Copyright (C) 2007-2011 Joern Huxhorn
+ * Copyright (C) 2007-2017 Joern Huxhorn
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,16 +15,16 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package de.huxhorn.lilith;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.util.Objects;
 
-public class VersionBundle
+public final class VersionBundle
 	implements Comparable<VersionBundle>
 {
-	private String version;
-	private long timestamp;
+	private final String version;
+	private final long timestamp;
 
 	public VersionBundle(String version)
 	{
@@ -33,7 +33,7 @@ public class VersionBundle
 
 	public VersionBundle(String version, long timestamp)
 	{
-		this.version = version;
+		this.version = Objects.requireNonNull(version, "version must not be null!");
 		if(timestamp < 0)
 		{
 			timestamp = -1;
@@ -53,8 +53,6 @@ public class VersionBundle
 
 	public static VersionBundle fromString(String input)
 	{
-		final Logger logger = LoggerFactory.getLogger(VersionBundle.class);
-
 		if(input == null)
 		{
 			return null;
@@ -65,7 +63,6 @@ public class VersionBundle
 		VersionBundle result;
 		if(hashIndex < 0)
 		{
-			if(logger.isWarnEnabled()) logger.warn("Retrieved version without timestamp! '{}'", input);
 			result=new VersionBundle(input);
 		}
 		else
@@ -79,32 +76,29 @@ public class VersionBundle
 			}
 			catch(NumberFormatException ex)
 			{
-				if(logger.isWarnEnabled()) logger.warn("Retrieved version with invalid timestamp! '{}'", input, ex);
 				result=new VersionBundle(input);
 			}
 		}
-		if(logger.isDebugEnabled()) logger.debug("VersionBundle: {}", result);
+
 		return result;
 	}
+
 
 	@Override
 	public boolean equals(Object o)
 	{
-		if(this == o) return true;
-		if(o == null || getClass() != o.getClass()) return false;
+		if (this == o) return true;
+		if (o == null || getClass() != o.getClass()) return false;
 
 		VersionBundle that = (VersionBundle) o;
 
-		if(timestamp != that.timestamp) return false;
-		if(version != null ? !version.equals(that.version) : that.version != null) return false;
-
-		return true;
+		return timestamp == that.timestamp && version.equals(that.version);
 	}
 
 	@Override
 	public int hashCode()
 	{
-		int result = version != null ? version.hashCode() : 0;
+		int result = version.hashCode();
 		result = 31 * result + (int) (timestamp ^ (timestamp >>> 32));
 		return result;
 	}
@@ -122,6 +116,7 @@ public class VersionBundle
 	 * @return  a negative integer, zero, or a positive integer as this object
 	 *		is less than, equal to, or greater than the specified object.
 	 */
+	@Override
 	public int compareTo(VersionBundle o)
 	{
 		if(o == null)

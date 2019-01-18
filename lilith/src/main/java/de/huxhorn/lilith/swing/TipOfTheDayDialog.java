@@ -1,6 +1,6 @@
 /*
  * Lilith - a log event viewer.
- * Copyright (C) 2007-2011 Joern Huxhorn
+ * Copyright (C) 2007-2017 Joern Huxhorn
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,11 +15,32 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package de.huxhorn.lilith.swing;
 
 import de.huxhorn.lilith.swing.linklistener.OpenUrlLinkListener;
 import de.huxhorn.sulky.swing.KeyStrokes;
-
+import java.awt.Container;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.GridLayout;
+import java.awt.event.ActionEvent;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
+import java.awt.event.KeyEvent;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
+import javax.swing.AbstractAction;
+import javax.swing.Action;
+import javax.swing.JButton;
+import javax.swing.JCheckBox;
+import javax.swing.JDialog;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.KeyStroke;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xhtmlrenderer.context.AWTFontResolver;
@@ -32,32 +53,8 @@ import org.xhtmlrenderer.simple.extend.XhtmlNamespaceHandler;
 import org.xhtmlrenderer.swing.LinkListener;
 import org.xhtmlrenderer.swing.SelectionHighlighter;
 
-import javax.swing.AbstractAction;
-import javax.swing.Action;
-import javax.swing.Icon;
-import javax.swing.ImageIcon;
-import javax.swing.JButton;
-import javax.swing.JCheckBox;
-import javax.swing.JDialog;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.KeyStroke;
-import java.awt.Container;
-import java.awt.Dimension;
-import java.awt.Font;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
-import java.awt.GridLayout;
-import java.awt.event.ActionEvent;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
-import java.awt.event.KeyEvent;
-import java.net.URL;
-import java.util.List;
-import java.util.ArrayList;
 
-
-public class TipOfTheDayDialog
+class TipOfTheDayDialog
 	extends JDialog
 {
 	private static final long serialVersionUID = -1068053167252606619L;
@@ -66,34 +63,15 @@ public class TipOfTheDayDialog
 
 	private List<URL> tipsOfTheDay;
 	private int currentTipOfTheDay;
-	private ApplicationPreferences applicationPreferences;
-	private XHTMLPanel helpPane;
-	private XhtmlNamespaceHandler xhtmlNamespaceHandler;
-	private SelectionHighlighter.CopyAction copyAction;
-	private JCheckBox showTipOfTheDayCheckbox;
+	private final ApplicationPreferences applicationPreferences;
+	private final XHTMLPanel helpPane;
+	private final XhtmlNamespaceHandler xhtmlNamespaceHandler;
+	private final JCheckBox showTipOfTheDayCheckbox;
 
 	private static final int INSET = 10;
 
-	private static final Icon INFO_ICON;
 
-	static
-	{
-		Icon icon;
-		{
-			URL url = ViewActions.class.getResource("/tango/32x32/status/dialog-information.png");
-			if(url != null)
-			{
-				icon = new ImageIcon(url);
-			}
-			else
-			{
-				icon = null;
-			}
-		}
-		INFO_ICON = icon;
-	}
-
-	public TipOfTheDayDialog(MainFrame owner)
+	TipOfTheDayDialog(MainFrame owner)
 	{
 		super(owner);
 
@@ -123,7 +101,7 @@ public class TipOfTheDayDialog
 		Font labelFont = didYouKnowLabel.getFont();
 		labelFont=labelFont.deriveFont(2.0f*labelFont.getSize2D());
 		didYouKnowLabel.setFont(labelFont);
-		didYouKnowLabel.setIcon(INFO_ICON);
+		didYouKnowLabel.setIcon(Icons.DIALOG_INFO_ICON);
 
 		content.add(didYouKnowLabel, gbc);
 
@@ -146,7 +124,7 @@ public class TipOfTheDayDialog
 
 		{
 			LinkListener originalLinkListener = null;
-			java.util.List mouseTrackingList = helpPane.getMouseTrackingListeners();
+			List mouseTrackingList = helpPane.getMouseTrackingListeners();
 			if(mouseTrackingList != null)
 			{
 				for(Object o : mouseTrackingList)
@@ -165,7 +143,7 @@ public class TipOfTheDayDialog
 		SelectionHighlighter helpPaneCaret = new SelectionHighlighter();
 		helpPaneCaret.install(helpPane);
 
-		copyAction = new SelectionHighlighter.CopyAction();
+		SelectionHighlighter.CopyAction copyAction = new SelectionHighlighter.CopyAction();
 		copyAction.install(helpPaneCaret);
 
 
@@ -261,8 +239,8 @@ public class TipOfTheDayDialog
 
 	private void initHelpResources()
 	{
-		tipsOfTheDay = new ArrayList<URL>();
-		for(int i = 0; ; i++)
+		tipsOfTheDay = new ArrayList<>();
+		for(int i = 0;; i++)
 		{
 			URL url = TipOfTheDayDialog.class.getResource("/tips/" + i + ".xhtml");
 			if(url == null)
@@ -275,12 +253,7 @@ public class TipOfTheDayDialog
 		if(logger.isInfoEnabled()) logger.info("Found {} Tips of the Day.", tipsOfTheDay.size());
 	}
 
-	public void copySelection()
-	{
-		copyAction.actionPerformed(null);
-	}
-
-	public void setShowingTipOfTheDay(boolean showingTipOfTheDay)
+	void setShowingTipOfTheDay(boolean showingTipOfTheDay)
 	{
 		showTipOfTheDayCheckbox.setSelected(showingTipOfTheDay);
 	}
@@ -290,12 +263,13 @@ public class TipOfTheDayDialog
 	{
 		private static final long serialVersionUID = -4025074394725104369L;
 
-		private PreviousTipAction()
+		PreviousTipAction()
 		{
 			super("Previous Tip");
 			putValue(Action.MNEMONIC_KEY, KeyEvent.VK_P);
 		}
 
+		@Override
 		public void actionPerformed(ActionEvent e)
 		{
 			previousTipOfTheDay();
@@ -307,12 +281,13 @@ public class TipOfTheDayDialog
 	{
 		private static final long serialVersionUID = 107240711521577323L;
 
-		private NextTipAction()
+		NextTipAction()
 		{
 			super("Next Tip");
 			putValue(Action.MNEMONIC_KEY, KeyEvent.VK_N);
 		}
 
+		@Override
 		public void actionPerformed(ActionEvent e)
 		{
 			nextTipOfTheDay();
@@ -324,7 +299,7 @@ public class TipOfTheDayDialog
 	{
 		private static final long serialVersionUID = -3837690263247686627L;
 
-		private CloseAction()
+		CloseAction()
 		{
 			super("Close");
 			KeyStroke accelerator = LilithKeyStrokes.getKeyStroke(LilithKeyStrokes.ESCAPE);
@@ -332,6 +307,7 @@ public class TipOfTheDayDialog
 			putValue(Action.MNEMONIC_KEY, KeyEvent.VK_C);
 		}
 
+		@Override
 		public void actionPerformed(ActionEvent e)
 		{
 			setVisible(false);
@@ -348,12 +324,12 @@ public class TipOfTheDayDialog
 	private class CheckboxListener
 		implements ItemListener
 	{
-
+		@Override
 		public void itemStateChanged(ItemEvent e)
 		{
 			Object source = e.getItemSelectable();
 
-			if(source == showTipOfTheDayCheckbox)
+			if(source == showTipOfTheDayCheckbox) // NOPMD
 			{
 				applicationPreferences.setShowingTipOfTheDay(showTipOfTheDayCheckbox.isSelected());
 			}

@@ -21,7 +21,6 @@ import de.huxhorn.lilith.data.eventsource.EventWrapper;
 import de.huxhorn.lilith.swing.ViewContainer;
 import de.huxhorn.sulky.conditions.Condition;
 import de.huxhorn.sulky.conditions.Not;
-
 import java.awt.event.ActionEvent;
 import java.beans.PropertyChangeListener;
 import java.io.Serializable;
@@ -31,36 +30,36 @@ public class NegateFilterAction
 {
 	private static final long serialVersionUID = -71987935355756555L;
 
-	private FilterAction wrapped;
+	private BasicFilterAction wrapped;
 
 	public NegateFilterAction()
 	{
 		this(null);
 	}
 
-	public NegateFilterAction(FilterAction wrapped)
+	public NegateFilterAction(BasicFilterAction wrapped)
 	{
 		this.wrapped = wrapped;
 	}
 
-	public FilterAction getWrapped()
+	public BasicFilterAction getWrapped()
 	{
 		return wrapped;
 	}
 
-	public void setWrapped(FilterAction wrapped)
+	public void setWrapped(BasicFilterAction wrapped)
 	{
 		this.wrapped = wrapped;
 	}
 
 	@Override
-	public Condition resolveCondition()
+	public Condition resolveCondition(ActionEvent e)
 	{
 		if(wrapped == null)
 		{
 			return null;
 		}
-		Condition condition = wrapped.resolveCondition();
+		Condition condition = wrapped.resolveCondition(e);
 		if(condition != null)
 		{
 			return new Not(condition);
@@ -136,7 +135,12 @@ public class NegateFilterAction
 		{
 			return;
 		}
-		viewContainer.applyCondition(resolveCondition(), e);
+		Condition condition=resolveCondition(e);
+		if(condition == null)
+		{
+			return;
+		}
+		viewContainer.applyCondition(condition, e);
 	}
 
 	@Override
@@ -146,7 +150,10 @@ public class NegateFilterAction
 		{
 			return;
 		}
-		wrapped.setEventWrapper(eventWrapper);
+		if(wrapped instanceof FilterAction)
+		{
+			((FilterAction)wrapped).setEventWrapper(eventWrapper);
+		}
 	}
 
 	@Override

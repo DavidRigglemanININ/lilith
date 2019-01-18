@@ -1,6 +1,6 @@
 /*
  * Lilith - a log event viewer.
- * Copyright (C) 2007-2014 Joern Huxhorn
+ * Copyright (C) 2007-2018 Joern Huxhorn
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,66 +15,71 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package de.huxhorn.lilith.swing;
 
+import de.huxhorn.lilith.DateTimeFormatters;
 import de.huxhorn.lilith.Lilith;
 import de.huxhorn.lilith.LilithBuffer;
 import de.huxhorn.lilith.LilithSounds;
 import de.huxhorn.lilith.VersionBundle;
-import de.huxhorn.lilith.data.access.logback.LogbackAccessConverter;
-import de.huxhorn.lilith.data.converter.ConverterRegistry;
-import de.huxhorn.lilith.data.logging.logback.LogbackLoggingConverter;
-import de.huxhorn.lilith.engine.impl.eventproducer.LoggingEventSourceIdentifierUpdater;
-import de.huxhorn.lilith.engine.impl.sourceproducer.ConvertingServerSocketEventSourceProducer;
-import de.huxhorn.lilith.engine.json.sourceproducer.LilithJsonMessageLoggingServerSocketEventSourceProducer;
-import de.huxhorn.lilith.engine.json.sourceproducer.LilithJsonStreamLoggingServerSocketEventSourceProducer;
-import de.huxhorn.lilith.engine.jul.sourceproducer.JulXmlStreamLoggingServerSocketEventSourceProducer;
-import de.huxhorn.lilith.eventhandlers.AlarmSoundAccessEventHandler;
-import de.huxhorn.lilith.eventhandlers.AlarmSoundLoggingEventHandler;
-import de.huxhorn.lilith.eventhandlers.FileDumpEventHandler;
-import de.huxhorn.lilith.eventhandlers.RrdLoggingEventHandler;
-import de.huxhorn.lilith.data.eventsource.LoggerContext;
-import de.huxhorn.lilith.debug.DebugDialog;
+import de.huxhorn.lilith.api.FileConstants;
 import de.huxhorn.lilith.appender.InternalLilithAppender;
-import de.huxhorn.lilith.eventhandlers.FileSplitterEventHandler;
 import de.huxhorn.lilith.data.access.AccessEvent;
 import de.huxhorn.lilith.data.access.HttpStatus;
+import de.huxhorn.lilith.data.access.logback.converter.LogbackAccessConverter;
+import de.huxhorn.lilith.data.converter.ConverterRegistry;
 import de.huxhorn.lilith.data.eventsource.EventWrapper;
 import de.huxhorn.lilith.data.eventsource.SourceIdentifier;
+import de.huxhorn.lilith.data.logging.ExtendedStackTraceElement;
 import de.huxhorn.lilith.data.logging.LoggingEvent;
+import de.huxhorn.lilith.data.logging.logback.converter.LogbackLoggingConverter;
+import de.huxhorn.lilith.debug.DebugDialog;
 import de.huxhorn.lilith.engine.AccessFileBufferFactory;
 import de.huxhorn.lilith.engine.EventHandler;
 import de.huxhorn.lilith.engine.EventSource;
 import de.huxhorn.lilith.engine.EventSourceListener;
+import de.huxhorn.lilith.engine.EventSourceProducer;
 import de.huxhorn.lilith.engine.FileBufferFactory;
-import de.huxhorn.lilith.api.FileConstants;
 import de.huxhorn.lilith.engine.LogFileFactory;
 import de.huxhorn.lilith.engine.LoggingFileBufferFactory;
 import de.huxhorn.lilith.engine.SourceManager;
 import de.huxhorn.lilith.engine.impl.EventSourceImpl;
 import de.huxhorn.lilith.engine.impl.LogFileFactoryImpl;
+import de.huxhorn.lilith.engine.impl.eventproducer.LoggingEventSourceIdentifierUpdater;
 import de.huxhorn.lilith.engine.impl.sourcemanager.SourceManagerImpl;
 import de.huxhorn.lilith.engine.impl.sourceproducer.AccessEventProtobufServerSocketEventSourceProducer;
 import de.huxhorn.lilith.engine.impl.sourceproducer.LoggingEventProtobufServerSocketEventSourceProducer;
+import de.huxhorn.lilith.engine.impl.sourceproducer.SerializableServerSocketEventSourceProducer;
+import de.huxhorn.lilith.engine.json.sourceproducer.LilithJsonMessageLoggingServerSocketEventSourceProducer;
+import de.huxhorn.lilith.engine.json.sourceproducer.LilithJsonStreamLoggingServerSocketEventSourceProducer;
+import de.huxhorn.lilith.engine.jul.sourceproducer.JulXmlStreamLoggingServerSocketEventSourceProducer;
 import de.huxhorn.lilith.engine.xml.sourceproducer.LilithXmlMessageLoggingServerSocketEventSourceProducer;
 import de.huxhorn.lilith.engine.xml.sourceproducer.LilithXmlStreamLoggingServerSocketEventSourceProducer;
-import de.huxhorn.lilith.jul.xml.JulImportCallable;
-import de.huxhorn.lilith.log4j.producer.Log4jLoggingConverter;
+import de.huxhorn.lilith.eventhandlers.AlarmSoundAccessEventHandler;
+import de.huxhorn.lilith.eventhandlers.AlarmSoundLoggingEventHandler;
+import de.huxhorn.lilith.eventhandlers.FileDumpEventHandler;
+import de.huxhorn.lilith.eventhandlers.FileSplitterEventHandler;
+import de.huxhorn.lilith.jul.xml.importing.JulImportCallable;
+import de.huxhorn.lilith.log4j.converter.Log4jLoggingConverter;
 import de.huxhorn.lilith.log4j.xml.Log4jImportCallable;
-import de.huxhorn.lilith.log4j2.producer.Log4j2LoggingConverter;
-import de.huxhorn.lilith.logback.appender.AccessMultiplexSocketAppender;
-import de.huxhorn.lilith.logback.appender.ClassicJsonMultiplexSocketAppender;
+import de.huxhorn.lilith.log4j2.converter.Log4j2LoggingConverter;
+import de.huxhorn.lilith.log4j2.producer.Log4j2JsonServerSocketEventSourceProducer;
+import de.huxhorn.lilith.log4j2.producer.Log4j2Ports;
+import de.huxhorn.lilith.log4j2.producer.Log4j2XmlServerSocketEventSourceProducer;
+import de.huxhorn.lilith.log4j2.producer.Log4j2YamlServerSocketEventSourceProducer;
 import de.huxhorn.lilith.logback.appender.ClassicMultiplexSocketAppender;
-import de.huxhorn.lilith.logback.appender.ClassicXmlMultiplexSocketAppender;
-import de.huxhorn.lilith.logback.appender.ZeroDelimitedClassicJsonMultiplexSocketAppender;
-import de.huxhorn.lilith.logback.appender.ZeroDelimitedClassicXmlMultiplexSocketAppender;
+import de.huxhorn.lilith.logback.appender.access.AccessMultiplexSocketAppender;
+import de.huxhorn.lilith.logback.appender.json.ClassicJsonMultiplexSocketAppender;
+import de.huxhorn.lilith.logback.appender.json.ZeroDelimitedClassicJsonMultiplexSocketAppender;
+import de.huxhorn.lilith.logback.appender.xml.ClassicXmlMultiplexSocketAppender;
+import de.huxhorn.lilith.logback.appender.xml.ZeroDelimitedClassicXmlMultiplexSocketAppender;
 import de.huxhorn.lilith.prefs.LilithPreferences;
+import de.huxhorn.lilith.services.details.AbstractHtmlFormatter;
 import de.huxhorn.lilith.services.details.GroovyEventWrapperHtmlFormatter;
 import de.huxhorn.lilith.services.details.ThymeleafEventWrapperHtmlFormatter;
 import de.huxhorn.lilith.services.gotosrc.GoToSource;
 import de.huxhorn.lilith.services.gotosrc.SerializingGoToSource;
-import de.huxhorn.lilith.services.sender.EventSender;
-import de.huxhorn.lilith.services.sender.SenderService;
 import de.huxhorn.lilith.swing.callables.CheckFileChangeCallable;
 import de.huxhorn.lilith.swing.callables.CleanAllInactiveCallable;
 import de.huxhorn.lilith.swing.callables.CleanObsoleteCallable;
@@ -83,7 +88,6 @@ import de.huxhorn.lilith.swing.callables.IndexingCallable;
 import de.huxhorn.lilith.swing.filefilters.DirectoryFilter;
 import de.huxhorn.lilith.swing.filefilters.LilithFileFilter;
 import de.huxhorn.lilith.swing.filefilters.LogFileFilter;
-import de.huxhorn.lilith.swing.filefilters.RrdFileFilter;
 import de.huxhorn.lilith.swing.filefilters.XmlImportFileFilter;
 import de.huxhorn.lilith.swing.preferences.PreferencesDialog;
 import de.huxhorn.lilith.swing.preferences.SavedCondition;
@@ -91,7 +95,6 @@ import de.huxhorn.lilith.swing.table.ColorScheme;
 import de.huxhorn.lilith.swing.table.Colors;
 import de.huxhorn.lilith.swing.taskmanager.TaskManagerInternalFrame;
 import de.huxhorn.lilith.swing.transfer.MainFrameTransferHandler;
-import de.huxhorn.lilith.swing.transfer.MainFrameTransferHandler16;
 import de.huxhorn.lilith.swing.uiprocessors.ConditionNamesActionsProcessor;
 import de.huxhorn.lilith.swing.uiprocessors.ConditionNamesContainerProcessor;
 import de.huxhorn.lilith.swing.uiprocessors.PreviousSearchStringsContainerProcessor;
@@ -108,6 +111,7 @@ import de.huxhorn.sulky.buffers.AppendOperation;
 import de.huxhorn.sulky.buffers.BlockingCircularBuffer;
 import de.huxhorn.sulky.buffers.Buffer;
 import de.huxhorn.sulky.buffers.FileBuffer;
+import de.huxhorn.sulky.buffers.Reset;
 import de.huxhorn.sulky.codec.filebuffer.CodecFileBuffer;
 import de.huxhorn.sulky.codec.filebuffer.DefaultFileHeaderStrategy;
 import de.huxhorn.sulky.codec.filebuffer.FileHeader;
@@ -115,32 +119,20 @@ import de.huxhorn.sulky.codec.filebuffer.FileHeaderStrategy;
 import de.huxhorn.sulky.codec.filebuffer.MetaData;
 import de.huxhorn.sulky.conditions.Condition;
 import de.huxhorn.sulky.conditions.Or;
+import de.huxhorn.sulky.formatting.SimpleXml;
 import de.huxhorn.sulky.sounds.Sounds;
 import de.huxhorn.sulky.swing.MemoryStatus;
 import de.huxhorn.sulky.swing.Windows;
 import de.huxhorn.sulky.tasks.Task;
 import de.huxhorn.sulky.tasks.TaskListener;
 import de.huxhorn.sulky.tasks.TaskManager;
-
-import de.huxhorn.sulky.io.IOUtilities;
-import org.apache.commons.lang3.SystemUtils;
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpResponse;
-import org.apache.http.StatusLine;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClientBuilder;
-import org.apache.http.protocol.BasicHttpContext;
-import org.apache.http.protocol.HttpContext;
-import org.apache.http.util.EntityUtils;
-import org.simplericity.macify.eawt.Application;
-import org.simplericity.macify.eawt.ApplicationEvent;
-import org.simplericity.macify.eawt.ApplicationListener;
-import org.simplericity.macify.eawt.DefaultApplication;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.EventQueue;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
+import java.awt.Toolkit;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.StringSelection;
 import java.awt.datatransfer.Transferable;
@@ -153,37 +145,93 @@ import java.beans.PropertyChangeListener;
 import java.beans.PropertyVetoException;
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileFilter;
-import java.io.FileInputStream;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.io.Serializable;
+import java.net.MalformedURLException;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
-import java.text.SimpleDateFormat;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
+import java.util.stream.Collectors;
 import java.util.zip.GZIPInputStream;
-
-import javax.swing.*;
+import javax.swing.Icon;
+import javax.swing.JDesktopPane;
+import javax.swing.JDialog;
+import javax.swing.JFileChooser;
+import javax.swing.JFrame;
+import javax.swing.JInternalFrame;
+import javax.swing.JLabel;
+import javax.swing.JMenuBar;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JToolBar;
 import javax.swing.border.EtchedBorder;
-
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
+import org.apache.http.StatusLine;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClientBuilder;
+import org.apache.http.protocol.BasicHttpContext;
+import org.apache.http.protocol.HttpContext;
+import org.apache.http.util.EntityUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class MainFrame
 	extends JFrame
 {
 	private static final long serialVersionUID = 6138189654024239738L;
+
+	private static final String LOGS_SUBDIRECTORY = "logs";
+	private static final String LOGGING_FILE_SUBDIRECTORY = LOGS_SUBDIRECTORY + "/logging";
+	private static final String ACCESS_FILE_SUBDIRECTORY = LOGS_SUBDIRECTORY + "/access";
+	private static final String GLOBAL_SOURCE_IDENTIFIER_NAME ="global";
+	private static final String HELP_URI_PREFIX = "help://";
+	private static final String PREFERENCES_URI_PREFIX = "prefs://";
+	private static final String STACK_TRACE_ELEMENT_URI_PREFIX = "ste://";
+	private static final ViewContainerProcessor UPDATE_VIEWS_CONTAINER_PROCESSOR = new UpdateViewsContainerProcessor();
+	private static final ViewActionsProcessor UPDATE_RECENT_FILES_ACTIONS_PROCESSOR = new UpdateRecentFilesProcessor();
+	private static final ViewActionsProcessor UPDATE_WINDOW_MENU_ACTIONS_PROCESSOR = new UpdateWindowMenuProcessor();
+	private static final ViewContainerProcessor RESET_CONTAINER_PROCESSOR = new ResetContainerProcessor();
+	private static final double SCALE_FACTOR = 0.05d;
+	private static final int EXPORT_WARNING_SIZE = 20_000;
+	private static final boolean IS_MAC;
+	private static final boolean IS_WINDOWS;
+
+	private static final String[] MAC_OPEN_URL_ARRAY =
+			{
+					// Mac: open http://www.heise.de
+					"open",
+					null,
+			};
+
+	private static final String[] WINDOWS_OPEN_URL_ARRAY =
+			{
+					// Windows: cmd /C start http://www.heise.de
+					"cmd",
+					"/C",
+					"start",
+					null,
+			};
+
 
 	private final Logger logger = LoggerFactory.getLogger(MainFrame.class);
 
@@ -191,148 +239,94 @@ public class MainFrame
 	private final GroovyEventWrapperHtmlFormatter groovyFormatter;
 	private final ThymeleafEventWrapperHtmlFormatter thymeleafFormatter;
 
-	private GoToSource gotoSource;
-	private LogFileFactory loggingFileFactory;
+	private final LogFileFactory loggingFileFactory;
+	private final FileBufferFactory<LoggingEvent> loggingFileBufferFactory;
+	private final EventSourceListener<LoggingEvent> loggingSourceListener;
+	private final LoggingEventViewManager loggingEventViewManager;
+
+	private final LogFileFactory accessFileFactory;
+	private final FileBufferFactory<AccessEvent> accessFileBufferFactory;
+	private final EventSourceListener<AccessEvent> accessSourceListener;
+	private final AccessEventViewManager accessEventViewManager;
+
+	private final JDesktopPane desktop;
+
+	private final PreferencesDialog preferencesDialog;
+	private final JDialog aboutDialog;
+	private final JLabel statusLabel;
+	private final ApplicationPreferences applicationPreferences;
+	private final DebugDialog debugDialog;
+	private final TaskManager<Long> longTaskManager;
+	private final ViewActions viewActions;
+	private final OpenPreviousDialog openInactiveLogsDialog;
+	private final HelpFrame helpFrame;
+	private final List<AutostartRunnable> autostartProcesses;
+	private final SplashScreen splashScreen;
+	private final TaskManagerInternalFrame taskManagerFrame;
+	private final JLabel taskStatusLabel;
+	private final JFileChooser openFileChooser;
+	private final JFileChooser importFileChooser;
+	private final JFileChooser exportFileChooser;
+
+	private final JToolBar toolbar;
+	private final JPanel statusBar;
+	private final TipOfTheDayDialog tipOfTheDayDialog;
+	private final CheckForUpdateDialog checkForUpdateDialog;
+
+	private final SourceTitleContainerProcessor sourceTitleContainerProcessor=new SourceTitleContainerProcessor();
+	private final ScrollingSmoothlyContainerProcessor scrollingSmoothlyContainerProcessor = new ScrollingSmoothlyContainerProcessor();
+
+	private GoToSource gotoSourceProvider;
 	private SourceManager<LoggingEvent> loggingEventSourceManager;
-	private FileBufferFactory<LoggingEvent> loggingFileBufferFactory;
-	private EventSourceListener<LoggingEvent> loggingSourceListener;
-	private LoggingEventViewManager loggingEventViewManager;
-
-	private LogFileFactory accessFileFactory;
 	private SourceManager<AccessEvent> accessEventSourceManager;
-	private FileBufferFactory<AccessEvent> accessFileBufferFactory;
-	private EventSourceListener<AccessEvent> accessSourceListener;
-	private AccessEventViewManager accessEventViewManager;
-
 	private Sounds sounds;
-	private JDesktopPane desktop;
-
-	private PreferencesDialog preferencesDialog;
-	private JDialog aboutDialog;
-	private JLabel statusLabel;
-	private ApplicationPreferences applicationPreferences;
-	private DebugDialog debugDialog;
-	private RrdFileFilter rrdFileFilter;
-	private StatisticsDialog statisticsDialog;
-	private TaskManager<Long> longTaskManager;
-	private ViewActions viewActions;
-	private OpenPreviousDialog openInactiveLogsDialog;
-	private HelpFrame helpFrame;
-	private Application application;
 	private int activeCounter;
-	private List<AutostartRunnable> autostartProcesses;
-	private SenderService senderService;
-	private boolean enableBonjour;
-	private static final boolean isMac;
-	private static final boolean isWindows;
 	private List<SavedCondition> activeConditions;
 	private Map<LoggingEvent.Level, Colors> levelColors;
 	private Map<HttpStatus.Type, Colors> statusColors;
-	private SplashScreen splashScreen;
-	private TaskManagerInternalFrame taskManagerFrame;
-	private JLabel taskStatusLabel;
 	private int previousNumberOfTasks;
-	private ImageIcon smallProgressIcon;
-	public static final String LOGS_SUBDIRECTORY = "logs";
-	public static final String LOGGING_FILE_SUBDIRECTORY = LOGS_SUBDIRECTORY + "/logging";
-	public static final String ACCESS_FILE_SUBDIRECTORY = LOGS_SUBDIRECTORY + "/access";
-	private JFileChooser openFileChooser;
-	private JFileChooser importFileChooser;
-	private JFileChooser exportFileChooser;
 	private boolean coloringWholeRow;
-
-	private static final double SCALE_FACTOR = 0.05d;
-	private JToolBar toolbar;
-	private JPanel statusBar;
-	private TipOfTheDayDialog tipOfTheDayDialog;
-	private CheckForUpdateDialog checkForUpdateDialog;
 	private FileDumpEventHandler<LoggingEvent> loggingFileDump;
 	private FileDumpEventHandler<AccessEvent> accessFileDump;
-	private RrdLoggingEventHandler rrdLoggingEventHandler;
-	private static final int EXPORT_WARNING_SIZE = 20000;
 	private Condition findActiveCondition;
 	private TraySupport traySupport; // may be null
+	private boolean usingThymeleaf;
 
 	static
 	{
-		DefaultApplication app = new DefaultApplication();
-		isMac = app.isMac();
-		if(!isMac)
-		{
-			String osName = System.getProperty("os.name").toLowerCase();
-			isWindows = osName.startsWith("windows");
-		}
-		else
-		{
-			isWindows = false;
-		}
+		String osName = System.getProperty("os.name").toLowerCase(Locale.US);
+		IS_WINDOWS = osName.startsWith("windows");
+		IS_MAC = osName.startsWith("mac");
 	}
 
-	private static final ViewContainerProcessor UPDATE_VIEWS_CONTAINER_PROCESSOR = new UpdateViewsContainerProcessor();
-	private static final ViewActionsProcessor UPDATE_RECENT_FILES_ACTIONS_PROCESSOR = new UpdateRecentFilesProcessor();
-	private static final ViewActionsProcessor UPDATE_WINDOW_MENU_ACTIONS_PROCESSOR = new UpdateWindowMenuProcessor();
-	private static final ViewContainerProcessor RESET_CONTAINER_PROCESSOR = new ResetContainerProcessor();
-	private final ViewContainerProcessor sourceTitleContainerProcessor=new SourceTitleContainerProcessor();
-
-	private boolean usingThymeleaf;
-	/*
-	 * Need to use ConcurrentMap because it's accessed by both the EventDispatchThread and the CleanupThread.
-	 */
-	//private ConcurrentMap<EventIdentifier, SoftColorsReference> colorsCache;
-	//private ReferenceQueue<Colors> colorsReferenceQueue;
-
-	public AccessEventViewManager getAccessEventViewManager()
-	{
-		return accessEventViewManager;
-	}
-
-	public LoggingEventViewManager getLoggingEventViewManager()
-	{
-		return loggingEventViewManager;
-	}
-
-	public PreferencesDialog getPreferencesDialog()
-	{
-		return preferencesDialog;
-	}
-
-	public ViewActions getViewActions()
-	{
-		return viewActions;
-	}
-
-	public JDesktopPane getDesktop()
-	{
-		return desktop;
-	}
-
-	public MainFrame(ApplicationPreferences applicationPreferences, SplashScreen splashScreen, String appName, boolean enableBonjour)
+	public MainFrame(ApplicationPreferences applicationPreferences, SplashScreen splashScreen, String appName)
 	{
 		super(appName);
-		this.applicationPreferences = applicationPreferences;
+		this.applicationPreferences = Objects.requireNonNull(applicationPreferences, "applicationPreferences must not be null!");
 		this.coloringWholeRow = this.applicationPreferences.isColoringWholeRow();
 		this.splashScreen = splashScreen;
-		setSplashStatusText("Creating main frame.");
+		setSplashStatusText("Creating icons…");
+		// Executing any Icons method triggers initialisation of class
+		setIconImages(Icons.resolveFrameIconImages(LilithFrameId.MAIN));
+
+		// Executing any LilithKeyStrokes method triggers initialisation of class
+		setSplashStatusText("Creating keystrokes…");
+		LilithKeyStrokes.getActionNames();
+
+		setSplashStatusText("Creating main frame…");
 
 		groovyFormatter = new GroovyEventWrapperHtmlFormatter(applicationPreferences);
 		thymeleafFormatter = new ThymeleafEventWrapperHtmlFormatter(applicationPreferences);
 
-		smallProgressIcon = new ImageIcon(MainFrame.class.getResource("/otherGraphics/Progress16.gif"));
-		ImageIcon frameIcon = new ImageIcon(MainFrame.class.getResource("/otherGraphics/Lilith16.jpg"));
-		setIconImage(frameIcon.getImage());
-		//colorsReferenceQueue=new ReferenceQueue<Colors>();
-		//colorsCache=new ConcurrentHashMap<EventIdentifier, SoftColorsReference>();
-		application = new DefaultApplication();
-		autostartProcesses = new ArrayList<AutostartRunnable>();
+
+		autostartProcesses = new ArrayList<>();
 
 		addWindowListener(new MainWindowListener());
-		setDefaultCloseOperation(DO_NOTHING_ON_CLOSE); // fixes ticket #79 
+		setDefaultCloseOperation(DO_NOTHING_ON_CLOSE); // fixes ticket #79
 		Runtime runtime = Runtime.getRuntime();
 		Thread shutdownHook = new Thread(new ShutdownRunnable());
 		runtime.addShutdownHook(shutdownHook);
 
-		senderService = new SenderService(this);
-		this.enableBonjour = enableBonjour;
 		/*
 		if(application.isMac())
 		{
@@ -344,7 +338,7 @@ public class MainFrame
 		}
         */
 
-		longTaskManager = new TaskManager<Long>();
+		longTaskManager = new TaskManager<>();
 		longTaskManager.setUsingEventQueue(true);
 		longTaskManager.startUp();
 		longTaskManager.addTaskListener(new MainTaskListener());
@@ -354,7 +348,7 @@ public class MainFrame
 		loggingFileFactory = new LogFileFactoryImpl(new File(startupApplicationPath, LOGGING_FILE_SUBDIRECTORY));
 		accessFileFactory = new LogFileFactoryImpl(new File(startupApplicationPath, ACCESS_FILE_SUBDIRECTORY));
 
-		Map<String, String> loggingMetaData = new HashMap<String, String>();
+		Map<String, String> loggingMetaData = new HashMap<>();
 		loggingMetaData.put(FileConstants.CONTENT_TYPE_KEY, FileConstants.CONTENT_TYPE_VALUE_LOGGING);
 		loggingMetaData.put(FileConstants.CONTENT_FORMAT_KEY, FileConstants.CONTENT_FORMAT_VALUE_PROTOBUF);
 		loggingMetaData.put(FileConstants.COMPRESSION_KEY, FileConstants.COMPRESSION_VALUE_GZIP);
@@ -362,15 +356,13 @@ public class MainFrame
 
 		loggingFileBufferFactory = new LoggingFileBufferFactory(loggingFileFactory, loggingMetaData);
 
-		Map<String, String> accessMetaData = new HashMap<String, String>();
+		Map<String, String> accessMetaData = new HashMap<>();
 		accessMetaData.put(FileConstants.CONTENT_TYPE_KEY, FileConstants.CONTENT_TYPE_VALUE_ACCESS);
 		accessMetaData.put(FileConstants.CONTENT_FORMAT_KEY, FileConstants.CONTENT_FORMAT_VALUE_PROTOBUF);
 		accessMetaData.put(FileConstants.COMPRESSION_KEY, FileConstants.COMPRESSION_VALUE_GZIP);
 		// TODO: configurable format and compressed
 
 		accessFileBufferFactory = new AccessFileBufferFactory(accessFileFactory, accessMetaData);
-
-		rrdFileFilter = new RrdFileFilter();
 
 		loggingEventViewManager = new LoggingEventViewManager(this);
 		accessEventViewManager = new AccessEventViewManager(this);
@@ -382,7 +374,7 @@ public class MainFrame
 		statusBar = new JPanel(new GridBagLayout());
 		GridBagConstraints gbc = new GridBagConstraints();
 		statusLabel = new JLabel();
-		statusLabel.setText("Starting...");
+		statusLabel.setText("Starting…");
 
 		gbc.fill = GridBagConstraints.HORIZONTAL;
 		gbc.gridx = 0;
@@ -442,35 +434,28 @@ public class MainFrame
 		add(desktop, BorderLayout.CENTER);
 		add(statusBar, BorderLayout.SOUTH);
 
-		if(SystemUtils.IS_JAVA_1_6)
-		{
-			setSplashStatusText("Creating statistics dialog.");
-			if(logger.isDebugEnabled()) logger.debug("Before creation of statistics-dialog...");
-			statisticsDialog = new StatisticsDialog(this);
-			if(logger.isDebugEnabled()) logger.debug("After creation of statistics-dialog...");
-		}
+		setSplashStatusText("Creating about dialog…");
+		aboutDialog = new AboutDialog(this, "About " + appName + "…", appName);
 
-		setSplashStatusText("Creating about dialog.");
-		aboutDialog = new AboutDialog(this, "About " + appName + "...", appName);
-
-		setSplashStatusText("Creating update dialog.");
+		setSplashStatusText("Creating update dialog…");
 		checkForUpdateDialog = new CheckForUpdateDialog(this);
 
-		setSplashStatusText("Creating debug dialog.");
+		setSplashStatusText("Creating debug dialog…");
 		debugDialog = new DebugDialog(this, this);
 
-		setSplashStatusText("Creating preferences dialog.");
+		setSplashStatusText("Creating preferences dialog…");
 		if(logger.isDebugEnabled()) logger.debug("Before creation of preferences-dialog...");
 		preferencesDialog = new PreferencesDialog(this);
 		if(logger.isDebugEnabled()) logger.debug("After creation of preferences-dialog...");
 
-		setSplashStatusText("Creating \"Open inactive\" dialog.");
-		openInactiveLogsDialog = new OpenPreviousDialog(MainFrame.this);
+		setSplashStatusText("Creating \"Open inactive\" dialog…");
+		openInactiveLogsDialog = new OpenPreviousDialog(this);
 
-		setSplashStatusText("Creating help frame.");
+		setSplashStatusText("Creating help frame…");
 		helpFrame = new HelpFrame(this);
 		helpFrame.setTitle("Help Topics");
 
+		setSplashStatusText("Creating file choosers…");
 		openFileChooser = new JFileChooser();
 		openFileChooser.setFileFilter(new LilithFileFilter());
 		openFileChooser.setFileHidingEnabled(false);
@@ -486,7 +471,7 @@ public class MainFrame
 		exportFileChooser.setFileHidingEnabled(false);
 		exportFileChooser.setCurrentDirectory(this.applicationPreferences.getPreviousExportPath());
 
-		setSplashStatusText("Creating task manager frame.");
+		setSplashStatusText("Creating task manager frame…");
 		taskManagerFrame = new TaskManagerInternalFrame(this);
 		taskManagerFrame.setTitle("Task Manager");
 		taskManagerFrame.setDefaultCloseOperation(JInternalFrame.HIDE_ON_CLOSE);
@@ -496,31 +481,22 @@ public class MainFrame
 		desktop.validate();
 
 		// the following code must be executed after desktop has been initialized...
-		try
-		{
-			// try to use the 1.6 transfer handler...
-			new MainFrameTransferHandler16(this).attach();
-		}
-		catch(Throwable t)
-		{
-			// ... and use the basic 1.5 transfer handler if this fails.
-			new MainFrameTransferHandler(this).attach();
-		}
+		new MainFrameTransferHandler(this).attach();
 
-		setSplashStatusText("Creating Tip of the Day dialog.");
+		setSplashStatusText("Creating Tip of the Day dialog…");
 		tipOfTheDayDialog = new TipOfTheDayDialog(this);
 
-		setSplashStatusText("Creating actions and menus.");
+		setSplashStatusText("Creating actions and menus…");
 		viewActions = new ViewActions(this, null);
 		viewActions.getPopupMenu(); // initialize popup once in main frame only.
 
 		JMenuBar menuBar = viewActions.getMenuBar();
-		toolbar = viewActions.getToolbar();
+		toolbar = viewActions.getToolBar();
 		add(toolbar, BorderLayout.NORTH);
 		setJMenuBar(menuBar);
 
 		setShowingToolbar(applicationPreferences.isShowingToolbar());
-		setShowingStatusbar(applicationPreferences.isShowingStatusbar());
+		setShowingStatusBar(applicationPreferences.isShowingStatusBar());
 	}
 
 	public boolean isUsingThymeleaf()
@@ -542,97 +518,83 @@ public class MainFrame
 		//referenceCollection.setDaemon(true);
 		//referenceCollection.start();
 
-		setSplashStatusText("Executing autostart items.");
+		setSplashStatusText("Executing autostart items…");
 		// Autostart
 		{
 			File autostartDir = new File(startupApplicationPath, "autostart");
 			if(autostartDir.mkdirs())
 			{
-				if(logger.isDebugEnabled()) logger.debug("Created '{}'.", autostartDir.getAbsolutePath());
+				if(logger.isDebugEnabled()) logger.debug("Created '{}'.", autostartDir.getAbsolutePath()); // NOPMD
 			}
-			File[] autoFiles = autostartDir.listFiles(new FileFilter()
-			{
-				public boolean accept(File file)
-				{
-					return file.isFile();
-				}
-			});
+			File[] autoFiles = autostartDir.listFiles(File::isFile);
 
 			if(autoFiles != null && autoFiles.length > 0)
 			{
-				Arrays.sort(autoFiles, new Comparator<File>()
-				{
-					public int compare(File o1, File o2)
-					{
-						return o1.getAbsolutePath().compareTo(o2.getAbsolutePath());
-					}
-				});
+				Arrays.sort(autoFiles, Comparator.comparing(File::getAbsolutePath));
 				for(File current : autoFiles)
 				{
-					AutostartRunnable r = new AutostartRunnable(current);
+					AutostartRunnable r = new AutostartRunnable(current); // NOPMD - AvoidInstantiatingObjectsInLoops
 					autostartProcesses.add(r);
-					Thread t = new Thread(r, current.getAbsolutePath());
+					Thread t = new Thread(r, current.getAbsolutePath()); // NOPMD - AvoidInstantiatingObjectsInLoops
 					t.setDaemon(true);
 					t.start();
 				}
 			}
 			else
 			{
-				if(logger.isInfoEnabled())
-				{
-					logger.info("No autostart files defined in '{}'.", autostartDir.getAbsolutePath());
-				}
+				if(logger.isInfoEnabled()) logger.info("No autostart files defined in '{}'.", autostartDir.getAbsolutePath());
 			}
 		}
 
 		// go to source
 		{
-			gotoSource = new SerializingGoToSource();
+			gotoSourceProvider = new SerializingGoToSource();
 			//gotoSource.start() started when needed...
 		}
 
-		setSplashStatusText("Creating global views.");
-		SourceIdentifier globalSourceIdentifier = new SourceIdentifier("global", null);
+		setSplashStatusText("Creating global views…");
+		SourceIdentifier globalSourceIdentifier = new SourceIdentifier(GLOBAL_SOURCE_IDENTIFIER_NAME, null);
 
-		loggingFileDump = new FileDumpEventHandler<LoggingEvent>(globalSourceIdentifier, loggingFileBufferFactory);
-		accessFileDump = new FileDumpEventHandler<AccessEvent>(globalSourceIdentifier, accessFileBufferFactory);
+		loggingFileDump = new FileDumpEventHandler<>(loggingFileBufferFactory.createActiveBuffer(globalSourceIdentifier));
+		accessFileDump = new FileDumpEventHandler<>(accessFileBufferFactory.createActiveBuffer(globalSourceIdentifier));
+
 		setGlobalLoggingEnabled(applicationPreferences.isGlobalLoggingEnabled());
 
-		BlockingCircularBuffer<EventWrapper<LoggingEvent>> loggingEventQueue = new LilithBuffer<LoggingEvent>(applicationPreferences, 1000);
-		BlockingCircularBuffer<EventWrapper<AccessEvent>> accessEventQueue = new LilithBuffer<AccessEvent>(applicationPreferences, 1000);
+		BlockingCircularBuffer<EventWrapper<LoggingEvent>> loggingEventQueue = new LilithBuffer<>(applicationPreferences, 1000);
+		BlockingCircularBuffer<EventWrapper<AccessEvent>> accessEventQueue = new LilithBuffer<>(applicationPreferences, 1000);
 
-		SourceManagerImpl<LoggingEvent> lsm = new SourceManagerImpl<LoggingEvent>(loggingEventQueue);
+		SourceManagerImpl<LoggingEvent> lsm = new SourceManagerImpl<>(loggingEventQueue);
 		// add global view
-		EventSource<LoggingEvent> globalLoggingEventSource = new EventSourceImpl<LoggingEvent>(globalSourceIdentifier, loggingFileDump.getBuffer(), true);
+		EventSource<LoggingEvent> globalLoggingEventSource = new EventSourceImpl<>(globalSourceIdentifier, loggingFileDump.getBuffer(), true);
 		lsm.addSource(globalLoggingEventSource);
 
-		setSplashStatusText("Creating internal view.");
+		setSplashStatusText("Creating internal view…");
 		// add internal lilith logging
-		EventSource<LoggingEvent> lilithLoggingEventSource = new EventSourceImpl<LoggingEvent>(InternalLilithAppender.getSourceIdentifier(), InternalLilithAppender.getBuffer(), false);
+		EventSource<LoggingEvent> lilithLoggingEventSource = new EventSourceImpl<>(InternalLilithAppender.getSourceIdentifier(), InternalLilithAppender.getBuffer(), false);
 		lsm.addSource(lilithLoggingEventSource);
 
 		setLoggingEventSourceManager(lsm);
 
-		SourceManagerImpl<AccessEvent> asm = new SourceManagerImpl<AccessEvent>(accessEventQueue);
+		SourceManagerImpl<AccessEvent> asm = new SourceManagerImpl<>(accessEventQueue);
 		// add global view
-		EventSource<AccessEvent> globalAccessEventSource = new EventSourceImpl<AccessEvent>(globalSourceIdentifier, accessFileDump.getBuffer(), true);
+		EventSource<AccessEvent> globalAccessEventSource = new EventSourceImpl<>(globalSourceIdentifier, accessFileDump.getBuffer(), true);
 		asm.addSource(globalAccessEventSource);
 		setAccessEventSourceManager(asm);
 
-		ConverterRegistry<LoggingEvent> loggingConverterRegistry = new ConverterRegistry<LoggingEvent>();
+		ConverterRegistry<LoggingEvent> loggingConverterRegistry = new ConverterRegistry<>();
 		loggingConverterRegistry.addConverter(new LogbackLoggingConverter());
 		loggingConverterRegistry.addConverter(new Log4jLoggingConverter());
 		loggingConverterRegistry.addConverter(new Log4j2LoggingConverter());
 
-		ConverterRegistry<AccessEvent> accessConverterRegistry = new ConverterRegistry<AccessEvent>();
+		ConverterRegistry<AccessEvent> accessConverterRegistry = new ConverterRegistry<>();
 		accessConverterRegistry.addConverter(new LogbackAccessConverter());
 
-		setSplashStatusText("Starting event receivers.");
+		setSplashStatusText("Starting event receivers…");
 
 		try
 		{
-			ConvertingServerSocketEventSourceProducer<LoggingEvent> producer
-					= new ConvertingServerSocketEventSourceProducer<LoggingEvent>(4560, loggingConverterRegistry, new LoggingEventSourceIdentifierUpdater());
+			EventSourceProducer<LoggingEvent> producer
+					= new SerializableServerSocketEventSourceProducer<>(4560, loggingConverterRegistry, new LoggingEventSourceIdentifierUpdater());
 			loggingEventSourceManager.addEventSourceProducer(producer);
 		}
 		catch(IOException ex)
@@ -642,8 +604,8 @@ public class MainFrame
 
 		try
 		{
-			ConvertingServerSocketEventSourceProducer<LoggingEvent> producer
-					= new ConvertingServerSocketEventSourceProducer<LoggingEvent>(4445, loggingConverterRegistry, new LoggingEventSourceIdentifierUpdater());
+			EventSourceProducer<LoggingEvent> producer
+					= new SerializableServerSocketEventSourceProducer<>(4445, loggingConverterRegistry, new LoggingEventSourceIdentifierUpdater());
 			loggingEventSourceManager.addEventSourceProducer(producer);
 		}
 		catch(IOException ex)
@@ -653,7 +615,7 @@ public class MainFrame
 
 		try
 		{
-			LoggingEventProtobufServerSocketEventSourceProducer producer
+			EventSourceProducer<LoggingEvent> producer
 				= new LoggingEventProtobufServerSocketEventSourceProducer
 				(ClassicMultiplexSocketAppender.COMPRESSED_DEFAULT_PORT, true);
 
@@ -667,7 +629,7 @@ public class MainFrame
 
 		try
 		{
-			LoggingEventProtobufServerSocketEventSourceProducer producer
+			EventSourceProducer<LoggingEvent> producer
 				= new LoggingEventProtobufServerSocketEventSourceProducer
 				(ClassicMultiplexSocketAppender.UNCOMPRESSED_DEFAULT_PORT, false);
 
@@ -682,7 +644,7 @@ public class MainFrame
 
 		try
 		{
-			LilithXmlMessageLoggingServerSocketEventSourceProducer producer
+			EventSourceProducer<LoggingEvent> producer
 				= new LilithXmlMessageLoggingServerSocketEventSourceProducer
 				(ClassicXmlMultiplexSocketAppender.UNCOMPRESSED_DEFAULT_PORT, false);
 
@@ -695,7 +657,7 @@ public class MainFrame
 
 		try
 		{
-			LilithXmlMessageLoggingServerSocketEventSourceProducer producer
+			EventSourceProducer<LoggingEvent> producer
 				= new LilithXmlMessageLoggingServerSocketEventSourceProducer
 				(ClassicXmlMultiplexSocketAppender.COMPRESSED_DEFAULT_PORT, true);
 
@@ -709,7 +671,7 @@ public class MainFrame
 
 		try
 		{
-			LilithJsonMessageLoggingServerSocketEventSourceProducer producer
+			EventSourceProducer<LoggingEvent> producer
 				= new LilithJsonMessageLoggingServerSocketEventSourceProducer
 				(ClassicJsonMultiplexSocketAppender.UNCOMPRESSED_DEFAULT_PORT, false);
 
@@ -722,7 +684,7 @@ public class MainFrame
 
 		try
 		{
-			LilithJsonMessageLoggingServerSocketEventSourceProducer producer
+			EventSourceProducer<LoggingEvent> producer
 				= new LilithJsonMessageLoggingServerSocketEventSourceProducer
 				(ClassicJsonMultiplexSocketAppender.COMPRESSED_DEFAULT_PORT, true);
 
@@ -735,7 +697,7 @@ public class MainFrame
 
 		try
 		{
-			LilithXmlStreamLoggingServerSocketEventSourceProducer producer
+			EventSourceProducer<LoggingEvent> producer
 				= new LilithXmlStreamLoggingServerSocketEventSourceProducer
 				(ZeroDelimitedClassicXmlMultiplexSocketAppender.DEFAULT_PORT);
 
@@ -748,7 +710,7 @@ public class MainFrame
 
 		try
 		{
-			LilithJsonStreamLoggingServerSocketEventSourceProducer producer
+			EventSourceProducer<LoggingEvent> producer
 				= new LilithJsonStreamLoggingServerSocketEventSourceProducer
 				(ZeroDelimitedClassicJsonMultiplexSocketAppender.DEFAULT_PORT);
 
@@ -761,8 +723,8 @@ public class MainFrame
 
 		try
 		{
-			JulXmlStreamLoggingServerSocketEventSourceProducer producer
-				= new JulXmlStreamLoggingServerSocketEventSourceProducer(11020);
+			EventSourceProducer<LoggingEvent> producer
+				= new JulXmlStreamLoggingServerSocketEventSourceProducer(11_020);
 
 			loggingEventSourceManager.addEventSourceProducer(producer);
 		}
@@ -773,8 +735,44 @@ public class MainFrame
 
 		try
 		{
-			ConvertingServerSocketEventSourceProducer<AccessEvent> producer
-					= new ConvertingServerSocketEventSourceProducer<AccessEvent>(4570, accessConverterRegistry, null);
+			EventSourceProducer<LoggingEvent> producer
+					= new Log4j2JsonServerSocketEventSourceProducer(Log4j2Ports.JSON);
+
+			loggingEventSourceManager.addEventSourceProducer(producer);
+		}
+		catch(IOException ex)
+		{
+			if(logger.isWarnEnabled()) logger.warn("Exception while creating event producer!", ex);
+		}
+
+		try
+		{
+			EventSourceProducer<LoggingEvent> producer
+					= new Log4j2YamlServerSocketEventSourceProducer(Log4j2Ports.YAML);
+
+			loggingEventSourceManager.addEventSourceProducer(producer);
+		}
+		catch(IOException ex)
+		{
+			if(logger.isWarnEnabled()) logger.warn("Exception while creating event producer!", ex);
+		}
+
+		try
+		{
+			EventSourceProducer<LoggingEvent> producer
+					= new Log4j2XmlServerSocketEventSourceProducer(Log4j2Ports.XML);
+
+			loggingEventSourceManager.addEventSourceProducer(producer);
+		}
+		catch(IOException ex)
+		{
+			if(logger.isWarnEnabled()) logger.warn("Exception while creating event producer!", ex);
+		}
+
+		try
+		{
+			EventSourceProducer<AccessEvent> producer
+					= new SerializableServerSocketEventSourceProducer<>(4570, accessConverterRegistry, null);
 			accessEventSourceManager.addEventSourceProducer(producer);
 		}
 		catch(IOException ex)
@@ -783,12 +781,11 @@ public class MainFrame
 		}
 		try
 		{
-			AccessEventProtobufServerSocketEventSourceProducer producer
+			EventSourceProducer<AccessEvent> producer
 				= new AccessEventProtobufServerSocketEventSourceProducer
 				(AccessMultiplexSocketAppender.COMPRESSED_DEFAULT_PORT, true);
 
 			accessEventSourceManager.addEventSourceProducer(producer);
-			// TODO: senderService.addAccessProducer(producer);
 		}
 		catch(IOException ex)
 		{
@@ -797,74 +794,49 @@ public class MainFrame
 
 		try
 		{
-			AccessEventProtobufServerSocketEventSourceProducer producer
+			EventSourceProducer<AccessEvent> producer
 				= new AccessEventProtobufServerSocketEventSourceProducer
 				(AccessMultiplexSocketAppender.UNCOMPRESSED_DEFAULT_PORT, false);
 
 			accessEventSourceManager.addEventSourceProducer(producer);
-			// TODO: senderService.addAccessProducer(producer);
 		}
 		catch(IOException ex)
 		{
 			if(logger.isWarnEnabled()) logger.warn("Exception while creating event producer!", ex);
 		}
 
-		setSplashStatusText("Setting up event handlers.");
+		setSplashStatusText("Setting up event handlers…");
 
-		rrdLoggingEventHandler = new RrdLoggingEventHandler();
-		rrdLoggingEventHandler.setBasePath(new File(startupApplicationPath, "statistics"));
-		setStatisticsEnabled(applicationPreferences.isLoggingStatisticEnabled());
 		AlarmSoundLoggingEventHandler loggingEventAlarmSound = new AlarmSoundLoggingEventHandler();
 		loggingEventAlarmSound.setSounds(sounds);
 
 		FileSplitterEventHandler<LoggingEvent> fileSplitterLoggingEventHandler =
-			new FileSplitterEventHandler<LoggingEvent>(loggingFileBufferFactory, loggingEventSourceManager);
+			new FileSplitterEventHandler<>(loggingFileBufferFactory, loggingEventSourceManager);
 
-		List<EventHandler<LoggingEvent>> loggingHandlers = new ArrayList<EventHandler<LoggingEvent>>();
+		List<EventHandler<LoggingEvent>> loggingHandlers = new ArrayList<>();
 
-		loggingHandlers.add(rrdLoggingEventHandler);
 		loggingHandlers.add(loggingEventAlarmSound);
 		loggingHandlers.add(fileSplitterLoggingEventHandler);
 		loggingHandlers.add(loggingFileDump);
 
-		// crashes the app using j2se 6
-		//if(application.isMac())
-		//{
-		//	UserNotificationLoggingEventHandler notification = new UserNotificationLoggingEventHandler(application);
-		//	loggingHandlers.add(notification);
-		//}
 		loggingEventSourceManager.setEventHandlers(loggingHandlers);
 		loggingEventSourceManager.start();
 
-		List<EventHandler<AccessEvent>> accessHandlers = new ArrayList<EventHandler<AccessEvent>>();
+		List<EventHandler<AccessEvent>> accessHandlers = new ArrayList<>();
 
 		FileSplitterEventHandler<AccessEvent> fileSplitterAccessEventHandler =
-			new FileSplitterEventHandler<AccessEvent>(accessFileBufferFactory, accessEventSourceManager);
+			new FileSplitterEventHandler<>(accessFileBufferFactory, accessEventSourceManager);
 		AlarmSoundAccessEventHandler accessEventAlarmSound = new AlarmSoundAccessEventHandler();
 		accessEventAlarmSound.setSounds(sounds);
 		accessHandlers.add(accessEventAlarmSound);
 		accessHandlers.add(fileSplitterAccessEventHandler);
 		accessHandlers.add(accessFileDump);
 
-		// crashes the app using j2se 6
-		//if(application.isMac())
-		//{
-		//	UserNotificationAccessEventHandler notification = new UserNotificationAccessEventHandler(application);
-		//	accessHandlers.add(notification);
-		//}
-
 		accessEventSourceManager.setEventHandlers(accessHandlers);
 		accessEventSourceManager.start();
 
 		viewActions.updateWindowMenu();
-		application.setEnabledAboutMenu(true);
-		application.setEnabledPreferencesMenu(true);
-		application.addApplicationListener(new MyApplicationListener());
 
-		if(enableBonjour)
-		{
-			senderService.start();
-		}
 		if(applicationPreferences.isCheckingForUpdate())
 		{
 			checkForUpdate(false);
@@ -883,11 +855,25 @@ public class MainFrame
 		{
 			traySupport.setMainFrame(this);
 		}
-		setSplashStatusText("Finished.");
-//		viewActions.requestMenuBarFocus();
+		setSplashStatusText("Done!");
 	}
 
-	public void showTipOfTheDayDialog()
+	public PreferencesDialog getPreferencesDialog()
+	{
+		return preferencesDialog;
+	}
+
+	public ViewActions getViewActions()
+	{
+		return viewActions;
+	}
+
+	public JDesktopPane getDesktop()
+	{
+		return desktop;
+	}
+
+	void showTipOfTheDayDialog()
 	{
 		Windows.showWindow(tipOfTheDayDialog, this, true);
 	}
@@ -903,12 +889,12 @@ public class MainFrame
 			if(numberOfTasks == 1)
 			{
 				text = "1 active task.";
-				icon = smallProgressIcon;
+				icon = Icons.PROGRESS_ICON;
 			}
 			else if(numberOfTasks > 1)
 			{
-				text = "" + numberOfTasks + " active tasks.";
-				icon = smallProgressIcon;
+				text = Integer.toString(numberOfTasks) + " active tasks.";
+				icon = Icons.PROGRESS_ICON;
 			}
 			taskStatusLabel.setText(text);
 			taskStatusLabel.setIcon(icon);
@@ -923,63 +909,6 @@ public class MainFrame
 		}
 	}
 
-	public Application getApplication()
-	{
-		return application;
-	}
-
-//	/**
-//	 * Returns a sorted map containing resolved source name mapped to sender. If there is both a compressed
-//	 * and uncompressed sender the compressed one will be used.
-//	 * @param senders a map of all senders
-//	 * @return a  map of senders.
-//	 */
-//	private <T extends Serializable> Map<String, EventSender<T>> getEventSenders(Map<String, EventSender<T>> senders)
-//	{
-//		Map<String, EventSender<T>> serviceNameSenderMapping;
-//		synchronized(senders)
-//		{
-//			serviceNameSenderMapping =new HashMap<String, EventSender<T>>(senders);
-//		}
-//
-//		SortedMap<String, EventSender<T>> result=new TreeMap<String, EventSender<T>>();
-//		for(Map.Entry<String, EventSender<T>> current: serviceNameSenderMapping.entrySet())
-//		{
-//			EventSender<T> value = current.getValue();
-//			String hostName = value.getHostAddress();
-//			hostName = getPrimarySourceTitle(hostName);
-//			EventSender<T> prevValue = result.get(hostName);
-//			if(prevValue == null)
-//			{
-//				result.put(hostName, value);
-//			}
-//			else
-//			{
-//				if(value instanceof AbstractEventSender)
-//				{
-//					AbstractEventSender aes = (AbstractEventSender) value;
-//					if(aes.isCompressing())
-//					{
-//						result.put(hostName, value);
-//						if(logger.isDebugEnabled()) logger.debug("Replaced previous sender with compressing one.");
-//					}
-//				}
-//			}
-//		}
-//		if(logger.isDebugEnabled()) logger.debug("EventSenders: {}", result);
-//		return result;
-//	}
-
-	public Map<String, EventSender<LoggingEvent>> getLoggingEventSenders()
-	{
-		return senderService.getLoggingEventSenders();//getEventSenders(loggingEventSenders);
-	}
-
-	public Map<String, EventSender<AccessEvent>> getAccessEventSenders()
-	{
-		return senderService.getAccessEventSenders();//getEventSenders(accessEventSenders);
-	}
-
 	public void updateWindowMenus()
 	{
 		processViewActions(UPDATE_WINDOW_MENU_ACTIONS_PROCESSOR);
@@ -988,8 +917,8 @@ public class MainFrame
 		if(logger.isDebugEnabled()) logger.debug("Selected IFrame: {}", selected);
 		if(selected instanceof ViewContainerInternalFrame)
 		{
-			ViewContainerInternalFrame iframe = (ViewContainerInternalFrame) selected;
-			viewActions.setViewContainer(iframe.getViewContainer());
+			ViewContainerInternalFrame internalFrame = (ViewContainerInternalFrame) selected;
+			viewActions.setViewContainer(internalFrame.getViewContainer());
 		}
 		else
 		{
@@ -999,47 +928,35 @@ public class MainFrame
 	}
 
 
-	public void closeLoggingConnection(SourceIdentifier id)
+	void closeLoggingConnection(SourceIdentifier id)
 	{
 		loggingEventSourceManager.removeEventProducer(id);
 	}
 
-	public void closeAccessConnection(SourceIdentifier id)
+	void closeAccessConnection(SourceIdentifier id)
 	{
 		accessEventSourceManager.removeEventProducer(id);
 	}
 
-	public void goToSource(StackTraceElement ste)
+	void goToSource(StackTraceElement stackTraceElement)
 	{
-		/*
-		String className=ste.getClassName();
-		int dollarIndex = className.indexOf("$");
-		if(dollarIndex>=0)
+		if(stackTraceElement == null)
 		{
-			String parentClassName=className.substring(0, dollarIndex);
-			if(logger.isWarnEnabled()) logger.warn("parentClassName: {}", parentClassName);
+			return;
 		}
-        */
-		if(gotoSource != null)
+		if(gotoSourceProvider != null)
 		{
-			gotoSource.goToSource(ste);
+			gotoSourceProvider.goToSource(stackTraceElement);
 		}
 	}
 
-	public void setActiveConnectionsCounter(int activeCounter)
+	void setActiveConnectionsCounter(int activeCounter)
 	{
 		this.activeCounter = activeCounter;
 		updateStatus();
 	}
 
-	public void copyHtml(String html)
-	{
-		Clipboard systemClipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
-		Transferable transferableText = new HtmlTransferable(html);
-		systemClipboard.setContents(transferableText, null);
-	}
-
-	public void checkForUpdate(boolean showAlways)
+	void checkForUpdate(boolean showAlways)
 	{
 		Thread t = new Thread(new CheckForUpdateRunnable(showAlways, applicationPreferences.isCheckingForSnapshot()));
 		t.start();
@@ -1051,19 +968,7 @@ public class MainFrame
 		{
 			initStatusColors();
 		}
-		Colors c = statusColors.get(status);
-		if(c != null)
-		{
-			try
-			{
-				c = c.clone();
-			}
-			catch(CloneNotSupportedException e)
-			{
-				if(logger.isErrorEnabled()) logger.error("Exception while cloning Colors!!", e);
-			}
-		}
-		return c;
+		return cloneColors(statusColors.get(status));
 	}
 
 	public Colors getColors(LoggingEvent.Level level)
@@ -1072,7 +977,11 @@ public class MainFrame
 		{
 			initLevelColors();
 		}
-		Colors c = levelColors.get(level);
+		return cloneColors(levelColors.get(level));
+	}
+
+	private static Colors cloneColors(Colors c)
+	{
 		if(c != null)
 		{
 			try
@@ -1081,6 +990,7 @@ public class MainFrame
 			}
 			catch(CloneNotSupportedException e)
 			{
+				final Logger logger = LoggerFactory.getLogger(MainFrame.class);
 				if(logger.isErrorEnabled()) logger.error("Exception while cloning Colors!!", e);
 			}
 		}
@@ -1089,9 +999,9 @@ public class MainFrame
 
 	public Colors getColors(EventWrapper eventWrapper)
 	{
-		if(!SwingUtilities.isEventDispatchThread())
+		if(!EventQueue.isDispatchThread())
 		{
-			if(logger.isErrorEnabled()) logger.error("Not on EventDispatchThread!");
+			if(logger.isErrorEnabled()) logger.error("Not on EventDispatchThread!"); // NOPMD
 		}
 
 		ColorScheme result=null;
@@ -1172,7 +1082,7 @@ public class MainFrame
 		}
 	}
 
-	public void importFile()
+	void importFile()
 	{
 		int returnVal = importFileChooser.showOpenDialog(this);
 
@@ -1180,7 +1090,7 @@ public class MainFrame
 		{
 			File importFile = importFileChooser.getSelectedFile();
 			String fileName = importFile.getAbsolutePath();
-			if(fileName.toLowerCase().endsWith(FileConstants.FILE_EXTENSION))
+			if(fileName.toLowerCase(Locale.US).endsWith(FileConstants.FILE_EXTENSION))
 			{
 				open(importFile);
 				return;
@@ -1189,7 +1099,7 @@ public class MainFrame
 		}
 	}
 
-	public void exportFile(EventWrapperViewPanel view)
+	void exportFile(EventWrapperViewPanel view)
 	{
 		long size=view.getEventSource().getBuffer().getSize();
 		if(size == 0)
@@ -1214,7 +1124,7 @@ public class MainFrame
 			File file = exportFileChooser.getSelectedFile();
 			String fileName = file.getAbsolutePath();
 			String baseName;
-			if(fileName.toLowerCase().endsWith(FileConstants.FILE_EXTENSION))
+			if(fileName.toLowerCase(Locale.US).endsWith(FileConstants.FILE_EXTENSION))
 			{
 				baseName=fileName.substring(0, fileName.length()-FileConstants.FILE_EXTENSION.length());
 			}
@@ -1238,11 +1148,11 @@ public class MainFrame
 				}
 				if(!dataFile.delete())
 				{
-					if(logger.isWarnEnabled()) logger.warn("Couldn't delete existing file {}!", dataFile.getAbsolutePath());
+					if(logger.isWarnEnabled()) logger.warn("Couldn't delete existing file {}!", dataFile.getAbsolutePath()); // NOPMD
 				}
 				if(indexFile.isFile() && !indexFile.delete())
 				{
-					if(logger.isWarnEnabled()) logger.warn("Couldn't delete existing file {}!", indexFile.getAbsolutePath());
+					if(logger.isWarnEnabled()) logger.warn("Couldn't delete existing file {}!", indexFile.getAbsolutePath()); // NOPMD
 				}
 			}
 
@@ -1259,7 +1169,7 @@ public class MainFrame
 
 	private void exportFile(File dataFile, File indexFile, AccessEventViewPanel viewPanel)
 	{
-		Map<String, String> metaData = new HashMap<String, String>();
+		Map<String, String> metaData = new HashMap<>();
 		metaData.put(FileConstants.CONTENT_FORMAT_KEY, FileConstants.CONTENT_FORMAT_VALUE_PROTOBUF);
 		metaData.put(FileConstants.CONTENT_TYPE_KEY, FileConstants.CONTENT_TYPE_VALUE_ACCESS);
 		metaData.put(FileConstants.COMPRESSION_KEY, FileConstants.COMPRESSION_VALUE_GZIP);
@@ -1271,13 +1181,13 @@ public class MainFrame
 
 		String name="Export to "+dataFile.getName();
 		String description="Exporting "+inputBuffer.getSize()+" access events into file '"+dataFile.getAbsolutePath()+"'.";
-		Task<Long> task = longTaskManager.startTask(new ExportCallable<AccessEvent>(inputBuffer, outputBuffer), name, description);
+		Task<Long> task = longTaskManager.startTask(new ExportCallable<>(inputBuffer, outputBuffer), name, description);
 		if(logger.isInfoEnabled()) logger.info("Task-Name: {}", task.getName());
 	}
 
 	private void exportFile(File dataFile, File indexFile, LoggingEventViewPanel viewPanel)
 	{
-		Map<String, String> metaData = new HashMap<String, String>();
+		Map<String, String> metaData = new HashMap<>();
 		metaData.put(FileConstants.CONTENT_FORMAT_KEY, FileConstants.CONTENT_FORMAT_VALUE_PROTOBUF);
 		metaData.put(FileConstants.CONTENT_TYPE_KEY, FileConstants.CONTENT_TYPE_VALUE_LOGGING);
 		metaData.put(FileConstants.COMPRESSION_KEY, FileConstants.COMPRESSION_VALUE_GZIP);
@@ -1289,7 +1199,7 @@ public class MainFrame
 
 		String name="Export to "+dataFile.getName();
 		String description="Exporting "+inputBuffer.getSize()+" logging events into file '"+dataFile.getAbsolutePath()+"'.";
-		Task<Long> task = longTaskManager.startTask(new ExportCallable<LoggingEvent>(inputBuffer, outputBuffer), name, description);
+		Task<Long> task = longTaskManager.startTask(new ExportCallable<>(inputBuffer, outputBuffer), name, description);
 		if(logger.isInfoEnabled()) logger.info("Task-Name: {}", task.getName());
 	}
 
@@ -1299,26 +1209,22 @@ public class MainFrame
 		if(!dataFile.isFile())
 		{
 			String message = "'" + dataFile.getAbsolutePath() + "' is not a file!";
-			JOptionPane.showMessageDialog(this, message, "Can't open file...", JOptionPane.ERROR_MESSAGE);
+			JOptionPane.showMessageDialog(this, message, "Can't open file…", JOptionPane.ERROR_MESSAGE);
 			return;
 		}
 		if(!dataFile.canRead())
 		{
 			String message = "Can't read from '" + dataFile.getAbsolutePath() + "'!";
-			JOptionPane.showMessageDialog(this, message, "Can't open file...", JOptionPane.ERROR_MESSAGE);
+			JOptionPane.showMessageDialog(this, message, "Can't open file…", JOptionPane.ERROR_MESSAGE);
 			return;
 		}
-		ViewContainer<?> viewContainer = resolveViewContainer(dataFile);
-		if(viewContainer != null)
+		if(isViewAlreadyOpen(dataFile))
 		{
-			showView(viewContainer);
-			String message = "File '" + dataFile.getAbsolutePath() + "' is already open.";
-			JOptionPane.showMessageDialog(this, message, "File is already open...", JOptionPane.INFORMATION_MESSAGE);
 			return;
 		}
 		String fileName = dataFile.getAbsolutePath();
 		String indexFileName;
-		if(fileName.toLowerCase().endsWith(FileConstants.FILE_EXTENSION))
+		if(fileName.toLowerCase(Locale.US).endsWith(FileConstants.FILE_EXTENSION))
 		{
 			indexFileName = fileName.substring(0, fileName.length() - FileConstants.FILE_EXTENSION.length());
 		}
@@ -1328,7 +1234,6 @@ public class MainFrame
 		}
 		indexFileName = indexFileName + FileConstants.INDEX_FILE_EXTENSION;
 
-		long dataModified=dataFile.lastModified();
 
 		File indexFile = new File(indexFileName);
 		if(!indexFile.isFile())
@@ -1344,7 +1249,7 @@ public class MainFrame
 				return;
 			}
 			String name = "Indexing Lilith file";
-			String description = "Indexing '" + dataFile.getAbsolutePath() + "'...";
+			String description = "Indexing '" + dataFile.getAbsolutePath() + "'…";
 			Task<Long> task = longTaskManager.startTask(new IndexingCallable(dataFile, indexFile), name, description);
 			if(logger.isInfoEnabled()) logger.info("Task-Name: {}", task.getName());
 			// opening of view will be done by the task
@@ -1352,21 +1257,22 @@ public class MainFrame
 		}
 
 		// Previous index file was found
+		long dataModified=dataFile.lastModified();
 		long indexModified=indexFile.lastModified();
 		if(indexModified < dataModified)
 		{
-			// Index file is outdated. Ask if it should be reindexed.
-			String dialogTitle = "Index outdated. Reindex file?";
-			String message = "The index file is older than the data file!\nReindex data file right now?";
+			// Index file is outdated. Ask if it should be re-indexed.
+			String dialogTitle = "Index outdated. Re-index file?";
+			String message = "The index file is older than the data file!\nRe-index data file right now?";
 			int result = JOptionPane.showConfirmDialog(this, message, dialogTitle,
 				JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
 			if(JOptionPane.OK_OPTION == result)
 			{
-				if(indexFile.delete())
+				if(indexFile.delete()) // NOPMD
 				{
 					if(logger.isInfoEnabled()) logger.info("Deleted previous index file {}.", indexFile.getAbsolutePath());
-					String name = "Reindexing Lilith file";
-					String description = "Reindexing '" + dataFile.getAbsolutePath() + "'...";
+					String name = "Re-indexing Lilith file";
+					String description = "Re-indexing '" + dataFile.getAbsolutePath() + "'…";
 					Task<Long> task = longTaskManager.startTask(new IndexingCallable(dataFile, indexFile), name, description);
 					if(logger.isInfoEnabled()) logger.info("Task-Name: {}", task.getName());
 					// opening of view will be done by the task
@@ -1379,43 +1285,50 @@ public class MainFrame
 		createViewFor(dataFile, indexFile, true);
 	}
 
-	public void importFile(File importFile)
+	private boolean isViewAlreadyOpen(File dataFile)
+	{
+		ViewContainer<?> viewContainer = resolveViewContainer(dataFile);
+		if(viewContainer != null)
+		{
+			showView(viewContainer);
+			String message = "File '" + dataFile.getAbsolutePath() + "' is already open.";
+			JOptionPane.showMessageDialog(this, message, "File is already open…", JOptionPane.INFORMATION_MESSAGE);
+			return true;
+		}
+		return false;
+	}
+
+	private void importFile(File importFile)
 	{
 		if(logger.isInfoEnabled()) logger.info("Import file: {}", importFile.getAbsolutePath());
 
-		File parentFile = importFile.getParentFile();
-		String inputName = importFile.getName();
 		if(!importFile.isFile())
 		{
 			String message = "'" + importFile.getAbsolutePath() + "' is not a file!";
-			JOptionPane.showMessageDialog(this, message, "Can't import file...", JOptionPane.ERROR_MESSAGE);
+			JOptionPane.showMessageDialog(this, message, "Can't import file…", JOptionPane.ERROR_MESSAGE);
 			return;
 		}
 		if(!importFile.canRead())
 		{
 			String message = "Can't read from '" + importFile.getAbsolutePath() + "'!";
-			JOptionPane.showMessageDialog(this, message, "Can't import file...", JOptionPane.ERROR_MESSAGE);
+			JOptionPane.showMessageDialog(this, message, "Can't import file…", JOptionPane.ERROR_MESSAGE);
 			return;
 		}
 
-		File dataFile = new File(parentFile, inputName + FileConstants.FILE_EXTENSION);
-		File indexFile = new File(parentFile, inputName + FileConstants.INDEX_FILE_EXTENSION);
+		final String inputName = importFile.getName();
+		final File parentFile = importFile.getParentFile();
 
+		final File dataFile = new File(parentFile, inputName + FileConstants.FILE_EXTENSION);
 		// check if file exists and warn in that case
 		if(dataFile.isFile())
 		{
 			// check if file is already open
-			ViewContainer<?> viewContainer = resolveViewContainer(dataFile);
-			if(viewContainer != null)
+			if(isViewAlreadyOpen(dataFile))
 			{
-				showView(viewContainer);
-				String message = "File '" + dataFile.getAbsolutePath() + "' is already open.";
-				JOptionPane
-					.showMessageDialog(this, message, "File is already open...", JOptionPane.INFORMATION_MESSAGE);
 				return;
 			}
-			String dialogTitle = "Reimport file?";
-			String message = "Data file does already exist!\nReimport data file right now?";
+			String dialogTitle = "Re-import file?";
+			String message = "Data file does already exist!\nRe-import data file right now?";
 			int result = JOptionPane.showConfirmDialog(this, message, dialogTitle,
 				JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
 			if(JOptionPane.OK_OPTION != result)
@@ -1425,18 +1338,17 @@ public class MainFrame
 
 			if(dataFile.delete())
 			{
-				if(logger.isInfoEnabled()) logger.info("Deleted file '{}'.", dataFile.getAbsolutePath());
-			}
-		}
-		if(indexFile.isFile())
-		{
-			if(indexFile.delete())
-			{
-				if(logger.isInfoEnabled()) logger.info("Deleted file '{}'.", indexFile.getAbsolutePath());
+				if(logger.isInfoEnabled()) logger.info("Deleted file '{}'.", dataFile.getAbsolutePath()); // NOPMD
 			}
 		}
 
-		Map<String, String> metaData = new HashMap<String, String>();
+		File indexFile = new File(parentFile, inputName + FileConstants.INDEX_FILE_EXTENSION);
+		if(indexFile.isFile() && indexFile.delete())
+		{
+			if(logger.isInfoEnabled()) logger.info("Deleted file '{}'.", indexFile.getAbsolutePath()); // NOPMD
+		}
+
+		Map<String, String> metaData = new HashMap<>();
 		metaData.put(FileConstants.CONTENT_FORMAT_KEY, FileConstants.CONTENT_FORMAT_VALUE_PROTOBUF);
 		metaData.put(FileConstants.CONTENT_TYPE_KEY, FileConstants.CONTENT_TYPE_VALUE_LOGGING);
 		metaData.put(FileConstants.COMPRESSION_KEY, FileConstants.COMPRESSION_VALUE_GZIP);
@@ -1448,7 +1360,7 @@ public class MainFrame
 		if(type == ImportType.LOG4J)
 		{
 			String name = "Importing Log4J XML file";
-			String description = "Importing Log4J XML file '" + importFile.getAbsolutePath() + "'...";
+			String description = "Importing Log4J XML file '" + importFile.getAbsolutePath() + "'…";
 			Task<Long> task = longTaskManager.startTask(new Log4jImportCallable(importFile, buffer), name, description);
 			if(logger.isInfoEnabled()) logger.info("Task-Name: {}", task.getName());
 			return;
@@ -1456,7 +1368,7 @@ public class MainFrame
 		if(type == ImportType.JUL)
 		{
 			String name = "Importing java.util.logging XML file";
-			String description = "Importing java.util.logging XML file '" + importFile.getAbsolutePath() + "'...";
+			String description = "Importing java.util.logging XML file '" + importFile.getAbsolutePath() + "'…";
 			Task<Long> task = longTaskManager.startTask(new JulImportCallable(importFile, buffer), name, description);
 			if(logger.isInfoEnabled()) logger.info("Task-Name: {}", task.getName());
 			return;
@@ -1464,7 +1376,7 @@ public class MainFrame
 
 		// show warning "Unknown type"
 		String message = "Couldn't detect type of file '" + importFile.getAbsolutePath() + "'.\nFile is unsupported.";
-		JOptionPane.showMessageDialog(this, message, "Unknown file type...", JOptionPane.WARNING_MESSAGE);
+		JOptionPane.showMessageDialog(this, message, "Unknown file type…", JOptionPane.WARNING_MESSAGE);
 	}
 
 	private ImportType resolveType(File inputFile)
@@ -1472,16 +1384,16 @@ public class MainFrame
 		BufferedReader br = null;
 		try
 		{
-			FileInputStream fis = new FileInputStream(inputFile);
+			InputStream fis = Files.newInputStream(inputFile.toPath());
 
-			String fileName=inputFile.getName().toLowerCase();
+			String fileName=inputFile.getName().toLowerCase(Locale.US);
 			if(fileName.endsWith(".gz"))
 			{
-				br = new BufferedReader(new InputStreamReader(new GZIPInputStream(fis), "UTF-8"));
+				br = new BufferedReader(new InputStreamReader(new GZIPInputStream(fis), StandardCharsets.UTF_8));
 			}
 			else
 			{
-				br = new BufferedReader(new InputStreamReader(fis, "UTF-8"));
+				br = new BufferedReader(new InputStreamReader(fis, StandardCharsets.UTF_8));
 			}
 			for(int i = 0; i < 5; i++)
 			{
@@ -1521,7 +1433,7 @@ public class MainFrame
 		return null;
 	}
 
-	public void zoomOut()
+	void zoomOut()
 	{
 		double scale = applicationPreferences.getScaleFactor() - SCALE_FACTOR;
 		if(scale < 0.1d)
@@ -1531,57 +1443,24 @@ public class MainFrame
 		applicationPreferences.setScaleFactor(scale);
 	}
 
-	public void zoomIn()
+	void zoomIn()
 	{
 		double scale = applicationPreferences.getScaleFactor() + SCALE_FACTOR;
 		applicationPreferences.setScaleFactor(scale);
 	}
 
-	public void resetZoom()
+	void resetZoom()
 	{
 		applicationPreferences.setScaleFactor(1.0d);
 	}
 
-	public void troubleshooting()
+	void troubleshooting()
 	{
 		preferencesDialog.showPane(PreferencesDialog.Panes.Troubleshooting);
 	}
 
-	public void openHelp(String help)
+	void openHelp(String help)
 	{
-
-		/*
-		String helpFile=help;
-		String helpAnchor=null;
-		int hashIndex = helpFile.indexOf('#');
-		if(hashIndex > -1)
-		{
-			helpFile=help.substring(0, hashIndex);
-			helpAnchor = help.substring(hashIndex);
-		}
-		String resourceName="/help/"+helpFile;
-		URL url = MainFrame.class.getResource(resourceName);
-		if(url == null)
-		{
-			if(logger.isWarnEnabled()) logger.warn("Couldn't find help resource '{}'!", resourceName);
-			return;
-		}
-
-		if(helpAnchor != null)
-		{
-			String urlString = url.toString()+helpAnchor;
-			try
-			{
-				url=new URL(urlString);
-			}
-			catch(MalformedURLException e)
-			{
-				if(logger.isWarnEnabled()) logger.warn("Couldn't create help URL for '{}'!", urlString);
-			}
-		}
-		if(logger.isInfoEnabled()) logger.info("Opening help: {}", url);
-		helpFrame.setHelpUrl(url);
-		*/
 		if(logger.isInfoEnabled()) logger.info("Opening help: {}", help);
 		helpFrame.setHelpUrl(help);
 		if(!helpFrame.isVisible())
@@ -1591,18 +1470,6 @@ public class MainFrame
 		helpFrame.toFront();
 	}
 
-	public void openPreferences(String panelName)
-	{
-		try
-		{
-			PreferencesDialog.Panes pane = PreferencesDialog.Panes.valueOf(panelName);
-			preferencesDialog.showPane(pane);
-		}
-		catch(IllegalArgumentException ex)
-		{
-			if(logger.isWarnEnabled()) logger.warn("Couldn't resolve preferences pane '{}'!", panelName);
-		}
-	}
 
 	public void deleteAllLogs()
 	{
@@ -1610,12 +1477,102 @@ public class MainFrame
 		cleanAllInactiveLogs();
 	}
 
+	public boolean openUriString(String uri)
+	{
+		if(uri.startsWith(HELP_URI_PREFIX))
+		{
+			String value = uri.substring(HELP_URI_PREFIX.length());
+			openHelp(value);
+			return true;
+		}
+
+		if(uri.startsWith(PREFERENCES_URI_PREFIX))
+		{
+			String value = uri.substring(PREFERENCES_URI_PREFIX.length());
+			int hashIndex = value.indexOf('#');
+			String paneName;
+			String actionName;
+			if(hashIndex >= 0)
+			{
+				paneName = value.substring(0, hashIndex);
+				actionName = value.substring(hashIndex+1);
+			}
+			else
+			{
+				paneName = value;
+				actionName = null;
+			}
+			if(actionName != null)
+			{
+				try
+				{
+					preferencesDialog.executeAction(PreferencesDialog.Actions.valueOf(actionName));
+					return true;
+				}
+				catch(IllegalArgumentException ex)
+				{
+					if(logger.isWarnEnabled()) logger.warn("Couldn't resolve preferences action '{}'!", actionName);
+				}
+			}
+			try
+			{
+				PreferencesDialog.Panes pane = PreferencesDialog.Panes.valueOf(paneName);
+				preferencesDialog.showPane(pane);
+			}
+			catch(IllegalArgumentException ex)
+			{
+				if(logger.isWarnEnabled()) logger.warn("Couldn't resolve preferences pane '{}'!", paneName);
+			}
+			return true;
+		}
+
+		if(uri.startsWith(STACK_TRACE_ELEMENT_URI_PREFIX))
+		{
+			String steStr = uri.substring(STACK_TRACE_ELEMENT_URI_PREFIX.length());
+			steStr = SimpleXml.unescape(steStr);
+			ExtendedStackTraceElement extendedStackTraceElement = ExtendedStackTraceElement.parseStackTraceElement(steStr);
+			if(logger.isDebugEnabled()) logger.debug("STE: {}", extendedStackTraceElement);
+			if(extendedStackTraceElement != null)
+			{
+				goToSource(extendedStackTraceElement.getStackTraceElement());
+			}
+			return true;
+		}
+
+		if(uri.contains("://"))
+		{
+			try
+			{
+				openUrl(new URL(uri));
+			}
+			catch(MalformedURLException e)
+			{
+				if(logger.isInfoEnabled()) logger.info("Couldn't create URL for uri-string {}!", uri, e);
+			}
+			return true;
+		}
+
+		if(uri.contains("coin:") || uri.startsWith("mailto:"))
+		{
+			try
+			{
+				openUri(new URI(uri));
+			}
+			catch(URISyntaxException e)
+			{
+				if(logger.isInfoEnabled()) logger.info("Couldn't create URI for uri-string {}!", uri, e);
+			}
+			return true;
+		}
+		return false;
+	}
+
 	public enum ImportType
 	{
 		LOG4J, JUL
 	}
 
-	public ViewContainer<?> resolveViewContainer(File dataFile)
+	private ViewContainer<?> resolveViewContainer(File dataFile)
 	{
 		{ // logging
 			Map<EventSource<LoggingEvent>, ViewContainer<LoggingEvent>> views = loggingEventViewManager.getViews();
@@ -1696,7 +1653,7 @@ public class MainFrame
 				return;
 			}
 			MetaData metaData = header.getMetaData();
-			if(metaData == null || metaData.getData() == null)
+			if(metaData == null /*|| metaData.getData() == null*/)
 			{
 				if(logger.isWarnEnabled())
 				{
@@ -1706,51 +1663,53 @@ public class MainFrame
 			}
 			Map<String, String> data = metaData.getData();
 			String contentType = data.get(FileConstants.CONTENT_TYPE_KEY);
-			Map<String, String> usedMetaData = new HashMap<String, String>();
+			Map<String, String> usedMetaData = new HashMap<>();
 			SourceIdentifier si = new SourceIdentifier(dataFile.getAbsolutePath());
 
-			if(FileConstants.CONTENT_TYPE_VALUE_LOGGING.equals(contentType))
+			switch (contentType)
 			{
-				FileBuffer<EventWrapper<LoggingEvent>> buffer =
-					loggingFileBufferFactory.createBuffer(dataFile, indexFile, usedMetaData);
-				EventSource<LoggingEvent> eventSource = new EventSourceImpl<LoggingEvent>(si, buffer, false);
-				ViewContainer<LoggingEvent> viewContainer = loggingEventViewManager.retrieveViewContainer(eventSource);
-				EventWrapperViewPanel<LoggingEvent> panel = viewContainer.getDefaultView();
-				if(keepUpdating)
+				case FileConstants.CONTENT_TYPE_VALUE_LOGGING:
 				{
-					panel.setState(LoggingViewState.UPDATING_FILE);
-					viewContainer.setUpdateCallable(new CheckFileChangeCallable(dataFile, indexFile, viewContainer));
+					FileBuffer<EventWrapper<LoggingEvent>> buffer = loggingFileBufferFactory.createBuffer(dataFile, indexFile, usedMetaData);
+					EventSource<LoggingEvent> eventSource = new EventSourceImpl<>(si, buffer, false);
+					ViewContainer<LoggingEvent> viewContainer = loggingEventViewManager.retrieveViewContainer(eventSource);
+					EventWrapperViewPanel<LoggingEvent> panel = viewContainer.getDefaultView();
+					if (keepUpdating)
+					{
+						panel.setState(LoggingViewState.UPDATING_FILE);
+						viewContainer.setUpdateCallable(new CheckFileChangeCallable(dataFile, indexFile, viewContainer));
+					}
+					else
+					{
+						panel.setState(LoggingViewState.STALE_FILE);
+					}
+					showLoggingView(eventSource);
+					applicationPreferences.addRecentFile(dataFile);
+					break;
 				}
-				else
+				case FileConstants.CONTENT_TYPE_VALUE_ACCESS:
 				{
-					panel.setState(LoggingViewState.STALE_FILE);
+					FileBuffer<EventWrapper<AccessEvent>> buffer = accessFileBufferFactory.createBuffer(dataFile, indexFile, usedMetaData);
+					EventSource<AccessEvent> eventSource = new EventSourceImpl<>(si, buffer, false);
+					ViewContainer<AccessEvent> viewContainer = accessEventViewManager.retrieveViewContainer(eventSource);
+					EventWrapperViewPanel<AccessEvent> panel = viewContainer.getDefaultView();
+					if (keepUpdating)
+					{
+						panel.setState(LoggingViewState.UPDATING_FILE);
+						viewContainer.setUpdateCallable(new CheckFileChangeCallable(dataFile, indexFile, viewContainer));
+					}
+					else
+					{
+						panel.setState(LoggingViewState.STALE_FILE);
+					}
+					showAccessView(eventSource);
+					applicationPreferences.addRecentFile(dataFile);
+					break;
 				}
-				showLoggingView(eventSource);
-				applicationPreferences.addRecentFile(dataFile);
-			}
-			else if(FileConstants.CONTENT_TYPE_VALUE_ACCESS.equals(contentType))
-			{
-				FileBuffer<EventWrapper<AccessEvent>> buffer =
-					accessFileBufferFactory.createBuffer(dataFile, indexFile, usedMetaData);
-				EventSource<AccessEvent> eventSource = new EventSourceImpl<AccessEvent>(si, buffer, false);
-				ViewContainer<AccessEvent> viewContainer = accessEventViewManager.retrieveViewContainer(eventSource);
-				EventWrapperViewPanel<AccessEvent> panel = viewContainer.getDefaultView();
-				if(keepUpdating)
-				{
-					panel.setState(LoggingViewState.UPDATING_FILE);
-					viewContainer.setUpdateCallable(new CheckFileChangeCallable(dataFile, indexFile, viewContainer));
-				}
-				else
-				{
-					panel.setState(LoggingViewState.STALE_FILE);
-				}
-				showAccessView(eventSource);
-				applicationPreferences.addRecentFile(dataFile);
-			}
-			else
-			{
-				if(logger.isWarnEnabled()) logger.warn("Unexpected content type {}.", contentType);
-				applicationPreferences.removeRecentFile(dataFile);
+				default:
+					if (logger.isWarnEnabled()) logger.warn("Unexpected content type {}.", contentType);
+					applicationPreferences.removeRecentFile(dataFile);
+					break;
 			}
 		}
 		catch(IOException e)
@@ -1796,10 +1755,10 @@ public class MainFrame
 	private void initStatusColors()
 	{
 		Map<HttpStatus.Type, ColorScheme> prefValue = applicationPreferences.getStatusColors();
-		Map<HttpStatus.Type, Colors> colors = new HashMap<HttpStatus.Type, Colors>();
+		Map<HttpStatus.Type, Colors> colors = new HashMap<>();
 		for(Map.Entry<HttpStatus.Type, ColorScheme> current : prefValue.entrySet())
 		{
-			colors.put(current.getKey(), new Colors(current.getValue(), false));
+			colors.put(current.getKey(), new Colors(current.getValue(), false)); // NOPMD - AvoidInstantiatingObjectsInLoops
 		}
 		statusColors = colors;
 	}
@@ -1808,59 +1767,12 @@ public class MainFrame
 	private void initLevelColors()
 	{
 		Map<LoggingEvent.Level, ColorScheme> prefValue = applicationPreferences.getLevelColors();
-		Map<LoggingEvent.Level, Colors> colors = new HashMap<LoggingEvent.Level, Colors>();
+		Map<LoggingEvent.Level, Colors> colors = new HashMap<>();
 		for(Map.Entry<LoggingEvent.Level, ColorScheme> current : prefValue.entrySet())
 		{
-			colors.put(current.getKey(), new Colors(current.getValue(), false));
+			colors.put(current.getKey(), new Colors(current.getValue(), false)); // NOPMD - AvoidInstantiatingObjectsInLoops
 		}
 		levelColors = colors;
-	}
-
-	public class MyApplicationListener
-		implements ApplicationListener
-	{
-		private final Logger logger = LoggerFactory.getLogger(MyApplicationListener.class);
-
-		public void handleAbout(ApplicationEvent applicationEvent)
-		{
-			//application.requestUserAttention(Application.REQUEST_USER_ATTENTION_TYPE_INFORMATIONAL);
-			if(logger.isDebugEnabled()) logger.debug("handleAbout: {}", applicationEvent);
-			viewActions.getAboutAction().actionPerformed(null);
-			applicationEvent.setHandled(true);
-		}
-
-		public void handleOpenApplication(ApplicationEvent applicationEvent)
-		{
-			if(logger.isDebugEnabled()) logger.debug("handleOpenApplication: {}", applicationEvent);
-		}
-
-		public void handleOpenFile(ApplicationEvent applicationEvent)
-		{
-			if(logger.isDebugEnabled()) logger.debug("handleOpenFile: {}\n\tfilename: {}", applicationEvent, applicationEvent.getFilename());
-			open(new File(applicationEvent.getFilename()));
-		}
-
-		public void handlePreferences(ApplicationEvent applicationEvent)
-		{
-			if(logger.isDebugEnabled()) logger.debug("handlePreferences: {}", applicationEvent);
-			viewActions.getPreferencesAction().actionPerformed(null);
-		}
-
-		public void handlePrintFile(ApplicationEvent applicationEvent)
-		{
-			if(logger.isDebugEnabled()) logger.debug("handlePrintFile: {}", applicationEvent);
-		}
-
-		public void handleQuit(ApplicationEvent applicationEvent)
-		{
-			exit();
-		}
-
-		public void handleReOpenApplication(ApplicationEvent applicationEvent)
-		{
-			if(logger.isDebugEnabled()) logger.debug("handleReOpenApplication: {}", applicationEvent);
-			setVisible(true);
-		}
 	}
 
 	private void setLoggingEventSourceManager(SourceManager<LoggingEvent> loggingEventSourceManager)
@@ -1875,16 +1787,8 @@ public class MainFrame
 			this.loggingEventSourceManager.addEventSourceListener(loggingSourceListener);
 
 			List<EventSource<LoggingEvent>> sources = this.loggingEventSourceManager.getSources();
-			for(EventSource<LoggingEvent> source : sources)
-			{
-				loggingEventViewManager.retrieveViewContainer(source);
-			}
+			sources.forEach(loggingEventViewManager::retrieveViewContainer);
 		}
-	}
-
-	public SourceManager<LoggingEvent> getLoggingEventSourceManager()
-	{
-		return loggingEventSourceManager;
 	}
 
 	private void setAccessEventSourceManager(SourceManager<AccessEvent> accessEventSourceManager)
@@ -1899,21 +1803,8 @@ public class MainFrame
 			this.accessEventSourceManager.addEventSourceListener(accessSourceListener);
 
 			List<EventSource<AccessEvent>> sources = this.accessEventSourceManager.getSources();
-			for(EventSource<AccessEvent> source : sources)
-			{
-				accessEventViewManager.retrieveViewContainer(source);
-			}
+			sources.forEach(accessEventViewManager::retrieveViewContainer);
 		}
-	}
-
-	public SourceManager<AccessEvent> getAccessEventSourceManager()
-	{
-		return accessEventSourceManager;
-	}
-
-	public Sounds getSounds()
-	{
-		return sounds;
 	}
 
 	public void setSounds(Sounds sounds)
@@ -1941,90 +1832,51 @@ public class MainFrame
 		return applicationPreferences;
 	}
 
-	/*
-	public EventWrapperViewPanel<LoggingEvent> createLoggingViewPanel(EventSource<LoggingEvent> eventSource)
-	{
-		EventWrapperViewPanel<LoggingEvent> result = new LoggingEventViewPanel(this, eventSource);
-		result.setScrollingToBottom(applicationPreferences.isScrollingToBottom());
-		return result;
-	}
-    */
-
-	public SortedMap<String, SourceIdentifier> getAvailableStatistics()
-	{
-		File statisticsPath = new File(applicationPreferences.getStartupApplicationPath(), "statistics");
-		File[] files = statisticsPath.listFiles(rrdFileFilter);
-		SortedMap<String, SourceIdentifier> sources = new TreeMap<String, SourceIdentifier>();
-		if(files != null)
-		{
-			for(File f : files)
-			{
-				String name = f.getName();
-				name = name.substring(0, name.length() - 4); // we are sure about .rrd here...
-				if(!name.equalsIgnoreCase("global"))
-				{
-					SourceIdentifier si = new SourceIdentifier(name);
-					sources.put(getSourceTitle(si, null), si);
-				}
-			}
-		}
-		return sources;
-	}
-
-	public void showStatistics(SourceIdentifier sourceIdentifier)
-	{
-		if(statisticsDialog != null)
-		{
-			statisticsDialog.setSourceIdentifier(sourceIdentifier);
-			Windows.showWindow(statisticsDialog, MainFrame.this, true);
-		}
-	}
-
 	public TaskManager<Long> getLongWorkManager()
 	{
 		return longTaskManager;
 	}
 
-	public LogFileFactory getAccessFileFactory()
+	public FileBufferFactory<AccessEvent> getAccessFileBufferFactory()
 	{
-		return accessFileFactory;
+		return accessFileBufferFactory;
 	}
 
-	public LogFileFactory getLoggingFileFactory()
+	public FileBufferFactory<LoggingEvent> getLoggingFileBufferFactory()
 	{
-		return loggingFileFactory;
+		return loggingFileBufferFactory;
 	}
 
-	public void showLoggingView(EventSource<LoggingEvent> eventSource)
+	void showLoggingView(EventSource<LoggingEvent> eventSource)
 	{
 		ViewContainer<LoggingEvent> container = retrieveLoggingViewContainer(eventSource);
 		showView(container);
 	}
 
-	public void showAccessView(EventSource<AccessEvent> eventSource)
+	void showAccessView(EventSource<AccessEvent> eventSource)
 	{
 		ViewContainer<AccessEvent> container = retrieveAccessViewContainer(eventSource);
 		showView(container);
 	}
 
-	public void showView(ViewContainer<?> container)
+	private void showView(ViewContainer<?> container)
 	{
 		// we need this since this method might also be called by a different thread
 		ShowViewRunnable runnable = new ShowViewRunnable(container);
-		if(SwingUtilities.isEventDispatchThread())
+		if(EventQueue.isDispatchThread())
 		{
 			runnable.run();
 		}
 		else
 		{
-			SwingUtilities.invokeLater(runnable);
+			EventQueue.invokeLater(runnable);
 		}
 	}
 
-	public void openPreviousLogging(SourceIdentifier si)
+	void openPreviousLogging(SourceIdentifier si)
 	{
 		FileBuffer<EventWrapper<LoggingEvent>> buffer = loggingFileBufferFactory.createBuffer(si);
-		EventSource<LoggingEvent> eventSource = new EventSourceImpl<LoggingEvent>(si, buffer, false);
+		EventSource<LoggingEvent> eventSource = new EventSourceImpl<>(si, buffer, false);
 
 		ViewContainer<LoggingEvent> container = retrieveLoggingViewContainer(eventSource);
 		EventWrapperViewPanel<LoggingEvent> panel = container.getDefaultView();
@@ -2032,10 +1884,10 @@ public class MainFrame
 		showLoggingView(eventSource);
 	}
 
-	public void openPreviousAccess(SourceIdentifier si)
+	void openPreviousAccess(SourceIdentifier si)
 	{
 		FileBuffer<EventWrapper<AccessEvent>> buffer = accessFileBufferFactory.createBuffer(si);
-		EventSource<AccessEvent> eventSource = new EventSourceImpl<AccessEvent>(si, buffer, false);
+		EventSource<AccessEvent> eventSource = new EventSourceImpl<>(si, buffer, false);
 
 		ViewContainer<AccessEvent> container = retrieveAccessViewContainer(eventSource);
 		EventWrapperViewPanel<AccessEvent> panel = container.getDefaultView();
@@ -2043,9 +1895,9 @@ public class MainFrame
 		showAccessView(eventSource);
 	}
 
-	public void updateStatus()
+	private void updateStatus()
 	{
-		StringBuilder statusText = new StringBuilder();
+		StringBuilder statusText = new StringBuilder(100);
 
 		LilithPreferences.SourceFiltering filtering = applicationPreferences.getSourceFiltering();
 		switch(filtering)
@@ -2059,6 +1911,8 @@ public class MainFrame
 				statusText.append("Whitelisting on '");
 				statusText.append(applicationPreferences.getWhiteListName());
 				statusText.append("'.  ");
+				break;
+			default: // NONE
 				break;
 		}
 
@@ -2086,6 +1940,11 @@ public class MainFrame
 
 	public String createMessage(EventWrapper wrapper)
 	{
+		if(wrapper == null)
+		{
+			return "<html><body></body></html>";
+		}
+
 		String result;
 		if(usingThymeleaf)
 		{
@@ -2098,16 +1957,18 @@ public class MainFrame
 		if(result == null)
 		{
 			if(logger.isWarnEnabled()) logger.warn("createMessage with usingThymeleaf={} failed for {}!", usingThymeleaf, wrapper);
-			return "<html><body>Failed to create message!</body></html>";
+			return AbstractHtmlFormatter.createErrorHtml("Failed to create details view!", "Formatter returned null.", null);
 		}
 		return result;
 	}
 
-	public SortedMap<EventSource<LoggingEvent>, ViewContainer<LoggingEvent>> getSortedLoggingViews()
+	SortedMap<EventSource<LoggingEvent>, ViewContainer<LoggingEvent>> getSortedLoggingViews()
 	{
-		EventSourceComparator<LoggingEvent> loggingComparator = new EventSourceComparator<LoggingEvent>();
+		Map<String, String> sourceNames = applicationPreferences.getSourceNames();
+		boolean showingPrimaryIdentifier = applicationPreferences.isShowingPrimaryIdentifier();
+		EventSourceComparator<LoggingEvent> loggingComparator = new EventSourceComparator<>(sourceNames, showingPrimaryIdentifier);
 		SortedMap<EventSource<LoggingEvent>, ViewContainer<LoggingEvent>> sortedLoggingViews;
-		sortedLoggingViews = new TreeMap<EventSource<LoggingEvent>, ViewContainer<LoggingEvent>>(loggingComparator);
+		sortedLoggingViews = new TreeMap<>(loggingComparator);
 		if(loggingEventViewManager != null)
 		{
 			sortedLoggingViews.putAll(loggingEventViewManager.getViews());
@@ -2115,11 +1976,13 @@ public class MainFrame
 		return sortedLoggingViews;
 	}
 
-	public SortedMap<EventSource<AccessEvent>, ViewContainer<AccessEvent>> getSortedAccessViews()
+	SortedMap<EventSource<AccessEvent>, ViewContainer<AccessEvent>> getSortedAccessViews()
 	{
-		EventSourceComparator<AccessEvent> accessComparator = new EventSourceComparator<AccessEvent>();
+		Map<String, String> sourceNames = applicationPreferences.getSourceNames();
+		boolean showingPrimaryIdentifier = applicationPreferences.isShowingPrimaryIdentifier();
+		EventSourceComparator<AccessEvent> accessComparator = new EventSourceComparator<>(sourceNames, showingPrimaryIdentifier);
 		SortedMap<EventSource<AccessEvent>, ViewContainer<AccessEvent>> sortedAccessViews;
-		sortedAccessViews = new TreeMap<EventSource<AccessEvent>, ViewContainer<AccessEvent>>(accessComparator);
+		sortedAccessViews = new TreeMap<>(accessComparator);
 		if(accessEventViewManager != null)
 		{
 			sortedAccessViews.putAll(accessEventViewManager.getViews());
@@ -2127,57 +1990,22 @@ public class MainFrame
 		return sortedAccessViews;
 	}
 
-	public void closeAllViews(ViewContainer beside)
+	void closeAllViews(ViewContainer beside)
 	{
-		{
-			/*List<ViewContainer<LoggingEvent>> closed = */
-			loggingEventViewManager.closeAllViews(beside);
-		}
-
-		{
-			/*List<ViewContainer<AccessEvent>> closed = */
-			accessEventViewManager.closeAllViews(beside);
-		}
+		loggingEventViewManager.closeAllViews(beside);
+		accessEventViewManager.closeAllViews(beside);
 	}
 
-	public void minimizeAllViews(ViewContainer beside)
+	void minimizeAllViews(ViewContainer beside)
 	{
-		{
-			/*List<ViewContainer<LoggingEvent>> closed = */
-			loggingEventViewManager.minimizeAllViews(beside);
-		}
-
-		{
-			/*List<ViewContainer<AccessEvent>> closed = */
-			accessEventViewManager.minimizeAllViews(beside);
-		}
+		loggingEventViewManager.minimizeAllViews(beside);
+		accessEventViewManager.minimizeAllViews(beside);
 	}
 
-	public void removeInactiveViews(boolean onlyClosed, boolean clean)
+	void removeInactiveViews(boolean onlyClosed)
 	{
-		{
-			List<ViewContainer<LoggingEvent>> removed = loggingEventViewManager.removeInactiveViews(onlyClosed);
-			if(clean)
-			{
-				for(ViewContainer current : removed)
-				{
-					EventWrapperViewPanel panel = current.getDefaultView();
-					panel.clear();
-				}
-			}
-		}
-
-		{
-			List<ViewContainer<AccessEvent>> removed = accessEventViewManager.removeInactiveViews(onlyClosed);
-			if(clean)
-			{
-				for(ViewContainer current : removed)
-				{
-					EventWrapperViewPanel panel = current.getDefaultView();
-					panel.clear();
-				}
-			}
-		}
+		loggingEventViewManager.removeInactiveViews(onlyClosed);
+		accessEventViewManager.removeInactiveViews(onlyClosed);
 	}
 
 	public void toggleVisible()
@@ -2185,64 +2013,61 @@ public class MainFrame
 		setFramesVisible(!isVisible());
 	}
 
-	public void setFramesVisible(boolean visible)
+	private void setFramesVisible(boolean visible)
 	{
 		setVisible(visible);
 
 		processViewContainers(new VisibleContainerProcessor(visible));
 	}
 
-	public void openInactiveLogs()
+	void openInactiveLogs()
 	{
 		if(logger.isInfoEnabled()) logger.info("Open inactive log...");
 		Windows.showWindow(openInactiveLogsDialog, this, true);
 
 	}
 
-	public void showDebugDialog()
+	void showDebugDialog()
 	{
-		Windows.showWindow(debugDialog, MainFrame.this, true);
+		Windows.showWindow(debugDialog, this, true);
 	}
 
 	public void showPreferencesDialog()
 	{
-		Windows.showWindow(preferencesDialog, MainFrame.this, true);
+		Windows.showWindow(preferencesDialog, this, true);
 	}
 
-	public void showHelp()
+	void showHelp()
 	{
 		openHelp("index.xhtml");
 	}
 
-	public void showAboutDialog()
+	void showAboutDialog()
 	{
-		Windows.showWindow(aboutDialog, MainFrame.this, true);
-
-//		if(!applicationPreferences.isMute() && sounds != null)
-//		{
-//			sounds.play(LilithSounds.ABOUT_SOUND);
-//		}
+		Windows.showWindow(aboutDialog, this, true);
 	}
 
-	public void cleanAllInactiveLogs()
+	void cleanAllInactiveLogs()
 	{
 		loggingEventViewManager.removeInactiveViews(false);
 		accessEventViewManager.removeInactiveViews(false);
-		longTaskManager.startTask(new CleanAllInactiveCallable(this), "Clean all inactive...");
+		longTaskManager.startTask(new CleanAllInactiveCallable(this), "Clean all inactive…");
 		updateWindowMenus();
 	}
 
 	class LoggingEventSourceListener
 		implements EventSourceListener<LoggingEvent>
 	{
+		@Override
 		public void eventSourceAdded(EventSource<LoggingEvent> eventSource)
 		{
-			SwingUtilities.invokeLater(new LoggingSourceAddedRunnable(eventSource));
+			EventQueue.invokeLater(new LoggingSourceAddedRunnable(eventSource));
 		}
 
+		@Override
 		public void eventSourceRemoved(EventSource<LoggingEvent> eventSource)
 		{
-			SwingUtilities.invokeLater(new LoggingSourceRemovedRunnable(eventSource));
+			EventQueue.invokeLater(new LoggingSourceRemovedRunnable(eventSource));
 		}
 
 		private class LoggingSourceAddedRunnable
@@ -2250,11 +2075,12 @@ public class MainFrame
 		{
 			EventSource<LoggingEvent> eventSource;
 
-			public LoggingSourceAddedRunnable(EventSource<LoggingEvent> eventSource)
+			LoggingSourceAddedRunnable(EventSource<LoggingEvent> eventSource)
 			{
 				this.eventSource = eventSource;
 			}
 
+			@Override
 			public void run()
 			{
 				ViewContainer<LoggingEvent> container = retrieveLoggingViewContainer(eventSource);
@@ -2269,7 +2095,7 @@ public class MainFrame
 
 				if(!sourceNames.containsKey(primary))
 				{
-					sourceNames = new HashMap<String, String>(sourceNames);
+					sourceNames = new HashMap<>(sourceNames);
 					sourceNames.put(primary, primary);
 					applicationPreferences.setSourceNames(sourceNames);
 				}
@@ -2290,11 +2116,12 @@ public class MainFrame
 		{
 			EventSource<LoggingEvent> eventSource;
 
-			public LoggingSourceRemovedRunnable(EventSource<LoggingEvent> eventSource)
+			LoggingSourceRemovedRunnable(EventSource<LoggingEvent> eventSource)
 			{
 				this.eventSource = eventSource;
 			}
 
+			@Override
 			public void run()
 			{
 				ViewContainer<LoggingEvent> container = retrieveLoggingViewContainer(eventSource);
@@ -2317,14 +2144,16 @@ public class MainFrame
 	class AccessEventSourceListener
 		implements EventSourceListener<AccessEvent>
 	{
+		@Override
 		public void eventSourceAdded(EventSource<AccessEvent> eventSource)
 		{
-			SwingUtilities.invokeLater(new AccessSourceAddedRunnable(eventSource));
+			EventQueue.invokeLater(new AccessSourceAddedRunnable(eventSource));
 		}
 
+		@Override
 		public void eventSourceRemoved(EventSource<AccessEvent> eventSource)
 		{
-			SwingUtilities.invokeLater(new AccessSourceRemovedRunnable(eventSource));
+			EventQueue.invokeLater(new AccessSourceRemovedRunnable(eventSource));
 		}
 
 		private class AccessSourceAddedRunnable
@@ -2332,11 +2161,12 @@ public class MainFrame
 		{
 			EventSource<AccessEvent> eventSource;
 
-			public AccessSourceAddedRunnable(EventSource<AccessEvent> eventSource)
+			AccessSourceAddedRunnable(EventSource<AccessEvent> eventSource)
 			{
 				this.eventSource = eventSource;
 			}
 
+			@Override
 			public void run()
 			{
 				ViewContainer<AccessEvent> container = retrieveAccessViewContainer(eventSource);
@@ -2352,7 +2182,7 @@ public class MainFrame
 
 				if(!sourceNames.containsKey(primary))
 				{
-					sourceNames = new HashMap<String, String>(sourceNames);
+					sourceNames = new HashMap<>(sourceNames);
 					sourceNames.put(primary, primary);
 					applicationPreferences.setSourceNames(sourceNames);
 				}
@@ -2373,11 +2203,12 @@ public class MainFrame
 		{
 			EventSource<AccessEvent> eventSource;
 
-			public AccessSourceRemovedRunnable(EventSource<AccessEvent> eventSource)
+			AccessSourceRemovedRunnable(EventSource<AccessEvent> eventSource)
 			{
 				this.eventSource = eventSource;
 			}
 
+			@Override
 			public void run()
 			{
 				ViewContainer<AccessEvent> container = retrieveAccessViewContainer(eventSource);
@@ -2397,140 +2228,7 @@ public class MainFrame
 		}
 	}
 
-	public String getPrimarySourceTitle(String primary)
-	{
-		if(primary == null)
-		{
-			return null;
-		}
-		Map<String, String> sourceNames = applicationPreferences.getSourceNames();
-		String resolvedName = sourceNames.get(primary);
-		if(resolvedName != null && !resolvedName.equals(primary))
-		{
-			if(applicationPreferences.isShowingIdentifier())
-			{
-				return resolvedName + " [" + primary + "]";
-			}
-			else
-			{
-				return resolvedName;
-			}
-		}
-		return primary;
-	}
-
-	public String getPrimarySourceTitle(SourceIdentifier identifier)
-	{
-		return getPrimarySourceTitle(identifier.getIdentifier());
-	}
-
-	public String getSourceTitle(SourceIdentifier identifier, String name)
-	{
-		String primary = getPrimarySourceTitle(identifier);
-		String secondary = identifier.getSecondaryIdentifier();
-		if(secondary == null)
-		{
-			if(name == null)
-			{
-				return primary;
-			}
-			return primary + " - " + name;
-		}
-		if(name == null)
-		{
-			return primary + " - " + secondary;
-		}
-		return primary + " - " +name + " - " + secondary;
-	}
-
-	public String getLoggingSourceTitle(SourceIdentifier identifier, String name)
-	{
-		return getSourceTitle(identifier, name) + " (Logging)";
-	}
-
-	public String getAccessSourceTitle(SourceIdentifier identifier, String name)
-	{
-		return getSourceTitle(identifier, name) + " (Access)";
-	}
-
-	String resolveSourceTitle(ViewContainer container)
-	{
-		EventWrapperViewPanel defaultView = container.getDefaultView();
-		EventSource eventSource = defaultView.getEventSource();
-		boolean global=eventSource.isGlobal();
-
-		String name=null;
-		if(!global)
-		{
-			Buffer buffer = defaultView.getSourceBuffer();
-			Object event=null;
-			if(buffer != null)
-			{
-				event = buffer.get(0);
-			}
-			name=resolveName(event);
-		}
-
-		SourceIdentifier si = eventSource.getSourceIdentifier();
-
-		Class clazz = container.getWrappedClass();
-		String title;
-		if(clazz == LoggingEvent.class)
-		{
-			title = getLoggingSourceTitle(si, name);
-		}
-		else
-		{
-			title = getAccessSourceTitle(si, name);
-		}
-		return title;
-	}
-
-	private static String resolveName(Object eventWrapperObj)
-	{
-		String name;
-		String appId=null;
-		if(eventWrapperObj instanceof EventWrapper)
-		{
-			EventWrapper wrapper= (EventWrapper) eventWrapperObj;
-			Serializable evtObject = wrapper.getEvent();
-			LoggerContext context = null;
-			if(evtObject instanceof LoggingEvent)
-			{
-				context = ((LoggingEvent) evtObject).getLoggerContext();
-			}
-			else if(evtObject instanceof AccessEvent)
-			{
-				context = ((AccessEvent) evtObject).getLoggerContext();
-			}
-			if(context != null)
-			{
-				name=context.getName();
-				if("default".equals(name) || "".equals(name))
-				{
-					name = null;
-				}
-				Map<String, String> props = context.getProperties();
-				if(props!= null)
-				{
-					appId=props.get(LoggerContext.APPLICATION_IDENTIFIER_PROPERTY_NAME);
-				}
-
-				if(name != null)
-				{
-					if(appId == null || name.equals(appId))
-					{
-						return name;
-					}
-					return name+"/"+appId;
-				}
-				return appId;
-			}
-		}
-		return null;
-	}
-
-	public static void openUrl(URL url)
+	static void openUrl(URL url)
 	{
 		final Logger logger = LoggerFactory.getLogger(MainFrame.class);
 
@@ -2548,7 +2246,7 @@ public class MainFrame
 		executeCommand(cmdArray);
 	}
 
-	public static void openUri(URI uri)
+	private static void openUri(URI uri)
 	{
 		final Logger logger = LoggerFactory.getLogger(MainFrame.class);
 
@@ -2568,7 +2266,6 @@ public class MainFrame
 
 	private static void executeCommand(String[] cmdArray)
 	{
-		final Logger logger = LoggerFactory.getLogger(MainFrame.class);
 		if(cmdArray == null)
 		{
 			return;
@@ -2585,26 +2282,10 @@ public class MainFrame
 		}
 		catch(IOException e)
 		{
+			final Logger logger = LoggerFactory.getLogger(MainFrame.class);
 			if(logger.isWarnEnabled()) logger.warn("Exception while trying to execute command {}!", commandString, e);
 		}
 	}
-
-	// Windows: cmd /C start http://www.heise.de
-	// Mac: open http://www.heise.de
-
-	private static final String[] MAC_OPEN_URL_ARRAY =
-		{
-			"open",
-			null
-		};
-
-	private static final String[] WINDOWS_OPEN_URL_ARRAY =
-		{
-			"cmd",
-			"/C",
-			"start",
-			null
-		};
 
 	private static String[] resolveOpenCommandArray(String value)
 	{
@@ -2613,12 +2294,12 @@ public class MainFrame
 			return null;
 		}
 		String[] result = null;
-		if(isWindows)
+		if(IS_WINDOWS)
 		{
 			result = new String[WINDOWS_OPEN_URL_ARRAY.length];
 			System.arraycopy(WINDOWS_OPEN_URL_ARRAY, 0, result, 0, WINDOWS_OPEN_URL_ARRAY.length);
 		}
-		else if(isMac)
+		else if(IS_MAC)
 		{
 			result = new String[MAC_OPEN_URL_ARRAY.length];
 			System.arraycopy(MAC_OPEN_URL_ARRAY, 0, result, 0, MAC_OPEN_URL_ARRAY.length);
@@ -2638,26 +2319,25 @@ public class MainFrame
 
 	void showFrame(ViewContainer container)
 	{
-		String title = resolveSourceTitle(container);
 		ViewContainerFrame frame = new ViewContainerFrame(this, container);
 		frame.setShowingToolbar(applicationPreferences.isShowingToolbar());
-		frame.setShowingStatusbar(applicationPreferences.isShowingStatusbar());
-		frame.setTitle(title);
+		frame.setShowingStatusBar(applicationPreferences.isShowingStatusBar());
 		frame.setSize(800, 600);
-		Windows.showWindow(frame, null, false);
 
+		sourceTitleContainerProcessor.updateSourceNameSettings();
+		sourceTitleContainerProcessor.process(container);
+
+		Windows.showWindow(frame, null, false);
 		executeScrollToBottom(frame);
 	}
 
 	void showInternalFrame(ViewContainer container)
 	{
-		String title = resolveSourceTitle(container);
 		ViewContainerInternalFrame frame = new ViewContainerInternalFrame(this, container);
-		frame.setShowingStatusbar(applicationPreferences.isShowingStatusbar());
-		frame.setTitle(title);
+		frame.setShowingStatusBar(applicationPreferences.isShowingStatusBar());
 
 		int count = desktop.getComponentCount();
-		final int titleBarHeight = resolveInternalTitlebarHeight(/*frame*/);
+		final int titleBarHeight = resolveInternalTitleBarHeight(/*frame*/);
 		frame.setBounds(titleBarHeight * (count % 10), titleBarHeight * (count % 10), 640, 480);
 		// set bounds in any case
 		desktop.add(frame);
@@ -2678,11 +2358,14 @@ public class MainFrame
 
 		viewActions.setViewContainer(container);
 
+		sourceTitleContainerProcessor.updateSourceNameSettings();
+		sourceTitleContainerProcessor.process(container);
+
 		frame.setVisible(true);
 		executeScrollToBottom(frame);
 	}
 
-	public void showTaskManager()
+	void showTaskManager()
 	{
 		// don't add twice
 		if(taskManagerFrame.isClosed())
@@ -2720,27 +2403,28 @@ public class MainFrame
 	 * Initial scroll to bottom must be executed slightly after making it visible so
 	 * it's using invokeLater, now.
 	 *
-	 * @param window the window that should scrollt to bottom is configured that way.
+	 * @param window the window that should scroll to bottom is configured that way.
 	 */
 	private void executeScrollToBottom(ViewWindow window)
 	{
 		if(window != null)
 		{
 			ScrollToBottomRunnable runnable = new ScrollToBottomRunnable(window);
-			SwingUtilities.invokeLater(runnable);
+			EventQueue.invokeLater(runnable);
 		}
 	}
 
 	private static class ScrollToBottomRunnable
 		implements Runnable
 	{
-		private ViewWindow window;
+		private final ViewWindow window;
 
-		private ScrollToBottomRunnable(ViewWindow window)
+		ScrollToBottomRunnable(ViewWindow window)
 		{
 			this.window = window;
 		}
 
+		@Override
 		public void run()
 		{
 			ViewContainer viewContainer = window.getViewContainer();
@@ -2754,9 +2438,9 @@ public class MainFrame
 	/**
 	 * This is only a heuristic and probably won't be correct for non-metal l&f...
 	 *
-	 * @return the height of the internal frames titlebar...
+	 * @return the height of the internal frames title bar...
 	 */
-	private int resolveInternalTitlebarHeight(/*JInternalFrame frame*/)
+	private int resolveInternalTitleBarHeight(/*JInternalFrame frame*/)
 	{
 		int result = 24;
 		/*
@@ -2765,10 +2449,10 @@ public class MainFrame
 		{
 			BasicInternalFrameUI bui=(BasicInternalFrameUI) ui;
 			result=bui.getNorthPane().getPreferredSize().height;
-			if(logger.isDebugEnabled()) logger.debug("Resolved height of titlebar: {}", result);
+			if(logger.isDebugEnabled()) logger.debug("Resolved height of title bar: {}", result);
 		}
         */
-		if(logger.isDebugEnabled()) logger.debug("Height of titlebar: {}", result);
+		if(logger.isDebugEnabled()) logger.debug("Height of title bar: {}", result);
 		return result;
 	}
 
@@ -2776,22 +2460,14 @@ public class MainFrame
 	{
 		if(logger.isInfoEnabled()) logger.info("showApplicationPathChangedDialog()");
 		final Object[] options = {"Exit", "Cancel"};
-		Icon icon = null;
-		{
-			URL url = MainFrame.class.getResource("/tango/32x32/status/dialog-warning.png");
-			if(url != null)
-			{
-				icon = new ImageIcon(url);
-			}
-		}
-		int result = JOptionPane.showOptionDialog(this,
+		int result = JOptionPane.showOptionDialog(preferencesDialog,
 			"You have changed the application path.\n" +
 				"You need to restart for this change to take effect.\n\n" +
 				"Exit now?",
 			"Exit now?",
 			JOptionPane.DEFAULT_OPTION,
 			JOptionPane.WARNING_MESSAGE,
-			icon,
+			Icons.DIALOG_WARNING_ICON,
 			options,
 			options[0]);
 		if(result == 0)
@@ -2804,22 +2480,14 @@ public class MainFrame
 	{
 		if(logger.isInfoEnabled()) logger.info("showLookAndFeelChangedDialog()");
 		final Object[] options = {"Exit", "Cancel"};
-		Icon icon = null;
-		{
-			URL url = MainFrame.class.getResource("/tango/32x32/status/dialog-warning.png");
-			if(url != null)
-			{
-				icon = new ImageIcon(url);
-			}
-		}
-		int result = JOptionPane.showOptionDialog(this,
+		int result = JOptionPane.showOptionDialog(preferencesDialog,
 			"You have changed the look & feel.\n" +
 				"You need to restart for this change to take effect.\n\n" +
 				"Exit now?",
 			"Exit now?",
 			JOptionPane.DEFAULT_OPTION,
 			JOptionPane.WARNING_MESSAGE,
-			icon,
+			Icons.DIALOG_WARNING_ICON,
 			options,
 			options[0]);
 		if(result == 0)
@@ -2828,6 +2496,7 @@ public class MainFrame
 		}
 	}
 
+	@SuppressWarnings("PMD.DoNotCallSystemExit")
 	public void exit()
 	{
 		if(applicationPreferences.isAskingBeforeQuit())
@@ -2843,14 +2512,6 @@ public class MainFrame
 			}
 		}
 		if(logger.isInfoEnabled()) logger.info("Exiting...");
-		// this probably isn't necessary since jmdns registers a shutdown hook.
-		if(senderService != null)
-		{
-			senderService.stop();
-//			if(logger.isInfoEnabled()) logger.info("Unregistering services...");
-//			// this can't be done in the shutdown hook...
-//			jmDns.unregisterAllServices();
-		}
 		if(applicationPreferences.isCleaningLogsOnExit())
 		{
 			deleteInactiveLogs();
@@ -2866,13 +2527,14 @@ public class MainFrame
 	class ShowViewRunnable
 		implements Runnable
 	{
-		private ViewContainer<?> container;
+		private final ViewContainer<?> container;
 
-		public ShowViewRunnable(ViewContainer<?> container)
+		ShowViewRunnable(ViewContainer<?> container)
 		{
 			this.container = container;
 		}
 
+		@Override
 		public void run()
 		{
 			boolean isNew = false;
@@ -2903,6 +2565,7 @@ public class MainFrame
 	private class PreferencesChangeListener
 		implements PropertyChangeListener
 	{
+		@Override
 		@SuppressWarnings({"unchecked"})
 		public void propertyChange(PropertyChangeEvent evt)
 		{
@@ -2918,7 +2581,8 @@ public class MainFrame
 			}
 
 			if(ApplicationPreferences.SOURCE_NAMES_PROPERTY.equals(propName)
-				|| ApplicationPreferences.SHOWING_IDENTIFIER_PROPERTY.equals(propName))
+				|| ApplicationPreferences.SHOWING_PRIMARY_IDENTIFIER_PROPERTY.equals(propName)
+				|| ApplicationPreferences.SHOWING_SECONDARY_IDENTIFIER_PROPERTY.equals(propName))
 			{
 				updateSourceTitles();
 				return;
@@ -2958,24 +2622,14 @@ public class MainFrame
 				if(oldPath != null)
 				{
 					File previousApplicationPathFile = new File(newPath, ApplicationPreferences.PREVIOUS_APPLICATION_PATH_FILENAME);
-					FileWriter writer = null;
-					try
+
+					try(OutputStreamWriter writer = new OutputStreamWriter(Files.newOutputStream(previousApplicationPathFile.toPath()), StandardCharsets.UTF_8))
 					{
-						writer = new FileWriter(previousApplicationPathFile);
 						writer.append(oldPath.getAbsolutePath());
 					}
 					catch(IOException ex)
 					{
-						if(logger.isWarnEnabled())
-						{
-							logger
-								.warn("Exception while writing previous application path to file '" + previousApplicationPathFile
-									.getAbsolutePath() + "'!", ex);
-						}
-					}
-					finally
-					{
-						IOUtilities.closeQuietly(writer);
+						if(logger.isWarnEnabled()) logger.warn("Exception while writing previous application path to file '{}'!", previousApplicationPathFile.getAbsolutePath(), ex);
 					}
 				}
 				showApplicationPathChangedDialog();
@@ -3026,7 +2680,7 @@ public class MainFrame
 				return;
 			}
 
-			if(ApplicationPreferences.SHOWING_FULL_CALLSTACK_PROPERTY.equals(propName))
+			if(ApplicationPreferences.SHOWING_FULL_CALL_STACK_PROPERTY.equals(propName))
 			{
 				processViewContainers(UPDATE_VIEWS_CONTAINER_PROCESSOR);
 				return;
@@ -3056,9 +2710,9 @@ public class MainFrame
 				return;
 			}
 
-			if(ApplicationPreferences.SHOWING_STATUSBAR_PROPERTY.equals(propName))
+			if(ApplicationPreferences.SHOWING_STATUS_BAR_PROPERTY.equals(propName))
 			{
-				setShowingStatusbar(applicationPreferences.isShowingStatusbar());
+				setShowingStatusBar(applicationPreferences.isShowingStatusBar());
 				return;
 			}
 
@@ -3085,11 +2739,6 @@ public class MainFrame
 				setGlobalLoggingEnabled(applicationPreferences.isGlobalLoggingEnabled());
 				return;
 			}
-			if(ApplicationPreferences.LOGGING_STATISTIC_ENABLED_PROPERTY.equals(propName))
-			{
-				setStatisticsEnabled(applicationPreferences.isLoggingStatisticEnabled());
-				return;
-			}
 
 			if(ApplicationPreferences.TRAY_ACTIVE_PROPERTY.equals(propName))
 			{
@@ -3097,6 +2746,12 @@ public class MainFrame
 				{
 					traySupport.setActive(applicationPreferences.isTrayActive());
 				}
+				return;
+			}
+
+			if(ApplicationPreferences.SCROLLING_SMOOTHLY_PROPERTY.equals(propName))
+			{
+				updateScrollingSmoothly();
 				return;
 			}
 
@@ -3112,19 +2767,60 @@ public class MainFrame
 		private void updateSourceTitles()
 		{
 			updateWindowMenus();
+			sourceTitleContainerProcessor.updateSourceNameSettings();
 			processViewContainers(sourceTitleContainerProcessor);
+		}
+
+		private void updateScrollingSmoothly()
+		{
+			scrollingSmoothlyContainerProcessor.updateScrollingSmoothly();
+			processViewContainers(scrollingSmoothlyContainerProcessor);
 		}
 	}
 
 	private void setGlobalLoggingEnabled(boolean globalLoggingEnabled)
 	{
-		loggingFileDump.setEnabled(globalLoggingEnabled);
-		accessFileDump.setEnabled(globalLoggingEnabled);
+		setGlobalLoggingEnabled(loggingFileDump, loggingEventViewManager, globalLoggingEnabled);
+		setGlobalLoggingEnabled(accessFileDump, accessEventViewManager, globalLoggingEnabled);
+
+		viewActions.updateWindowMenu();
 	}
 
-	private void setStatisticsEnabled(boolean statisticsEnabled)
+	private static <T extends Serializable> void setGlobalLoggingEnabled(FileDumpEventHandler<T> fileDumpEventHandler, ViewManager<T> viewManager, boolean globalLoggingEnabled)
 	{
-		rrdLoggingEventHandler.setEnabled(statisticsEnabled);
+		fileDumpEventHandler.setEnabled(globalLoggingEnabled);
+
+		ViewContainer<T> viewContainer = resolveGlobalView(viewManager);
+		if(viewContainer != null)
+		{
+			ViewWindow viewWindow = viewContainer.resolveViewWindow();
+			if (viewWindow instanceof ViewContainerFrame)
+			{
+				viewWindow.getViewActions().updateWindowMenu();
+			}
+		}
+
+		if(!globalLoggingEnabled)
+		{
+			// close view
+			viewManager.closeViewContainer(viewContainer);
+			// delete data file
+			Reset.reset(fileDumpEventHandler.getBuffer());
+		}
+	}
+
+	private static <T extends Serializable> ViewContainer<T> resolveGlobalView(ViewManager<T> viewManager)
+	{
+		Map<EventSource<T>, ViewContainer<T>> views = viewManager.getViews();
+		for (Map.Entry<EventSource<T>, ViewContainer<T>> entry : views.entrySet())
+		{
+			EventSource<T> key = entry.getKey();
+			if (key.isGlobal())
+			{
+				return entry.getValue();
+			}
+		}
+		return null;
 	}
 
 	private void setCheckingForUpdate(boolean checkingForUpdate)
@@ -3136,25 +2832,24 @@ public class MainFrame
 	private void setCheckingForSnapshot(boolean checkingForSnapshot)
 	{
 		preferencesDialog.setCheckingForSnapshot(checkingForSnapshot);
-//		checkForUpdateDialog.setCheckingForSnapshot(checkingForSnapshot);
 	}
 
-	private void setShowingStatusbar(boolean showingStatusbar)
+	private void setShowingStatusBar(boolean showingStatusBar)
 	{
-		statusBar.setVisible(showingStatusbar);
+		statusBar.setVisible(showingStatusBar);
 		// change for all other open windows
 		{
 			SortedMap<EventSource<LoggingEvent>, ViewContainer<LoggingEvent>> views = getSortedLoggingViews();
 			for(Map.Entry<EventSource<LoggingEvent>, ViewContainer<LoggingEvent>> current : views.entrySet())
 			{
-				setShowingStatusbar(current.getValue(), showingStatusbar);
+				setShowingStatusBar(current.getValue(), showingStatusBar);
 			}
 		}
 		{
 			SortedMap<EventSource<AccessEvent>, ViewContainer<AccessEvent>> views = getSortedAccessViews();
 			for(Map.Entry<EventSource<AccessEvent>, ViewContainer<AccessEvent>> current : views.entrySet())
 			{
-				setShowingStatusbar(current.getValue(), showingStatusbar);
+				setShowingStatusBar(current.getValue(), showingStatusBar);
 			}
 		}
 	}
@@ -3186,7 +2881,7 @@ public class MainFrame
 		}
 	}
 
-	private void setShowingToolbar(ViewContainer container, boolean showingToolbar)
+	private static void setShowingToolbar(ViewContainer container, boolean showingToolbar)
 	{
 		ViewWindow viewWindow = container.resolveViewWindow();
 		if(viewWindow instanceof ViewContainerFrame)
@@ -3196,12 +2891,12 @@ public class MainFrame
 		}
 	}
 
-	private void setShowingStatusbar(ViewContainer container, boolean showingStatusbar)
+	private static void setShowingStatusBar(ViewContainer container, boolean showingStatusBar)
 	{
 		ViewWindow viewWindow = container.resolveViewWindow();
 		if(viewWindow != null)
 		{
-			viewWindow.setShowingStatusbar(showingStatusbar);
+			viewWindow.setShowingStatusBar(showingStatusBar);
 		}
 	}
 
@@ -3217,7 +2912,7 @@ public class MainFrame
 		processViewActions(UPDATE_RECENT_FILES_ACTIONS_PROCESSOR);
 	}
 
-	public Condition getFindActiveCondition()
+	Condition getFindActiveCondition()
 	{
 		return findActiveCondition;
 	}
@@ -3225,16 +2920,10 @@ public class MainFrame
 	private void updateConditions()
 	{
 		List<SavedCondition> conditions = applicationPreferences.getConditions();
-		List<SavedCondition> active = new ArrayList<SavedCondition>();
+		List<SavedCondition> active = new ArrayList<>();
 		if(conditions != null)
 		{
-			for(SavedCondition current : conditions)
-			{
-				if(current.isActive())
-				{
-					active.add(current);
-				}
-			}
+			active.addAll(conditions.stream().filter(SavedCondition::isActive).collect(Collectors.toList()));
 		}
 		activeConditions = active;
 		int activeCount = active.size();
@@ -3248,11 +2937,8 @@ public class MainFrame
 			{
 				Or or=new Or();
 
-				List<Condition> cond=new ArrayList<Condition>(activeCount);
-				for(SavedCondition current:active)
-				{
-					cond.add(current.getCondition());
-				}
+				List<Condition> cond=new ArrayList<>(activeCount);
+				cond.addAll(active.stream().map(SavedCondition::getCondition).collect(Collectors.toList()));
 				or.setConditions(cond);
 				findActiveCondition=or;
 			}
@@ -3310,6 +2996,16 @@ public class MainFrame
 	private class SourceTitleContainerProcessor
 			implements ViewContainerProcessor
 	{
+		private Map<String, String> sourceNames = null;
+		private boolean showingPrimaryIdentifier = false;
+		private boolean showingSecondaryIdentifier = false;
+
+		void updateSourceNameSettings()
+		{
+			sourceNames = applicationPreferences.getSourceNames();
+			showingPrimaryIdentifier = applicationPreferences.isShowingPrimaryIdentifier();
+			showingSecondaryIdentifier = applicationPreferences.isShowingSecondaryIdentifier();
+		}
 
 		@Override
 		public void process(ViewContainer<?> container)
@@ -3317,9 +3013,26 @@ public class MainFrame
 			ViewWindow window = container.resolveViewWindow();
 			if(window != null)
 			{
-				String title = resolveSourceTitle(container);
+				String title = ViewActions.resolveSourceTitle(container, sourceNames, showingPrimaryIdentifier, showingSecondaryIdentifier);
 				window.setTitle(title);
 			}
+		}
+	}
+
+	private class ScrollingSmoothlyContainerProcessor
+			implements ViewContainerProcessor
+	{
+		private boolean scrollingSmoothly;
+
+		void updateScrollingSmoothly()
+		{
+			scrollingSmoothly = applicationPreferences.isScrollingSmoothly();
+		}
+
+		@Override
+		public void process(ViewContainer<?> container)
+		{
+			container.setScrollingSmoothly(scrollingSmoothly);
 		}
 	}
 
@@ -3334,7 +3047,7 @@ public class MainFrame
 		 colorsCache.clear();
 	 }
  */
-	public void cleanObsoleteFiles()
+	private void cleanObsoleteFiles()
 	{
 		File obsoleteDir = new File(startupApplicationPath, "sources");
 		if(obsoleteDir.isDirectory())
@@ -3345,33 +3058,33 @@ public class MainFrame
 		}
 	}
 
-	public void deleteInactiveLogs()
+	private void deleteInactiveLogs()
 	{
 		deleteInactiveLogs(loggingFileFactory);
 		deleteInactiveLogs(accessFileFactory);
 	}
 
-	protected void deleteInactiveLogs(LogFileFactory fileFactory)
+	private void deleteInactiveLogs(LogFileFactory fileFactory)
 	{
-		List<SourceIdentifier> inactives = collectInactiveLogs(fileFactory);
-		for(SourceIdentifier si : inactives)
+		List<SourceIdentifier> inactiveLogs = collectInactiveLogs(fileFactory);
+		for(SourceIdentifier si : inactiveLogs)
 		{
 			File dataFile = fileFactory.getDataFile(si);
 			File indexFile = fileFactory.getIndexFile(si);
 			if(dataFile.delete())
 			{
-				if(logger.isInfoEnabled()) logger.info("Deleted {}", dataFile);
+				if(logger.isInfoEnabled()) logger.info("Deleted {}", dataFile); // NOPMD
 			}
 			if(indexFile.delete())
 			{
-				if(logger.isInfoEnabled()) logger.info("Deleted {}", indexFile);
+				if(logger.isInfoEnabled()) logger.info("Deleted {}", indexFile); // NOPMD
 			}
 		}
 	}
 
 	public List<SourceIdentifier> collectInactiveLogs(LogFileFactory fileFactory)
 	{
-		List<SourceIdentifier> result = new ArrayList<SourceIdentifier>();
+		List<SourceIdentifier> result = new ArrayList<>();
 		File logsRoot = fileFactory.getBaseDir();
 		File[] sources = logsRoot.listFiles(new DirectoryFilter());
 		if(sources != null)
@@ -3385,22 +3098,27 @@ public class MainFrame
 		return result;
 	}
 
-	private void collectInactiveLogs(LogFileFactory fileFactory, File sourceDir, List<SourceIdentifier> inactiveLogs)
+	private void collectInactiveLogs(LogFileFactory fileFactory, final File sourceDir, List<SourceIdentifier> inactiveLogs)
 	{
-		String primary = sourceDir.getName();
-
 		File[] logs = sourceDir.listFiles(new LogFileFilter(fileFactory));
+		if(logs == null)
+		{
+			return;
+		}
+
 		String extension = fileFactory.getDataFileExtension();
+		String primary = sourceDir.getName();
 		for(File f : logs)
 		{
 			String abs = f.getAbsolutePath();
 			abs = abs.substring(0, abs.length() - extension.length());
-			File active = new File(abs + FileConstants.ACTIVE_FILE_EXTENSION);
+			File active = new File(abs + FileConstants.ACTIVE_FILE_EXTENSION); // NOPMD - AvoidInstantiatingObjectsInLoops
 			if(!active.isFile())
 			{
 				String secondary = f.getName();
 				secondary = secondary.substring(0, secondary.length() - extension.length());
-				inactiveLogs.add(new SourceIdentifier(primary, secondary));
+
+				inactiveLogs.add(new SourceIdentifier(primary, secondary)); // NOPMD - AvoidInstantiatingObjectsInLoops
 			}
 		}
 	}
@@ -3412,12 +3130,22 @@ public class MainFrame
 		systemClipboard.setContents(transferableText, null);
 	}
 
-	public class EventSourceComparator<T extends Serializable>
+	private static class EventSourceComparator<T extends Serializable>
 		implements Comparator<EventSource<T>>
 	{
+		private final Map<String, String> sourceNames;
+		private final boolean showingPrimaryIdentifier;
+
+		EventSourceComparator(Map<String, String> sourceNames, boolean showingPrimaryIdentifier)
+		{
+			this.sourceNames = sourceNames;
+			this.showingPrimaryIdentifier = showingPrimaryIdentifier;
+		}
+
+		@Override
 		public int compare(EventSource<T> o1, EventSource<T> o2)
 		{
-			if(o1 == o2)
+			if(o1 == o2) // NOPMD
 			{
 				return 0;
 			}
@@ -3431,21 +3159,13 @@ public class MainFrame
 			}
 			SourceIdentifier si1 = o1.getSourceIdentifier();
 			SourceIdentifier si2 = o2.getSourceIdentifier();
-			if(si1 == si2)
+			if(si1 == si2) // NOPMD
 			{
 				return 0;
 			}
-			if(si1 == null)
-			{
-				return -1;
-			}
-			if(si2 == null)
-			{
-				return 1;
-			}
-
-			String primary1 = getPrimarySourceTitle(si1);
-			String primary2 = getPrimarySourceTitle(si2);
+			// SourceIdentifier of EventSource can't be null.
+			String primary1 = ViewActions.getPrimarySourceTitle(si1.getIdentifier(), sourceNames, showingPrimaryIdentifier);
+			String primary2 = ViewActions.getPrimarySourceTitle(si2.getIdentifier(), sourceNames, showingPrimaryIdentifier);
 			if(primary1 != null && primary2 != null)
 			{
 				int compare = primary1.compareTo(primary2);
@@ -3478,13 +3198,14 @@ public class MainFrame
 	private class ShutdownRunnable
 		implements Runnable
 	{
+		@Override
 		public void run()
 		{
 			if(logger.isInfoEnabled()) logger.info("Executing shutdown hook...");
-			if(gotoSource != null)
+			if(gotoSourceProvider != null)
 			{
-				gotoSource.stop();
-				gotoSource = null;
+				gotoSourceProvider.stop();
+				gotoSourceProvider = null;
 			}
 			for(AutostartRunnable current : autostartProcesses)
 			{
@@ -3500,15 +3221,15 @@ public class MainFrame
 	{
 		private final Logger logger = LoggerFactory.getLogger(MainFrame.class);
 
-		private File file;
+		private final File file;
 		private Process process;
 
-		public AutostartRunnable(File file)
+		AutostartRunnable(File file)
 		{
 			this.file = file;
 		}
 
-		public void destroyProcess()
+		void destroyProcess()
 		{
 			if(process != null)
 			{
@@ -3516,6 +3237,7 @@ public class MainFrame
 			}
 		}
 
+		@Override
 		public void run()
 		{
 			try
@@ -3539,36 +3261,31 @@ public class MainFrame
 			}
 			catch(IOException e)
 			{
-				if(logger.isWarnEnabled())
-				{
-					logger.warn("Exception while executing '" + file.getAbsolutePath() + "'!", e);
-				}
+				if(logger.isWarnEnabled()) logger.warn("Exception while executing '" + file.getAbsolutePath() + "'!", e);
 			}
 			catch(InterruptedException e)
 			{
-				if(logger.isDebugEnabled())
-				{
-					logger.debug("Execution of '" + file.getAbsolutePath() + "' was interrupted.", e);
-				}
+				if(logger.isDebugEnabled()) logger.debug("Execution of '" + file.getAbsolutePath() + "' was interrupted.", e);
 			}
 		}
 
 		abstract class AbstractOutputConsumerRunnable
 			implements Runnable
 		{
-			private BufferedReader inputReader;
+			private final BufferedReader inputReader;
 
-			public AbstractOutputConsumerRunnable(InputStream input)
+			AbstractOutputConsumerRunnable(InputStream input)
 			{
-				inputReader = new BufferedReader(new InputStreamReader(input));
+				inputReader = new BufferedReader(new InputStreamReader(input, StandardCharsets.UTF_8));
 			}
 
+			@Override
 			public void run()
 			{
 				try
 				{
 
-					for(; ;)
+					for(;;)
 					{
 						String line = inputReader.readLine();
 						if(line == null)
@@ -3594,11 +3311,12 @@ public class MainFrame
 		private class OutConsumerRunnable
 			extends AbstractOutputConsumerRunnable
 		{
-			public OutConsumerRunnable(InputStream input)
+			OutConsumerRunnable(InputStream input)
 			{
 				super(input);
 			}
 
+			@Override
 			public void processLine(String line)
 			{
 				if(logger.isInfoEnabled()) logger.info("{}: {}", file.getAbsolutePath(), line);
@@ -3608,11 +3326,13 @@ public class MainFrame
 		private class ErrorConsumerRunnable
 			extends AbstractOutputConsumerRunnable
 		{
-			public ErrorConsumerRunnable(InputStream input)
+			ErrorConsumerRunnable(InputStream input)
 			{
 				super(input);
 			}
 
+			@Override
+			@SuppressWarnings("PMD.SystemPrintln")
 			public void processLine(String line)
 			{
 				System.err.println(file.getAbsolutePath() + ": " + line);
@@ -3626,21 +3346,14 @@ public class MainFrame
 	{
 		private final Logger logger = LoggerFactory.getLogger(MainFrame.class);
 
-		private Process process;
+		private final Process process;
 
-		public ProcessConsumerRunnable(Process process)
+		ProcessConsumerRunnable(Process process)
 		{
 			this.process = process;
 		}
 
-		public void destroyProcess()
-		{
-			if(process != null)
-			{
-				process.destroy();
-			}
-		}
-
+		@Override
 		public void run()
 		{
 			try
@@ -3665,19 +3378,20 @@ public class MainFrame
 		abstract class AbstractOutputConsumerRunnable
 			implements Runnable
 		{
-			private BufferedReader inputReader;
+			private final BufferedReader inputReader;
 
-			public AbstractOutputConsumerRunnable(InputStream input)
+			AbstractOutputConsumerRunnable(InputStream input)
 			{
-				inputReader = new BufferedReader(new InputStreamReader(input));
+				inputReader = new BufferedReader(new InputStreamReader(input, StandardCharsets.UTF_8));
 			}
 
+			@Override
 			public void run()
 			{
 				try
 				{
 
-					for(; ;)
+					for(;;)
 					{
 						String line = inputReader.readLine();
 						if(line == null)
@@ -3690,7 +3404,7 @@ public class MainFrame
 				}
 				catch(IOException e)
 				{
-					if(logger.isDebugEnabled()) logger.debug("Exception while reading from openUrl process.", e);
+					if(logger.isDebugEnabled()) logger.debug("Exception while reading next line.", e);
 				}
 			}
 
@@ -3700,11 +3414,12 @@ public class MainFrame
 		private class OutConsumerRunnable
 			extends AbstractOutputConsumerRunnable
 		{
-			public OutConsumerRunnable(InputStream input)
+			OutConsumerRunnable(InputStream input)
 			{
 				super(input);
 			}
 
+			@Override
 			public void processLine(String line)
 			{
 				if(logger.isDebugEnabled()) logger.debug("{}", line);
@@ -3714,14 +3429,16 @@ public class MainFrame
 		private class ErrorConsumerRunnable
 			extends AbstractOutputConsumerRunnable
 		{
-			public ErrorConsumerRunnable(InputStream input)
+			ErrorConsumerRunnable(InputStream input)
 			{
 				super(input);
 			}
 
+			@Override
+			@SuppressWarnings("PMD.SystemPrintln")
 			public void processLine(String line)
 			{
-				System.err.println("openUrl: " + line);
+				System.err.println("Process: " + line);
 			}
 		}
 
@@ -3739,6 +3456,12 @@ public class MainFrame
 		{
 			HttpResponse response = client.execute(httpget, localContext);
 			StatusLine status = response.getStatusLine();
+			int statusCode = status.getStatusCode();
+			if(statusCode == HttpStatus.NOT_FOUND.getCode())
+			{
+				if(logger.isInfoEnabled()) logger.info("'{}' not found.", url);
+				return null;
+			}
 			if(status.getStatusCode() != HttpStatus.OK.getCode())
 			{
 				if(logger.isWarnEnabled()) logger.warn("Status while retrieving '{}': {}", url, status);
@@ -3767,105 +3490,117 @@ public class MainFrame
 		}
 	}
 
+	private static VersionBundle retrieveVersion(String url)
+	{
+		return VersionBundle.fromString(readUrl(url));
+	}
+
+	private static String retrieveChanges(String currentVersion)
+	{
+		final String url = "http://lilithapp.com/releases/" + currentVersion + ".xhtml";
+
+		return readUrl(url);
+	}
+
 	private class CheckForUpdateRunnable
 		implements Runnable
 	{
-		private static final String RELEASE_VERSION_URL = "http://lilith.huxhorn.de/release-version.txt";
-		private static final String SNAPSHOT_VERSION_URL = "http://lilith.huxhorn.de/snapshot-version.txt";
+		private static final String RELEASE_VERSION_URL = "http://lilithapp.com/release-version.txt";
+		private static final String SNAPSHOT_VERSION_URL = "http://lilithapp.com/snapshot-version.txt";
 
-		private boolean showAlways;
-		private boolean checkSnapshot;
+		private final boolean showAlways;
+		private final boolean checkSnapshot;
 
-		public CheckForUpdateRunnable(boolean showAlways, boolean checkSnapshot)
+		CheckForUpdateRunnable(boolean showAlways, boolean checkSnapshot)
 		{
 			this.showAlways = showAlways;
 			this.checkSnapshot = checkSnapshot;
 		}
 
-
-		public VersionBundle retrieveVersion(String url)
-		{
-			return VersionBundle.fromString(readUrl(url));
-		}
-
-		public String retrieveChanges(String currentVersion)
-		{
-			final String url = "http://lilith.huxhorn.de/releases/" + currentVersion + ".xhtml";
-
-			return readUrl(url);
-		}
-
+		@Override
 		public void run()
 		{
 			VersionBundle releaseVersionBundle = retrieveVersion(RELEASE_VERSION_URL);
-			int compare = Lilith.APP_VERSION_BUNDLE.compareTo(releaseVersionBundle);
-			if(compare<0)
+			if(releaseVersionBundle != null)
 			{
-				String version = releaseVersionBundle.getVersion();
-				String message = "New release: " + version;
-				String changes = retrieveChanges(version);
-				SwingUtilities.invokeLater(new ShowUpdateDialog(message, changes));
-				return;
-			}
+				int compare = Lilith.APP_VERSION_BUNDLE.compareTo(releaseVersionBundle);
+				if (compare < 0)
+				{
+					String version = releaseVersionBundle.getVersion();
+					String message = "New release: " + version;
+					String changes = retrieveChanges(version);
+					EventQueue.invokeLater(new ShowUpdateDialogRunnable(message, changes));
+					return;
+				}
 
-			if(!Lilith.APP_SNAPSHOT && compare>0)
-			{
-				String version = releaseVersionBundle.getVersion();
-				String message = "OH HAI! You can haz newzest release version!!1";
-				String changes = retrieveChanges(version);
-				SwingUtilities.invokeLater(new ShowUpdateDialog(message, changes));
-				return;
+				if (!Lilith.APP_SNAPSHOT && compare > 0)
+				{
+					showNewzestVersion("release", releaseVersionBundle);
+					return;
+				}
 			}
 
 			if(Lilith.APP_SNAPSHOT || checkSnapshot)
 			{
 				// check for snapshot if either checking is enabled or we are already using a snapshot
 				VersionBundle snapshotVersionBundle = retrieveVersion(SNAPSHOT_VERSION_URL);
-				compare = Lilith.APP_VERSION_BUNDLE.compareTo(snapshotVersionBundle);
-				if(compare<0)
+				if(snapshotVersionBundle != null)
 				{
-					String version = snapshotVersionBundle.getVersion();
-					Date d=new Date(snapshotVersionBundle.getTimestamp());
-					SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
+					int compare = Lilith.APP_VERSION_BUNDLE.compareTo(snapshotVersionBundle);
+					if (compare < 0)
+					{
+						String version = snapshotVersionBundle.getVersion();
+						long timestamp = snapshotVersionBundle.getTimestamp();
+						String timestampString =
+							DateTimeFormatters.DATETIME_IN_SYSTEM_ZONE_SPACE.format(Instant.ofEpochMilli(timestamp));
+						String message = "New snapshot: " + version + " - " + timestampString;
+						String changes = retrieveChanges(version);
+						EventQueue.invokeLater(new ShowUpdateDialogRunnable(message, changes));
+						return;
+					}
 
-					String message = "New snapshot: " + version + "-" + format.format(d);
-					String changes = retrieveChanges(version);
-					SwingUtilities.invokeLater(new ShowUpdateDialog(message, changes));
-					return;
-				}
-
-				if(compare>0)
-				{
-					String version = snapshotVersionBundle.getVersion();
-
-					String message = "OH HAI! You can haz newzest snapshot version!!1";
-					String changes = retrieveChanges(version);
-					SwingUtilities.invokeLater(new ShowUpdateDialog(message, changes));
-					return;
+					if (compare > 0)
+					{
+						showNewzestVersion("snapshot", snapshotVersionBundle);
+						return;
+					}
 				}
 			}
 
 			if(showAlways)
 			{
-				String message=null; // up to date
 				String changes = retrieveChanges(Lilith.APP_VERSION_BUNDLE.getVersion());
-				SwingUtilities.invokeLater(new ShowUpdateDialog(message, changes));
+				EventQueue.invokeLater(new ShowUpdateDialogRunnable(null /* i.e. up to date */, changes));
 			}
+		}
+
+		private void showNewzestVersion(String versionType, VersionBundle versionBundle)
+		{
+			String message = "OH HAI! You can haz newzest "+versionType+" version!!1";
+			String changes = retrieveChanges(Lilith.APP_VERSION_BUNDLE.getVersion());
+			if(changes == null)
+			{
+				String version = versionBundle.getVersion();
+
+				changes = retrieveChanges(version);
+			}
+			EventQueue.invokeLater(new ShowUpdateDialogRunnable(message, changes));
 		}
 	}
 
-	private class ShowUpdateDialog
+	private class ShowUpdateDialogRunnable
 		implements Runnable
 	{
-		private String message;
-		private String changes;
+		private final String message;
+		private final String changes;
 
-		public ShowUpdateDialog(String message, String changes)
+		ShowUpdateDialogRunnable(String message, String changes)
 		{
 			this.message = message;
 			this.changes = changes;
 		}
 
+		@Override
 		public void run()
 		{
 			MainFrame.this.showUpdateDialog(message, changes);
@@ -3880,42 +3615,19 @@ public class MainFrame
 		Windows.showWindow(checkForUpdateDialog, this, true);
 	}
 
-	/*
-		private class ColorsCollectionRunnable
-			implements Runnable
-		{
-			private final Logger logger = LoggerFactory.getLogger(ColorsCollectionRunnable.class);
-
-			public void run()
-			{
-				for(;;)
-				{
-					try
-					{
-						SoftColorsReference ref= (SoftColorsReference) colorsReferenceQueue.remove();
-						EventIdentifier id = ref.getId();
-						colorsCache.remove(id);
-						if(logger.isDebugEnabled()) logger.debug("Removed cached color for {}.", id);
-					}
-					catch (InterruptedException e)
-					{
-						break;
-					}
-				}
-			}
-		}
-		*/
 	private class MainTaskListener
 		implements TaskListener<Long>
 	{
 		private final Logger logger = LoggerFactory.getLogger(MainTaskListener.class);
 
+		@Override
 		public void taskCreated(Task<Long> longTask)
 		{
-			if(logger.isInfoEnabled()) logger.info("Task {} created.", longTask.getName());
+			if(logger.isDebugEnabled()) logger.debug("Task {} created.", longTask.getName());
 			updateTaskStatus();
 		}
 
+		@Override
 		public void executionFailed(Task<Long> longTask, ExecutionException exception)
 		{
 			if(logger.isWarnEnabled()) logger.warn("Execution of task {} failed!", longTask.getName(), exception);
@@ -3931,14 +3643,15 @@ public class MainFrame
 				causeMsg=cause.toString();
 			}
 			message=message+"\n"+causeMsg;
-			JOptionPane.showMessageDialog(MainFrame.this, message, "Exception while executing task...", JOptionPane.ERROR_MESSAGE);
+			JOptionPane.showMessageDialog(MainFrame.this, message, "Exception while executing task…", JOptionPane.ERROR_MESSAGE);
 
 			updateTaskStatus();
 		}
 
+		@Override
 		public void executionFinished(Task<Long> longTask, Long result)
 		{
-			if(logger.isInfoEnabled()) logger.info("Execution of task {} finished!", longTask.getName());
+			if(logger.isDebugEnabled()) logger.debug("Execution of task {} finished!", longTask.getName());
 			updateTaskStatus();
 			Callable<Long> callable = longTask.getCallable();
 
@@ -3953,32 +3666,29 @@ public class MainFrame
 			if(callable instanceof Log4jImportCallable)
 			{
 				Log4jImportCallable iCallable = (Log4jImportCallable) callable;
-				AppendOperation<EventWrapper<LoggingEvent>> buffer = iCallable.getBuffer();
-				if(buffer instanceof CodecFileBuffer)
-				{
-					CodecFileBuffer cfb = (CodecFileBuffer) buffer;
-					File dataFile = cfb.getDataFile();
-					File indexFile = cfb.getIndexFile();
-					cfb.dispose();
-					createViewFor(dataFile, indexFile, false);
-				}
+				createView(iCallable.getBuffer());
 				return;
 			}
 			if(callable instanceof JulImportCallable)
 			{
 				JulImportCallable iCallable = (JulImportCallable) callable;
-				AppendOperation<EventWrapper<LoggingEvent>> buffer = iCallable.getBuffer();
-				if(buffer instanceof CodecFileBuffer)
-				{
-					CodecFileBuffer cfb = (CodecFileBuffer) buffer;
-					File dataFile = cfb.getDataFile();
-					File indexFile = cfb.getIndexFile();
-					cfb.dispose();
-					createViewFor(dataFile, indexFile, false);
-				}
+				createView(iCallable.getBuffer());
 			}
 		}
 
+		private void createView(AppendOperation<EventWrapper<LoggingEvent>> buffer)
+		{
+			if(buffer instanceof CodecFileBuffer)
+			{
+				CodecFileBuffer cfb = (CodecFileBuffer) buffer;
+				File dataFile = cfb.getDataFile();
+				File indexFile = cfb.getIndexFile();
+				cfb.dispose();
+				createViewFor(dataFile, indexFile, false);
+			}
+		}
+
+		@Override
 		public void executionCanceled(Task<Long> longTask)
 		{
 			if(logger.isInfoEnabled()) logger.info("Execution of task {} canceled!", longTask.getName());
@@ -3997,11 +3707,11 @@ public class MainFrame
 						if(logger.isInfoEnabled()) logger.info("Deleted {}.", dataFile.getAbsolutePath());
 						if(dataFile.isFile())
 						{
-							if(logger.isWarnEnabled()) logger.warn("WTF???? I just deleted {} and now it's still a file?!", dataFile.getAbsolutePath());
+							if(logger.isWarnEnabled()) logger.warn("WTF???? I just deleted {} and now it's still a file?!", dataFile.getAbsolutePath()); // NOPMD
 						}
 						if(dataFile.exists())
 						{
-							if(logger.isWarnEnabled()) logger.warn("WTF???? I just deleted {} and now it still exists?!", dataFile.getAbsolutePath());
+							if(logger.isWarnEnabled()) logger.warn("WTF???? I just deleted {} and now it still exists?!", dataFile.getAbsolutePath()); // NOPMD
 						}
 					}
 					else
@@ -4017,6 +3727,7 @@ public class MainFrame
 			updateTaskStatus();
 		}
 
+		@Override
 		public void progressUpdated(Task<Long> longTask, int progress)
 		{
 			if(logger.isDebugEnabled()) logger.debug("Progress of task {} updated to {}.", longTask.getName(), progress);

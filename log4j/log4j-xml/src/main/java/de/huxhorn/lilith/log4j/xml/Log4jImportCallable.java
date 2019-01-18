@@ -1,6 +1,6 @@
 /*
  * Lilith - a log event viewer.
- * Copyright (C) 2007-2014 Joern Huxhorn
+ * Copyright (C) 2007-2017 Joern Huxhorn
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -17,7 +17,7 @@
  */
 
 /*
- * Copyright 2007-2014 Joern Huxhorn
+ * Copyright 2007-2017 Joern Huxhorn
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,36 +40,47 @@ import de.huxhorn.lilith.data.eventsource.SourceIdentifier;
 import de.huxhorn.lilith.data.logging.LoggingEvent;
 import de.huxhorn.sulky.buffers.AppendOperation;
 import de.huxhorn.sulky.tasks.AbstractProgressingCallable;
-
+import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.util.Locale;
+import java.util.zip.GZIPInputStream;
+import javax.xml.stream.XMLInputFactory;
+import javax.xml.stream.XMLStreamException;
+import javax.xml.stream.XMLStreamReader;
 import org.apache.commons.io.input.CountingInputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.BufferedReader;
-import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.InputStreamReader;
-import java.io.UnsupportedEncodingException;
-import java.util.zip.GZIPInputStream;
-
-import javax.xml.stream.XMLInputFactory;
-import javax.xml.stream.XMLStreamException;
-import javax.xml.stream.XMLStreamReader;
-
+@SuppressWarnings("PMD.ClassNamingConventions")
 public class Log4jImportCallable
 	extends AbstractProgressingCallable<Long>
 {
+	// thread-safe, see http://www.cowtowncoder.com/blog/archives/2006/06/entry_2.html
+	// XMLInputFactory.newFactory() is not deprecated. See http://bugs.java.com/bugdatabase/view_bug.do?bug_id=JDK-8183519
+	@SuppressWarnings("deprecation")
+	static final XMLInputFactory XML_INPUT_FACTORY = XMLInputFactory.newFactory();
+	static
+	{
+		XML_INPUT_FACTORY.setProperty(XMLInputFactory.IS_SUPPORTING_EXTERNAL_ENTITIES, false);
+		XML_INPUT_FACTORY.setProperty(XMLInputFactory.SUPPORT_DTD, false);
+		XML_INPUT_FACTORY.setProperty(XMLInputFactory.IS_VALIDATING, false);
+	}
+
 	private final Logger logger = LoggerFactory.getLogger(Log4jImportCallable.class);
 
-	public static final String CLOSING_LOG4J_EVENT_TAG = "</log4j:event>";
-	public static final String LOG4J_NAMESPACE = "xmlns:log4j=\"http://jakarta.apache.org/log4j/\"";
-	public static final String OPENING_LOG4J_EVENT_TAG_EXCL_NS = "<log4j:event ";
-	public static final String OPENING_LOG4J_EVENT_TAG_INCL_NS = OPENING_LOG4J_EVENT_TAG_EXCL_NS + LOG4J_NAMESPACE + " ";
+	private static final String CLOSING_LOG4J_EVENT_TAG = "</log4j:event>";
+	private static final String LOG4J_NAMESPACE = "xmlns:log4j=\"http://jakarta.apache.org/log4j/\"";
+	private static final String OPENING_LOG4J_EVENT_TAG_EXCL_NS = "<log4j:event ";
+	private static final String OPENING_LOG4J_EVENT_TAG_INCL_NS = OPENING_LOG4J_EVENT_TAG_EXCL_NS + LOG4J_NAMESPACE + " ";
 
-	private File inputFile;
-	private AppendOperation<EventWrapper<LoggingEvent>> buffer;
-	private LoggingEventReader instance;
+	private final File inputFile;
+	private final AppendOperation<EventWrapper<LoggingEvent>> buffer;
+	private final LoggingEventReader instance;
 	private long result;
 
 	public Log4jImportCallable(File inputFile, AppendOperation<EventWrapper<LoggingEvent>> buffer)
@@ -89,6 +100,7 @@ public class Log4jImportCallable
 		return inputFile;
 	}
 
+	@Override
 	public Long call()
 		throws Exception
 	{
@@ -102,24 +114,24 @@ public class Log4jImportCallable
 		}
 		long fileSize = inputFile.length();
 		setNumberOfSteps(fileSize);
-		FileInputStream fis = new FileInputStream(inputFile);
+		InputStream fis = Files.newInputStream(inputFile.toPath());
 		CountingInputStream cis = new CountingInputStream(fis);
 
-		String fileName=inputFile.getName().toLowerCase();
+		String fileName=inputFile.getName().toLowerCase(Locale.US);
 		BufferedReader br;
 		if(fileName.endsWith(".gz"))
 		{
-			br = new BufferedReader(new InputStreamReader(new GZIPInputStream(cis), "UTF-8"));
+			br = new BufferedReader(new InputStreamReader(new GZIPInputStream(cis), StandardCharsets.UTF_8));
 		}
 		else
 		{
-			br = new BufferedReader(new InputStreamReader(cis, "UTF-8"));
+			br = new BufferedReader(new InputStreamReader(cis, StandardCharsets.UTF_8));
 		}
 
 		StringBuilder builder = new StringBuilder();
 
 		result = 0;
-		for(; ;)
+		for(;;)
 		{
 			String line = br.readLine();
 			setCurrentStep(cis.getByteCount());
@@ -128,7 +140,7 @@ public class Log4jImportCallable
 				evaluate(builder.toString());
 				break;
 			}
-			for(; ;)
+			for(;;)
 			{
 				int closeIndex = line.indexOf(CLOSING_LOG4J_EVENT_TAG);
 				if(closeIndex >= 0)
@@ -141,8 +153,7 @@ public class Log4jImportCallable
 				}
 				else
 				{
-					builder.append(line);
-					builder.append("\n");
+					builder.append(line).append('\n');
 					break;
 				}
 			}
@@ -160,7 +171,7 @@ public class Log4jImportCallable
 			if(event != null)
 			{
 				result++;
-				EventWrapper<LoggingEvent> wrapper = new EventWrapper<LoggingEvent>();
+				EventWrapper<LoggingEvent> wrapper = new EventWrapper<>();
 				wrapper.setEvent(event);
 				SourceIdentifier sourceIdentifier = new SourceIdentifier(inputFile.getAbsolutePath());
 				EventIdentifier eventId = new EventIdentifier(sourceIdentifier, result);
@@ -169,10 +180,6 @@ public class Log4jImportCallable
 			}
 		}
 		catch(XMLStreamException e)
-		{
-			// ignore
-		}
-		catch(UnsupportedEncodingException e)
 		{
 			// ignore
 		}
@@ -190,16 +197,12 @@ public class Log4jImportCallable
 	}
 
 	private LoggingEvent readEvent(String eventStr)
-		throws XMLStreamException, UnsupportedEncodingException
+		throws XMLStreamException
 	{
-		byte[] bytes = eventStr.getBytes("UTF-8");
-		XMLInputFactory inputFactory = XMLInputFactory.newInstance();
-		inputFactory.setProperty(XMLInputFactory.IS_SUPPORTING_EXTERNAL_ENTITIES, false);
-		inputFactory.setProperty(XMLInputFactory.SUPPORT_DTD, false);
-		inputFactory.setProperty(XMLInputFactory.IS_VALIDATING, false);
+		byte[] bytes = eventStr.getBytes(StandardCharsets.UTF_8);
 
 		ByteArrayInputStream in = new ByteArrayInputStream(bytes);
-		XMLStreamReader reader = inputFactory.createXMLStreamReader(new InputStreamReader(in, "utf-8"));
+		XMLStreamReader reader = XML_INPUT_FACTORY.createXMLStreamReader(new InputStreamReader(in, StandardCharsets.UTF_8));
 		return instance.read(reader);
 	}
 }

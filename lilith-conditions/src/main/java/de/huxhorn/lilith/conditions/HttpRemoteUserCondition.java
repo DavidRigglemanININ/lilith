@@ -1,6 +1,6 @@
 /*
  * Lilith - a log event viewer.
- * Copyright (C) 2007-2013 Joern Huxhorn
+ * Copyright (C) 2007-2017 Joern Huxhorn
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,13 +15,15 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package de.huxhorn.lilith.conditions;
 
 import de.huxhorn.lilith.data.access.AccessEvent;
 import de.huxhorn.lilith.data.eventsource.EventWrapper;
+import java.io.ObjectStreamException;
 
-public class HttpRemoteUserCondition
-	implements LilithCondition, SearchStringCondition
+public final class HttpRemoteUserCondition
+	implements LilithCondition, SearchStringCondition, Cloneable
 {
 	private static final long serialVersionUID = -6203602189173332391L;
 
@@ -30,6 +32,7 @@ public class HttpRemoteUserCondition
 	private static final String NA = "-"; // IAccessEvent.NA
 
 	private String searchString;
+	private transient String userName;
 
 	public HttpRemoteUserCondition()
 	{
@@ -38,34 +41,35 @@ public class HttpRemoteUserCondition
 
 	public HttpRemoteUserCondition(String searchString)
 	{
-		this.searchString=searchString;
+		setSearchString(searchString);
 	}
 
 	public void setSearchString(String searchString)
 	{
 		this.searchString = searchString;
+		userName = processRemoteUserNameString(searchString);
 	}
 
+	@Override
 	public String getSearchString()
 	{
 		return searchString;
 	}
 
+	@Override
 	public String getDescription()
 	{
 		return DESCRIPTION;
 	}
 
+	public String getUserName()
+	{
+		return userName;
+	}
+
+	@Override
 	public boolean isTrue(Object value)
 	{
-		if(searchString == null)
-		{
-			return false;
-		}
-		if(searchString.length() == 0)
-		{
-			return true;
-		}
 		if(value instanceof EventWrapper)
 		{
 			EventWrapper wrapper = (EventWrapper) value;
@@ -73,13 +77,12 @@ public class HttpRemoteUserCondition
 			if(eventObj instanceof AccessEvent)
 			{
 				AccessEvent event = (AccessEvent) eventObj;
-				String remoteUser = event.getRemoteUser();
-				if(NA.equals(remoteUser))
+				String remoteUser = processRemoteUserNameString(event.getRemoteUser());
+				if(userName == null)
 				{
-					// don't ask
-					remoteUser = null;
+					return remoteUser == null;
 				}
-				return searchString.equals(remoteUser);
+				return userName.equals(remoteUser);
 			}
 		}
 		return false;
@@ -93,9 +96,7 @@ public class HttpRemoteUserCondition
 
 		HttpRemoteUserCondition that = (HttpRemoteUserCondition) o;
 
-		if (searchString != null ? !searchString.equals(that.searchString) : that.searchString != null) return false;
-
-		return true;
+		return searchString != null ? searchString.equals(that.searchString) : that.searchString == null;
 	}
 
 	@Override
@@ -104,6 +105,7 @@ public class HttpRemoteUserCondition
 		return searchString != null ? searchString.hashCode() : 0;
 	}
 
+	@Override
 	public HttpRemoteUserCondition clone()
 		throws CloneNotSupportedException
 	{
@@ -115,7 +117,35 @@ public class HttpRemoteUserCondition
 	{
 		StringBuilder result = new StringBuilder();
 		result.append(getDescription());
-		result.append(searchString);
+		if(userName != null)
+		{
+			result.append('"').append(userName).append('"');
+		}
+		else
+		{
+			result.append(NA);
+		}
 		return result.toString();
+	}
+
+	private Object readResolve()
+			throws ObjectStreamException
+	{
+		setSearchString(searchString);
+		return this;
+	}
+
+	private static String processRemoteUserNameString(String remoteUser)
+	{
+		if(remoteUser == null)
+		{
+			return null;
+		}
+		remoteUser = remoteUser.trim();
+		if(NA.equals(remoteUser) || "".equals(remoteUser))
+		{
+			return null;
+		}
+		return remoteUser;
 	}
 }

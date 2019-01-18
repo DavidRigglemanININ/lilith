@@ -1,6 +1,6 @@
 /*
  * Lilith - a log event viewer.
- * Copyright (C) 2007-2011 Joern Huxhorn
+ * Copyright (C) 2007-2017 Joern Huxhorn
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,6 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package de.huxhorn.lilith.elementprocessors;
 
 import de.huxhorn.lilith.data.eventsource.EventWrapper;
@@ -22,7 +23,6 @@ import de.huxhorn.lilith.data.logging.LoggingEvent;
 import de.huxhorn.lilith.data.logging.ThreadInfo;
 import de.huxhorn.sulky.buffers.ElementProcessor;
 import de.huxhorn.sulky.buffers.ResetOperation;
-
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -30,13 +30,9 @@ import java.util.Set;
 public class LoggingEventThreadNameProcessor
 	implements ElementProcessor<EventWrapper<LoggingEvent>>, ResetOperation
 {
-	private Set<String> threadNames;
+	private final Set<String> threadNames = new HashSet<>();
 
-	public LoggingEventThreadNameProcessor()
-	{
-		threadNames = new HashSet<String>();
-	}
-
+	@Override
 	public void processElement(EventWrapper<LoggingEvent> element)
 	{
 		if(element == null)
@@ -65,9 +61,10 @@ public class LoggingEventThreadNameProcessor
 		}
 	}
 
+	@Override
 	public void processElements(List<EventWrapper<LoggingEvent>> elements)
 	{
-		if(elements == null || elements.size() == 0)
+		if(elements == null || elements.isEmpty())
 		{
 			return;
 		}
@@ -107,6 +104,7 @@ public class LoggingEventThreadNameProcessor
 		}
 	}
 
+	@Override
 	public void reset()
 	{
 		threadNames.clear();

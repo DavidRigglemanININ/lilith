@@ -1,22 +1,24 @@
 /*
  * Lilith - a log event viewer.
- * Copyright (C) 2007-2014 Joern Huxhorn
- * 
+ * Copyright (C) 2007-2017 Joern Huxhorn
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package de.huxhorn.lilith.swing;
 
+import de.huxhorn.lilith.DateTimeFormatters;
 import de.huxhorn.lilith.data.eventsource.EventWrapper;
 import de.huxhorn.lilith.data.eventsource.SourceIdentifier;
 import de.huxhorn.lilith.data.logging.ExtendedStackTraceElement;
@@ -25,7 +27,7 @@ import de.huxhorn.lilith.engine.EventSource;
 import de.huxhorn.lilith.swing.callables.CallableMetaData;
 import de.huxhorn.lilith.swing.callables.FindNextCallable;
 import de.huxhorn.lilith.swing.callables.FindPreviousCallable;
-import de.huxhorn.lilith.swing.linklistener.StackTraceElementLinkListener;
+import de.huxhorn.lilith.swing.linklistener.OpenUrlLinkListener;
 import de.huxhorn.lilith.swing.table.EventWrapperViewTable;
 import de.huxhorn.lilith.swing.table.model.EventWrapperTableModel;
 import de.huxhorn.sulky.buffers.Buffer;
@@ -43,8 +45,58 @@ import de.huxhorn.sulky.tasks.ProgressingCallable;
 import de.huxhorn.sulky.tasks.Task;
 import de.huxhorn.sulky.tasks.TaskListener;
 import de.huxhorn.sulky.tasks.TaskManager;
-
-import de.huxhorn.sulky.io.IOUtilities;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.Dimension;
+import java.awt.EventQueue;
+import java.awt.FocusTraversalPolicy;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
+import java.awt.KeyboardFocusManager;
+import java.awt.Point;
+import java.awt.event.FocusEvent;
+import java.awt.event.FocusListener;
+import java.awt.event.InputEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseWheelEvent;
+import java.awt.event.MouseWheelListener;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
+import java.io.File;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.io.Serializable;
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Objects;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
+import javax.swing.JScrollBar;
+import javax.swing.JScrollPane;
+import javax.swing.JSplitPane;
+import javax.swing.ListSelectionModel;
+import javax.swing.border.MatteBorder;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
+import javax.swing.event.TableModelEvent;
+import javax.swing.event.TableModelListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xhtmlrenderer.context.AWTFontResolver;
@@ -57,101 +109,65 @@ import org.xhtmlrenderer.swing.LinkListener;
 import org.xhtmlrenderer.swing.ScalableXHTMLPanel;
 import org.xhtmlrenderer.swing.SelectionHighlighter;
 
-import java.awt.*;
-import java.awt.event.FocusEvent;
-import java.awt.event.FocusListener;
-import java.awt.event.InputEvent;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
-import java.awt.event.MouseWheelEvent;
-import java.awt.event.MouseWheelListener;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.OutputStreamWriter;
-import java.io.Serializable;
-import java.net.URL;
-import java.text.DecimalFormat;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
-
-import javax.swing.*;
-import javax.swing.border.MatteBorder;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
-import javax.swing.event.TableModelEvent;
-import javax.swing.event.TableModelListener;
-
 public abstract class EventWrapperViewPanel<T extends Serializable>
 	extends JPanel
 	implements DisposeOperation, FlushOperation
 {
-	private static final long serialVersionUID = 7987088820464790207L;
+	private static final long serialVersionUID = -944900018575063575L;
 
 	private final Logger logger = LoggerFactory.getLogger(EventWrapperViewPanel.class);
 
-	public static final String STATE_PROPERTY = "state";
-	public static final String FILTER_CONDITION_PROPERTY = "filterCondition";
-	public static final String EVENT_SOURCE_PROPERTY = "eventSource";
-	public static final String SCROLLING_TO_BOTTOM_PROPERTY = "scrollingToBottom";
-	public static final String PAUSED_PROPERTY = "paused";
-	public static final String SELECTED_EVENT_PROPERTY = "selectedEvent";
+	static final String STATE_PROPERTY = "state";
+	private static final String FILTER_CONDITION_PROPERTY = "filterCondition";
+	static final String EVENT_SOURCE_PROPERTY = "eventSource";
+	private static final String SCROLLING_TO_BOTTOM_PROPERTY = "scrollingToBottom";
+	static final String SELECTED_EVENT_PROPERTY = "selectedEvent";
 
+	private final MainFrame mainFrame;
+	private final TaskManager<Long> taskManager;
+
+	private final EventWrapperViewTable<T> table;
+	private final EventWrapperTableModel<T> tableModel;
+
+	private final JLabel statusLabel;
+	private final JScrollBar verticalLogScrollBar;
+
+	private final MatteBorder focusedBorder;
+	private final MatteBorder unfocusedBorder;
+	private final DecimalFormat eventCountFormat;
+	private final FindResultListener findResultListener;
+
+	private final ScalableXHTMLPanel messagePane;
+	private final XhtmlNamespaceHandler xhtmlNamespaceHandler;
+	private final SelectionHighlighter.CopyAction copyAction;
+	private final JScrollPane tableScrollPane;
+	private final FindPanel<T> findPanel;
+	private final SoftReferenceCachingBuffer<EventWrapper<T>> cachedBuffer;
 
 	private EventSource<T> eventSource;
 	private LoggingViewState state;
-	private MainFrame mainFrame;
 	private boolean showingFilters;
 	private Condition filterCondition;
-	private TaskManager<Long> taskManager;
-
-	private EventWrapperViewTable<T> table;
-	private EventWrapperTableModel<T> tableModel;
-
-	private JLabel statusLabel;
-	private JScrollBar verticalLogScrollbar;
-
-	private StatusTableModelListener tableModelListener;
-	private MatteBorder focusedBorder;
-	private MatteBorder unfocusedBorder;
-	private DecimalFormat eventCountFormat;
-	private FindResultListener findResultListener;
-
-	private ScalableXHTMLPanel messagePane;
-	private XhtmlNamespaceHandler xhtmlNamespaceHandler;
 	private EventWrapper<T> selectedEvent;
-	private SelectionHighlighter.CopyAction copyAction;
 	private double scale;
-	private JScrollPane tableScrollPane;
-	private FindPanel<T> findPanel;
-	private SoftReferenceCachingBuffer<EventWrapper<T>> cachedBuffer;
 
 	public EventWrapperViewPanel(MainFrame mainFrame, EventSource<T> eventSource)
 	{
 		super(true);
-		eventCountFormat = new DecimalFormat("#,###");
-		this.taskManager = mainFrame.getLongWorkManager();
+		this.mainFrame = Objects.requireNonNull(mainFrame, "mainFrame must not be null!");
+		// can't use setEventSource(eventSource) at this point.
+		this.eventSource = Objects.requireNonNull(eventSource, "eventSource must not be null!");
+
+		eventCountFormat = new DecimalFormat("#,###", new DecimalFormatSymbols(Locale.US));
+		taskManager = mainFrame.getLongWorkManager();
 		findResultListener = new FindResultListener();
 		taskManager.addTaskListener(findResultListener);
-		this.mainFrame = mainFrame;
-		this.eventSource = eventSource;
 		showingFilters = false;
 
-		tableModelListener = new StatusTableModelListener();
-		scale = mainFrame.getApplicationPreferences().getScaleFactor();
-		initUi();
-	}
+		StatusTableModelListener tableModelListener = new StatusTableModelListener();
 
-	private void initUi()
-	{
+		ApplicationPreferences applicationPreferences = mainFrame.getApplicationPreferences();
+		scale = applicationPreferences.getScaleFactor();
 		Insets borderInsets = new Insets(2, 2, 2, 2);
 		focusedBorder = new MatteBorder(borderInsets, Color.YELLOW);
 		unfocusedBorder = new MatteBorder(borderInsets, Color.WHITE);
@@ -166,10 +182,12 @@ public abstract class EventWrapperViewPanel<T extends Serializable>
 		tableScrollPane.addMouseListener(new ScrollPaneMouseListener());
 		tableScrollPane.setPreferredSize(new Dimension(400, 400));
 
-		verticalLogScrollbar = tableScrollPane.getVerticalScrollBar();
+		verticalLogScrollBar = tableScrollPane.getVerticalScrollBar();
 
 		messagePane = new ScalableXHTMLPanel();
 
+
+		//noinspection Duplicates
 		{
 			SharedContext sharedContext = messagePane.getSharedContext();
 			TextRenderer textRenderer = sharedContext.getTextRenderer();
@@ -183,7 +201,26 @@ public abstract class EventWrapperViewPanel<T extends Serializable>
 			}
 		}
 
-		messagePane.setScale(mainFrame.getApplicationPreferences().getScaleFactor());
+		{
+			LinkListener originalLinkListener = null;
+			List mouseTrackingList = messagePane.getMouseTrackingListeners();
+			//noinspection Duplicates
+			if(mouseTrackingList != null)
+			{
+				for(Object o : mouseTrackingList)
+				{
+					if(logger.isDebugEnabled()) logger.debug("Before MTL {}", o);
+					if(o instanceof LinkListener)
+					{
+						messagePane.removeMouseTrackingListener((LinkListener) o);
+						originalLinkListener = (LinkListener) o;
+					}
+				}
+			}
+			messagePane.addMouseTrackingListener(new OpenUrlLinkListener(mainFrame, originalLinkListener));
+		}
+
+		messagePane.setScale(scale);
 		SelectionHighlighter messagePaneCaret = new SelectionHighlighter();
 		messagePaneCaret.install(messagePane);
 
@@ -195,23 +232,6 @@ public abstract class EventWrapperViewPanel<T extends Serializable>
 
 		messagePane.addFocusListener(new MessageFocusListener());
 		messagePane.setBorder(unfocusedBorder);
-
-		{
-			List mouseTrackingList = messagePane.getMouseTrackingListeners();
-			if(mouseTrackingList != null)
-			{
-				for(Object o : mouseTrackingList)
-				{
-					if(logger.isDebugEnabled()) logger.debug("Before MTL {}", o);
-					if(o instanceof LinkListener)
-					{
-						messagePane.removeMouseTrackingListener((LinkListener) o);
-					}
-				}
-			}
-		}
-
-		messagePane.addMouseTrackingListener(new StackTraceElementLinkListener(mainFrame));
 
 		xhtmlNamespaceHandler = new XhtmlNamespaceHandler();
 		FSScrollPane messageScrollPane = new FSScrollPane(messagePane);
@@ -234,8 +254,8 @@ public abstract class EventWrapperViewPanel<T extends Serializable>
 		splitPane.setOneTouchExpandable(true);
 		setLayout(new BorderLayout());
 		add(splitPane, BorderLayout.CENTER);
-		ScrollbarChangeListner scrollBarChangeListener = new ScrollbarChangeListner();
-		verticalLogScrollbar.getModel().addChangeListener(scrollBarChangeListener);
+		ScrollBarChangeListener scrollBarChangeListener = new ScrollBarChangeListener();
+		verticalLogScrollBar.getModel().addChangeListener(scrollBarChangeListener);
 
 
 		table.addPropertyChangeListener(new EventWrapperViewChangeListener());
@@ -244,7 +264,7 @@ public abstract class EventWrapperViewPanel<T extends Serializable>
 		JPanel bottomPanel = new JPanel(new BorderLayout());
 		JPanel statusPanel = new JPanel(new GridBagLayout());
 		GridBagConstraints gbc = new GridBagConstraints();
-		findPanel = new FindPanel<T>(this);
+		findPanel = new FindPanel<>(this);
 		findPanel.addPropertyChangeListener(new FindPanelChangeListener());
 		bottomPanel.add(findPanel, BorderLayout.CENTER);
 		bottomPanel.add(statusPanel, BorderLayout.SOUTH);
@@ -261,8 +281,7 @@ public abstract class EventWrapperViewPanel<T extends Serializable>
 		statusPanel.add(statusLabel, gbc);
 		add(bottomPanel, BorderLayout.SOUTH);
 
-		setScrollingToBottom(false);
-		setPaused(false);
+		tableModel.setPaused(false);
 
 		FocusTraversalPolicy focusTraversalPolicy = new MyFocusTraversalPolicy();
 		setFocusTraversalPolicy(focusTraversalPolicy);
@@ -286,7 +305,9 @@ public abstract class EventWrapperViewPanel<T extends Serializable>
 		updateStatusText();
 
 		splitPane.setDividerLocation(0.5d);
-		setShowingStatusBar(mainFrame.getApplicationPreferences().isShowingStatusbar());
+		setShowingStatusBar(applicationPreferences.isShowingStatusBar());
+		setScrollingToBottom(applicationPreferences.isScrollingToBottom());
+		setScrollingSmoothly(applicationPreferences.isScrollingSmoothly());
 	}
 
 	public EventWrapperViewTable<T> getTable()
@@ -294,15 +315,12 @@ public abstract class EventWrapperViewPanel<T extends Serializable>
 		return table;
 	}
 
-	public LoggingViewState getState()
+	LoggingViewState getState()
 	{
 		if(!EventQueue.isDispatchThread())
 		{
-			if(logger.isWarnEnabled())
-			{
-				//noinspection ThrowableInstanceNeverThrown
-				logger.warn("!DispatchThread - getState: state=" + state, new Throwable());
-			}
+			//noinspection ThrowableInstanceNeverThrown
+			if(logger.isWarnEnabled()) logger.warn("!DispatchThread - getState: state={}", state, new Throwable()); // NOPMD
 		}
 		return state;
 	}
@@ -312,7 +330,7 @@ public abstract class EventWrapperViewPanel<T extends Serializable>
 		return mainFrame;
 	}
 
-	public void setState(LoggingViewState state)
+	void setState(LoggingViewState state)
 	{
 		Object oldValue = this.state;
 		this.state = state;
@@ -320,12 +338,12 @@ public abstract class EventWrapperViewPanel<T extends Serializable>
 		firePropertyChange(STATE_PROPERTY, oldValue, newValue);
 	}
 
-	public boolean isShowingFilters()
+	private boolean isShowingFilters()
 	{
 		return showingFilters;
 	}
 
-	public void setShowingFilters(boolean showingFilters)
+	void setShowingFilters(@SuppressWarnings("SameParameterValue") boolean showingFilters)
 	{
 		if(logger.isDebugEnabled()) logger.debug("ShowingFilters: {}", showingFilters);
 		this.showingFilters = showingFilters;
@@ -345,27 +363,27 @@ public abstract class EventWrapperViewPanel<T extends Serializable>
 	/**
 	 * scrolls to bottom if it is enabled. Otherwise makes sure that an event is selected if available.
 	 */
-	public void scrollToEvent()
+	void scrollToEvent()
 	{
 		if(table.isScrollingToBottom())
 		{
-			SwingUtilities.invokeLater(new ScrollToBottomRunnable());
+			EventQueue.invokeLater(new ScrollToBottomRunnable());
 		}
 		else if(table.getSelectedRow() < 0)
 		{
-			SwingUtilities.invokeLater(new SelectFirstEventRunnable());
+			EventQueue.invokeLater(new SelectFirstEventRunnable());
 		}
 	}
 
-	public void setScaleFactor(double scale)
+	void setScaleFactor(double scale)
 	{
 		this.scale = scale;
 		messagePane.setScale(scale);
 	}
 
-	public void updateView()
+	void updateView()
 	{
-		// update HTML detailsview
+		// update HTML details view
 		EventWrapper<T> selected = getSelectedEvent();
 		if(selected != null)
 		{
@@ -377,12 +395,12 @@ public abstract class EventWrapperViewPanel<T extends Serializable>
 		}
 	}
 
-	public void setShowingStatusBar(boolean showingStatusbar)
+	public void setShowingStatusBar(boolean showingStatusBar)
 	{
-		statusLabel.setVisible(showingStatusbar);
+		statusLabel.setVisible(showingStatusBar);
 	}
 
-	public void setPreviousSearchStrings(List<String> previousSearchStrings)
+	void setPreviousSearchStrings(List<String> previousSearchStrings)
 	{
 		findPanel.setPreviousSearchStrings(previousSearchStrings);
 	}
@@ -395,6 +413,7 @@ public abstract class EventWrapperViewPanel<T extends Serializable>
 	private class ScrollToBottomRunnable
 		implements Runnable
 	{
+		@Override
 		public void run()
 		{
 			// recheck because this is executed with invokeLater.
@@ -408,12 +427,14 @@ public abstract class EventWrapperViewPanel<T extends Serializable>
 	private class SelectFirstEventRunnable
 		implements Runnable
 	{
+		@Override
 		public void run()
 		{
 			table.scrollToFirst();
 		}
 	}
 
+	@Override
 	public void validate()
 	{
 		super.validate();
@@ -422,11 +443,12 @@ public abstract class EventWrapperViewPanel<T extends Serializable>
 
 	private SoftReferenceCachingBuffer<EventWrapper<T>> createCachedBuffer(Buffer<EventWrapper<T>> buffer)
 	{
-		return new SoftReferenceCachingBuffer<EventWrapper<T>>(buffer);
+		return new SoftReferenceCachingBuffer<>(buffer);
 	}
 
 	void setEventSource(EventSource<T> eventSource)
 	{
+		Objects.requireNonNull(eventSource, "eventSource must not be null!");
 		EventSource oldValue = this.eventSource;
 		this.eventSource = eventSource;
 		SoftReferenceCachingBuffer<EventWrapper<T>> cachedBuffer = createCachedBuffer(eventSource.getBuffer());
@@ -441,7 +463,12 @@ public abstract class EventWrapperViewPanel<T extends Serializable>
 		return eventSource;
 	}
 
-	public void setScrollingToBottom(boolean scrollingToBottom)
+	void setScrollingSmoothly(boolean scrollingSmoothly)
+	{
+		table.setScrollingSmoothly(scrollingSmoothly);
+	}
+
+	void setScrollingToBottom(boolean scrollingToBottom)
 	{
 		Object oldValue = table.isScrollingToBottom();
 		table.setScrollingToBottom(scrollingToBottom);
@@ -449,36 +476,24 @@ public abstract class EventWrapperViewPanel<T extends Serializable>
 		firePropertyChange(SCROLLING_TO_BOTTOM_PROPERTY, oldValue, newValue);
 	}
 
-	public boolean isScrollingToBottom()
+	boolean isScrollingToBottom()
 	{
 		return table.isScrollingToBottom();
 	}
 
-	public boolean isPaused()
-	{
-		return tableModel.isPaused();
-	}
-
-	public void setPaused(boolean paused)
-	{
-		Object oldValue = tableModel.isPaused();
-		tableModel.setPaused(paused);
-		Object newValue = tableModel.isPaused();
-		firePropertyChange(PAUSED_PROPERTY, oldValue, newValue);
-	}
-
-	public ViewContainer<T> resolveContainer()
+	@SuppressWarnings("unchecked")
+	ViewContainer<T> resolveContainer()
 	{
 		Container parent = getParent();
 		while(parent != null && !(parent instanceof ViewContainer))
 		{
 			parent = parent.getParent();
 		}
-		// not 100% typesafe
-		//noinspection unchecked
+		// not 100% type-safe
 		return (ViewContainer<T>) parent;
 	}
 
+	@Override
 	public void addNotify()
 	{
 		super.addNotify();
@@ -486,6 +501,7 @@ public abstract class EventWrapperViewPanel<T extends Serializable>
 		findPanel.setVisible(isShowingFilters());
 	}
 
+	@Override
 	public void removeNotify()
 	{
 		super.removeNotify();
@@ -497,30 +513,33 @@ public abstract class EventWrapperViewPanel<T extends Serializable>
 
 	protected abstract EventWrapperViewTable<T> createTable(EventWrapperTableModel<T> tableModel);
 
+	@Override
 	public void dispose()
 	{
 		tableModel.dispose();
 		taskManager.removeTaskListener(findResultListener);
 	}
 
+	@Override
 	public void flush()
 	{
 		Flush.flush(cachedBuffer);
 		resetFind();
 	}
 
+	@Override
 	public boolean isDisposed()
 	{
 		return tableModel.isDisposed();
 	}
 
-	public void resetFind()
+	void resetFind()
 	{
 		findPanel.resetFind();
 		setFilterCondition(null);
 	}
 
-	protected void setSelectedEvent(EventWrapper<T> selectedEvent)
+	private void setSelectedEvent(EventWrapper<T> selectedEvent)
 	{
 		Object oldValue = this.selectedEvent;
 		this.selectedEvent = selectedEvent;
@@ -528,7 +547,7 @@ public abstract class EventWrapperViewPanel<T extends Serializable>
 		firePropertyChange(SELECTED_EVENT_PROPERTY, oldValue, newValue);
 	}
 
-	public EventWrapper<T> getSelectedEvent()
+	EventWrapper<T> getSelectedEvent()
 	{
 		return selectedEvent;
 	}
@@ -538,7 +557,9 @@ public abstract class EventWrapperViewPanel<T extends Serializable>
 	 * One would expect that Focus Traversal would play well in an hierarchy, too, but it doesn't.
 	 * It's only supporting up- and down-cycling which isn't what I want/need.
 	 * I'd like to traverse into the findPanel and back out of it....
-	 * buuuuuut.....
+	 *
+	 * but.....
+	 *
 	 * if I implement that in a sophisticated, i.e. non-sucking, way I'd risk to infringe the
 	 * software patent "US Patent 6606106 - Hierarchical model for expressing focus traversal"
 	 * which you may review here:
@@ -551,7 +572,7 @@ public abstract class EventWrapperViewPanel<T extends Serializable>
 	 * If this is out of question then please try to vote for a party that opposes software patents,
 	 * assuming there is one in your country.
 	 *
-	 * kthxbai, Joern. 
+	 * kthxbai, Joern.
 	 */
 	class MyFocusTraversalPolicy
 		extends FocusTraversalPolicy
@@ -559,13 +580,14 @@ public abstract class EventWrapperViewPanel<T extends Serializable>
 		private Component resolveComponent(Component component)
 		{
 			Container container = component.getParent();
+			//noinspection Duplicates
 			while(container != null)
 			{
-				if(container == table)
+				if(container == table) // NOPMD
 				{
 					return table;
 				}
-				if(container == messagePane)
+				if(container == messagePane) // NOPMD
 				{
 					return messagePane;
 				}
@@ -574,12 +596,14 @@ public abstract class EventWrapperViewPanel<T extends Serializable>
 			return null;
 		}
 
+		@Override
 		public Component getComponentAfter(Container aContainer, Component aComponent)
 		{
 			if(aComponent.equals(table))
 			{
 				return messagePane;
 			}
+			//noinspection Duplicates
 			if(aComponent.equals(messagePane))
 			{
 				if(isShowingFilters())
@@ -605,7 +629,7 @@ public abstract class EventWrapperViewPanel<T extends Serializable>
 			/*
 			Attention, sucking code below!
 			*/
-			if(logger.isDebugEnabled()) logger.debug("Performing FocusTraversal-Yaddayadda...");
+			if(logger.isDebugEnabled()) logger.debug("Performing FocusTraversal...");
 
 			Component c = resolveComponent(aComponent);
 			if(table.equals(c))
@@ -632,7 +656,7 @@ public abstract class EventWrapperViewPanel<T extends Serializable>
 				return result;
 			}
 
-			if(aContainer == aComponent)
+			if(aContainer == aComponent) // NOPMD
 			{
 				// prevent useless warning
 				return null;
@@ -646,6 +670,7 @@ public abstract class EventWrapperViewPanel<T extends Serializable>
 			return null;
 		}
 
+		@Override
 		public Component getComponentBefore(Container aContainer, Component aComponent)
 		{
 			if(aComponent.equals(messagePane))
@@ -656,6 +681,7 @@ public abstract class EventWrapperViewPanel<T extends Serializable>
 			{
 				return messagePane;
 			}
+			//noinspection Duplicates
 			if(aComponent.equals(table))
 			{
 				if(isShowingFilters())
@@ -677,7 +703,7 @@ public abstract class EventWrapperViewPanel<T extends Serializable>
 			/*
 			Attention, sucking code below!
 			*/
-			if(logger.isDebugEnabled()) logger.debug("Performing FocusTraversal-Yaddayadda...");
+			if(logger.isDebugEnabled()) logger.debug("Performing FocusTraversal...");
 
 			Component c = resolveComponent(aComponent);
 			if(table.equals(c))
@@ -704,7 +730,7 @@ public abstract class EventWrapperViewPanel<T extends Serializable>
 				return result;
 			}
 
-			if(aContainer == aComponent)
+			if(aContainer == aComponent) // NOPMD
 			{
 				// prevent useless warning
 				return null;
@@ -718,16 +744,19 @@ public abstract class EventWrapperViewPanel<T extends Serializable>
 			return null;
 		}
 
+		@Override
 		public Component getFirstComponent(Container aContainer)
 		{
 			return table;
 		}
 
+		@Override
 		public Component getLastComponent(Container aContainer)
 		{
 			return messagePane;
 		}
 
+		@Override
 		public Component getDefaultComponent(Container aContainer)
 		{
 			return table;
@@ -740,7 +769,7 @@ public abstract class EventWrapperViewPanel<T extends Serializable>
 	}
 
 
-	protected void initMessage(EventWrapper wrapper)
+	private void initMessage(EventWrapper wrapper)
 	{
 		String message = mainFrame.createMessage(wrapper);
 		URL messageViewRootUrl = mainFrame.getApplicationPreferences().getDetailsViewRootUrl();
@@ -756,7 +785,7 @@ public abstract class EventWrapperViewPanel<T extends Serializable>
 		}
 	}
 
-	protected void resetMessage()
+	private void resetMessage()
 	{
 		String message = "<html><body>No event selected.</body></html>";
 		URL messageViewRootUrl = mainFrame.getApplicationPreferences().getDetailsViewRootUrl();
@@ -778,32 +807,22 @@ public abstract class EventWrapperViewPanel<T extends Serializable>
 		File errorPath = new File(appPath, "errors");
 		if(errorPath.mkdirs())
 		{
-			if(logger.isDebugEnabled()) logger.debug("Created errors directory '{}'.", errorPath);
+			if(logger.isDebugEnabled()) logger.debug("Created errors directory '{}'.", errorPath); // NOPMD
 		}
-		SimpleDateFormat format = new SimpleDateFormat("yyyyMMdd'T'HHmmssSSSZ");
-		String filename = format.format(new Date());
+		String filename = DateTimeFormatters.COMPACT_DATETIME_IN_SYSTEM_ZONE_T.format(Instant.now());
 		File errorFile = new File(errorPath, filename);
-		FileOutputStream fos = null;
-		try
+
+		try(OutputStream fos = Files.newOutputStream(errorFile.toPath()))
 		{
-			fos = new FileOutputStream(errorFile);
-			OutputStreamWriter osw = new OutputStreamWriter(fos, "UTF-8");
+			OutputStreamWriter osw = new OutputStreamWriter(fos, StandardCharsets.UTF_8);
 			osw.append(message);
 			osw.flush();
 			if(logger.isInfoEnabled()) logger.info("Faulty message written to '{}'.", errorFile.getAbsolutePath());
 		}
 		catch(Throwable e)
 		{
-			if(logger.isWarnEnabled())
-			{
-				logger.warn("Exception while writing faulty message to '" + errorFile.getAbsolutePath() + "'!", e);
-			}
+			if(logger.isWarnEnabled()) logger.warn("Exception while writing faulty message to '{}'!", errorFile.getAbsolutePath(), e);
 		}
-		finally
-		{
-			IOUtilities.closeQuietly(fos);
-		}
-
 	}
 
 
@@ -834,7 +853,7 @@ public abstract class EventWrapperViewPanel<T extends Serializable>
 		setFilterCondition(condition);
 	}
 
-	public void setFilterCondition(Condition condition)
+	private void setFilterCondition(Condition condition)
 	{
 		Object old = this.filterCondition;
 		this.filterCondition = condition;
@@ -842,7 +861,7 @@ public abstract class EventWrapperViewPanel<T extends Serializable>
 		firePropertyChange(FILTER_CONDITION_PROPERTY, old, condition);
 	}
 
-	public Condition getFilterCondition()
+	Condition getFilterCondition()
 	{
 		return filterCondition;
 	}
@@ -853,35 +872,39 @@ public abstract class EventWrapperViewPanel<T extends Serializable>
 		table.requestFocusInWindow();
 	}
 
+	/*
 	public void findPrevious()
 	{
 		findPrevious(getSelectedRow(), getFilterCondition());
 	}
+	*/
 
-	public void findPrevious(int currentRow, Condition condition)
+	void findPrevious(int currentRow, Condition condition)
 	{
 		if(condition != null)
 		{
-			ProgressingCallable<Long> callable = new FindPreviousCallable<T>(this, currentRow, condition);
+			ProgressingCallable<Long> callable = new FindPreviousCallable<>(this, currentRow, condition);
 			executeFind(callable, "Find previous", currentRow, condition);
 		}
 	}
 
+	/*
 	public void findNext()
 	{
 		findNext(getSelectedRow(), getFilterCondition());
 	}
+	*/
 
-	public void findNext(int currentRow, Condition condition)
+	void findNext(int currentRow, Condition condition)
 	{
 		if(condition != null)
 		{
-			ProgressingCallable<Long> callable = new FindNextCallable<T>(this, currentRow, condition);
+			ProgressingCallable<Long> callable = new FindNextCallable<>(this, currentRow, condition);
 			executeFind(callable, "Find next", currentRow, condition);
 		}
 	}
 
-	public void setSelectedRow(int row)
+	private void setSelectedRow(int row)
 	{
 		if(row > -1)
 		{
@@ -921,17 +944,17 @@ public abstract class EventWrapperViewPanel<T extends Serializable>
 			if(size > 0)
 			{
 				statusText.append("   Size on disk: ")
-					.append(HumanReadable.getHumanReadableSize(size, true, false)).append("bytes");
-
-				statusText.append("   Average event: ")
-					.append(HumanReadable.getHumanReadableSize(size / eventCount, true, false)).append("bytes");
+						.append(HumanReadable.getHumanReadableSize(size, true, false))
+						.append("bytes   Average event: ")
+						.append(HumanReadable.getHumanReadableSize(size / eventCount, true, false))
+						.append("bytes");
 			}
 		}
 
 		statusLabel.setText(statusText.toString());
 	}
 
-	protected long getSizeOnDisk()
+	private long getSizeOnDisk()
 	{
 		Buffer buffer = getEventSource().getBuffer();
 		if(buffer instanceof CodecFileBuffer)
@@ -942,7 +965,7 @@ public abstract class EventWrapperViewPanel<T extends Serializable>
 		return -1;
 	}
 
-	public Buffer<EventWrapper<T>> getSourceBuffer()
+	Buffer<EventWrapper<T>> getSourceBuffer()
 	{
 		Buffer<EventWrapper<T>> buffer = eventSource.getBuffer();
 
@@ -954,7 +977,7 @@ public abstract class EventWrapperViewPanel<T extends Serializable>
 		return buffer;
 	}
 
-	public Condition getBufferCondition()
+	Condition getBufferCondition()
 	{
 		Buffer<EventWrapper<T>> buffer = eventSource.getBuffer();
 
@@ -966,7 +989,7 @@ public abstract class EventWrapperViewPanel<T extends Serializable>
 		return null;
 	}
 
-	public void copySelection()
+	void copySelection()
 	{
 		copyAction.actionPerformed(null);
 	}
@@ -978,7 +1001,7 @@ public abstract class EventWrapperViewPanel<T extends Serializable>
 	 * @param condition the condition to be combined with the current buffer condition.
 	 * @return the combination of the given condition and the previous buffer condition.
 	 */
-	public Condition getCombinedCondition(Condition condition)
+	Condition getCombinedCondition(Condition condition)
 	{
 		Condition previousCondition = getBufferCondition();
 
@@ -1003,14 +1026,14 @@ public abstract class EventWrapperViewPanel<T extends Serializable>
 			else
 			{
 				and = new And();
-				ArrayList<Condition> conditions = new ArrayList<Condition>();
+				ArrayList<Condition> conditions = new ArrayList<>();
 				conditions.add(previousClone);
 				and.setConditions(conditions);
 			}
 			List<Condition> conditions = and.getConditions();
 			if(conditions == null)
 			{
-				conditions = new ArrayList<Condition>();
+				conditions = new ArrayList<>();
 			}
 			if(!conditions.contains(condition))
 			{
@@ -1054,7 +1077,7 @@ public abstract class EventWrapperViewPanel<T extends Serializable>
 	 * If the currently selected event is in a filtered tab, the same event is displayed in the
 	 * unfiltered view.
 	 */
-	public void showUnfilteredEvent()
+	void showUnfilteredEvent()
 	{
 		int row = getSelectedRow();
 		if(row >= 0)
@@ -1113,12 +1136,9 @@ public abstract class EventWrapperViewPanel<T extends Serializable>
 	}
 
 	private class TableMouseListener
-		implements MouseListener
+		extends MouseAdapter
 	{
-		public TableMouseListener()
-		{
-		}
-
+		@Override
 		public void mouseClicked(MouseEvent evt)
 		{
 			if(evt.isPopupTrigger())
@@ -1140,7 +1160,11 @@ public abstract class EventWrapperViewPanel<T extends Serializable>
 							ExtendedStackTraceElement[] callStack = loggingEvent.getCallStack();
 							if(callStack != null && callStack.length > 0)
 							{
-								mainFrame.goToSource(callStack[0].getStackTraceElement());
+								ExtendedStackTraceElement extendedStackTraceElement = callStack[0];
+								if(extendedStackTraceElement != null)
+								{
+									mainFrame.goToSource(extendedStackTraceElement.getStackTraceElement());
+								}
 							}
 						}
 					}
@@ -1155,7 +1179,6 @@ public abstract class EventWrapperViewPanel<T extends Serializable>
 			}
 		}
 
-
 		private void showPopup(MouseEvent evt)
 		{
 			Point p = evt.getPoint();
@@ -1164,6 +1187,7 @@ public abstract class EventWrapperViewPanel<T extends Serializable>
 			EventWrapperViewPanel.this.showPopup(table, p);
 		}
 
+		@Override
 		public void mousePressed(MouseEvent evt)
 		{
 			if(evt.isPopupTrigger())
@@ -1172,6 +1196,7 @@ public abstract class EventWrapperViewPanel<T extends Serializable>
 			}
 		}
 
+		@Override
 		public void mouseReleased(MouseEvent evt)
 		{
 			if(evt.isPopupTrigger())
@@ -1179,30 +1204,18 @@ public abstract class EventWrapperViewPanel<T extends Serializable>
 				showPopup(evt);
 			}
 		}
-
-		public void mouseEntered(MouseEvent e)
-		{
-		}
-
-		public void mouseExited(MouseEvent e)
-		{
-		}
-
 	}
 
 	private class EventViewMouseListener
-		implements MouseListener
+		extends MouseAdapter
 	{
-		public EventViewMouseListener()
-		{
-		}
-
 		private void showPopup(MouseEvent evt)
 		{
 			Point p = evt.getPoint();
 			EventWrapperViewPanel.this.showPopup(messagePane, p);
 		}
 
+		@Override
 		public void mouseClicked(MouseEvent evt)
 		{
 			messagePane.requestFocusInWindow();
@@ -1212,6 +1225,7 @@ public abstract class EventWrapperViewPanel<T extends Serializable>
 			}
 		}
 
+		@Override
 		public void mousePressed(MouseEvent evt)
 		{
 			if(evt.isPopupTrigger())
@@ -1220,6 +1234,7 @@ public abstract class EventWrapperViewPanel<T extends Serializable>
 			}
 		}
 
+		@Override
 		public void mouseReleased(MouseEvent evt)
 		{
 			if(evt.isPopupTrigger())
@@ -1227,30 +1242,18 @@ public abstract class EventWrapperViewPanel<T extends Serializable>
 				showPopup(evt);
 			}
 		}
-
-		public void mouseEntered(MouseEvent e)
-		{
-		}
-
-		public void mouseExited(MouseEvent e)
-		{
-		}
-
 	}
 
 	private class ScrollPaneMouseListener
-		implements MouseListener
+		extends MouseAdapter
 	{
-		public ScrollPaneMouseListener()
-		{
-		}
-
 		private void showPopup(MouseEvent evt)
 		{
 			Point p = evt.getPoint();
 			EventWrapperViewPanel.this.showPopup(tableScrollPane, p);
 		}
 
+		@Override
 		public void mouseClicked(MouseEvent evt)
 		{
 			tableScrollPane.requestFocusInWindow();
@@ -1260,6 +1263,7 @@ public abstract class EventWrapperViewPanel<T extends Serializable>
 			}
 		}
 
+		@Override
 		public void mousePressed(MouseEvent evt)
 		{
 			if(evt.isPopupTrigger())
@@ -1268,6 +1272,7 @@ public abstract class EventWrapperViewPanel<T extends Serializable>
 			}
 		}
 
+		@Override
 		public void mouseReleased(MouseEvent evt)
 		{
 			if(evt.isPopupTrigger())
@@ -1275,15 +1280,6 @@ public abstract class EventWrapperViewPanel<T extends Serializable>
 				showPopup(evt);
 			}
 		}
-
-		public void mouseEntered(MouseEvent e)
-		{
-		}
-
-		public void mouseExited(MouseEvent e)
-		{
-		}
-
 	}
 
 	private class TableRowSelectionListener
@@ -1291,6 +1287,7 @@ public abstract class EventWrapperViewPanel<T extends Serializable>
 	{
 		private final Logger logger = LoggerFactory.getLogger(TableRowSelectionListener.class);
 
+		@Override
 		public void valueChanged(ListSelectionEvent e)
 		{
 			int row = getSelectedRow();
@@ -1311,33 +1308,32 @@ public abstract class EventWrapperViewPanel<T extends Serializable>
 	}
 
 	/**
-	 * Disables "Scroll to Bottom" in case of adjusting, i.e. if the scrollbar is dragged.
+	 * Disables "Scroll to Bottom" in case of adjusting, i.e. if the scroll bar is dragged.
 	 */
-	private class ScrollbarChangeListner
+	private class ScrollBarChangeListener
 		implements ChangeListener
 	{
-		private final Logger logger = LoggerFactory.getLogger(ScrollbarChangeListner.class);
+		private final Logger logger = LoggerFactory.getLogger(ScrollBarChangeListener.class);
 
+		@Override
 		public void stateChanged(ChangeEvent evt)
 		{
 			if(logger.isDebugEnabled()) logger.debug("changeEvent: {}", evt);
 
-			if(isScrollingToBottom())
+			if(isScrollingToBottom()
+					&& verticalLogScrollBar.getModel().getValueIsAdjusting())
 			{
-				if(verticalLogScrollbar.getModel().getValueIsAdjusting())
-				{
-					setScrollingToBottom(false);
-				}
+				setScrollingToBottom(false);
 			}
 		}
 	}
 
-	public void focusTable()
+	void focusTable()
 	{
 		table.requestFocusInWindow();
 	}
 
-	public void focusMessagePane()
+	void focusMessagePane()
 	{
 		messagePane.requestFocusInWindow();
 	}
@@ -1347,6 +1343,7 @@ public abstract class EventWrapperViewPanel<T extends Serializable>
 	{
 		final Logger logger = LoggerFactory.getLogger(EventWrapperViewChangeListener.class);
 
+		@Override
 		public void propertyChange(PropertyChangeEvent event)
 		{
 			String propertyName = event.getPropertyName();
@@ -1364,6 +1361,7 @@ public abstract class EventWrapperViewPanel<T extends Serializable>
 	{
 		final Logger logger = LoggerFactory.getLogger(FindPanelChangeListener.class);
 
+		@Override
 		public void propertyChange(PropertyChangeEvent event)
 		{
 			String propertyName = event.getPropertyName();
@@ -1377,13 +1375,11 @@ public abstract class EventWrapperViewPanel<T extends Serializable>
 	private void executeFind(Callable<Long> callable, String name, int currentRow, Condition condition)
 	{
 		ViewContainer<T> container = resolveContainer();
-		if(container != null)
+		if(container != null && container.isSearching())
 		{
-			if(container.isSearching())
-			{
-				return; // prevent scheduling of multiple searches...
-			}
+			return; // prevent scheduling of multiple searches...
 		}
+
 		Map<String, String> metaData = CallableMetaData.createFindMetaData(condition, eventSource, currentRow);
 
 		String description = "Executing '" + name + "'  on " +
@@ -1391,7 +1387,6 @@ public abstract class EventWrapperViewPanel<T extends Serializable>
 				" starting at row " + currentRow + ".\n\n" +
 				metaData.get(CallableMetaData.FIND_TASK_META_CONDITION);
 
-		findPanel.enableFindComponents(false, condition);
 		findResultListener.setCallable(callable);
 		Task<Long> task = taskManager.startTask(callable, name, description, metaData);
 		if(container != null)
@@ -1405,11 +1400,13 @@ public abstract class EventWrapperViewPanel<T extends Serializable>
 	{
 		private Callable<Long> callable;
 
+		@Override
 		public void taskCreated(Task<Long> longTask)
 		{
-
+			// no-op
 		}
 
+		@Override
 		public void executionFailed(Task<Long> task, ExecutionException exception)
 		{
 			if(logger.isDebugEnabled())
@@ -1423,6 +1420,7 @@ public abstract class EventWrapperViewPanel<T extends Serializable>
 			}
 		}
 
+		@Override
 		public void executionFinished(Task<Long> task, Long result)
 		{
 			if(logger.isDebugEnabled())
@@ -1441,6 +1439,7 @@ public abstract class EventWrapperViewPanel<T extends Serializable>
 			}
 		}
 
+		@Override
 		public void executionCanceled(Task<Long> task)
 		{
 			if(logger.isDebugEnabled())
@@ -1454,6 +1453,7 @@ public abstract class EventWrapperViewPanel<T extends Serializable>
 			}
 		}
 
+		@Override
 		public void progressUpdated(Task<Long> task, int progress)
 		{
 			if(logger.isDebugEnabled())
@@ -1486,17 +1486,14 @@ public abstract class EventWrapperViewPanel<T extends Serializable>
 				setCallable(null);
 				container.hideSearchPanel();
 			}
-
-			findPanel.enableFindComponents(true, table.getFilterCondition());
 		}
 
-		public void setCallable(Callable<Long> callable)
+		void setCallable(Callable<Long> callable)
 		{
 			if(logger.isDebugEnabled())
 			{
 				//noinspection ThrowableInstanceNeverThrown
-				logger
-					.debug("Setting task...\n     newCallable: " + callable + "\npreviousCallable: " + this.callable, new Throwable());
+				logger.debug("Setting task...\n     newCallable: " + callable + "\npreviousCallable: " + this.callable, new Throwable());
 			}
 			this.callable = callable;
 		}
@@ -1510,7 +1507,7 @@ public abstract class EventWrapperViewPanel<T extends Serializable>
 	 *
 	 * @return the combined condition
 	 */
-	public Condition resolveCombinedCondition()
+	Condition resolveCombinedCondition()
 	{
 		Condition currentFilter = getTable().getFilterCondition();
 		if (currentFilter == null)
@@ -1532,6 +1529,7 @@ public abstract class EventWrapperViewPanel<T extends Serializable>
 		implements TableModelListener
 	{
 
+		@Override
 		public void tableChanged(TableModelEvent e)
 		{
 			if(logger.isDebugEnabled()) logger.debug("TableModelEvent: {}", e);
@@ -1542,9 +1540,10 @@ public abstract class EventWrapperViewPanel<T extends Serializable>
 	private class SplitPaneListener
 		implements PropertyChangeListener
 	{
+		@Override
 		public void propertyChange(PropertyChangeEvent evt)
 		{
-			if(logger.isDebugEnabled()) logger.debug("Splitpane change!");
+			if(logger.isDebugEnabled()) logger.debug("SplitPane change!");
 			String propertyName = evt.getPropertyName();
 			if("dividerLocation".equals(propertyName))
 			{
@@ -1557,11 +1556,13 @@ public abstract class EventWrapperViewPanel<T extends Serializable>
 		implements FocusListener
 	{
 
+		@Override
 		public void focusGained(FocusEvent e)
 		{
 			messagePane.setBorder(focusedBorder);
 		}
 
+		@Override
 		public void focusLost(FocusEvent e)
 		{
 			messagePane.setBorder(unfocusedBorder);
@@ -1571,20 +1572,21 @@ public abstract class EventWrapperViewPanel<T extends Serializable>
 	private class WrappingMouseWheelListener
 		implements MouseWheelListener
 	{
+		private final MouseWheelListener[] wrapped;
 
-		private MouseWheelListener[] wrapped;
-
-		private WrappingMouseWheelListener(MouseWheelListener[] wrapped)
+		@SuppressWarnings("PMD.ArrayIsStoredDirectly")
+		WrappingMouseWheelListener(MouseWheelListener[] wrapped)
 		{
 			this.wrapped = wrapped;
 		}
 
+		@Override
 		public void mouseWheelMoved(MouseWheelEvent e)
 		{
 			//noinspection MagicConstant
-			if(e.getModifiers() == KeyStrokes.COMMAND_KEYMASK)
+			if((e.getModifiersEx() & KeyStrokes.COMMAND_MODIFIERS) != 0)
 			{
-				// special handling, i.e. zoom in, zoomm out
+				// special handling, i.e. zoom in, zoom out
 				int rotation = e.getWheelRotation();
 				boolean up = false;
 				if(rotation < 0)

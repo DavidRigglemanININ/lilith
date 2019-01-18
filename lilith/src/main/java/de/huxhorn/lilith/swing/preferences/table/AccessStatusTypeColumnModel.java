@@ -1,6 +1,6 @@
 /*
  * Lilith - a log event viewer.
- * Copyright (C) 2007-2011 Joern Huxhorn
+ * Copyright (C) 2007-2017 Joern Huxhorn
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,26 +15,24 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package de.huxhorn.lilith.swing.preferences.table;
 
 import de.huxhorn.lilith.data.access.HttpStatus;
-import de.huxhorn.lilith.data.logging.LoggingEvent;
 import de.huxhorn.lilith.swing.table.ColorScheme;
-
+import java.util.Map;
 import javax.swing.table.DefaultTableColumnModel;
 import javax.swing.table.TableColumn;
-import java.util.Map;
 
 public class AccessStatusTypeColumnModel
 	extends DefaultTableColumnModel
 {
-	public static final int DEFAULT_COLUMN_INDEX_INDEX = 0;
-	public static final int DEFAULT_COLUMN_INDEX_PREVIEW = 1;
+	private static final long serialVersionUID = -792033886264673788L;
 
 	private static final String DEFAULT_COLUMN_NAME_INDEX = "#";
 	private static final String DEFAULT_COLUMN_NAME_PREVIEW = "Preview";
 
-	private AccessStatusTypePreviewRenderer previewRenderer;
+	private final AccessStatusTypePreviewRenderer previewRenderer;
 
 	public AccessStatusTypeColumnModel()
 	{
@@ -54,11 +52,6 @@ public class AccessStatusTypeColumnModel
 			col.setCellRenderer(previewRenderer);
 			addColumn(col);
 		}
-	}
-
-	public Map<HttpStatus.Type, ColorScheme> getSchemes()
-	{
-		return previewRenderer.getSchemes();
 	}
 
 	public void setSchemes(Map<HttpStatus.Type, ColorScheme> schemes)

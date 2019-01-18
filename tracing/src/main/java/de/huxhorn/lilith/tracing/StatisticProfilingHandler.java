@@ -1,6 +1,6 @@
 /*
  * Lilith - a log event viewer.
- * Copyright (C) 2007-2013 Joern Huxhorn
+ * Copyright (C) 2007-2017 Joern Huxhorn
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -17,7 +17,7 @@
  */
 
 /*
- * Copyright 2007-2013 Joern Huxhorn
+ * Copyright 2007-2017 Joern Huxhorn
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,10 +34,7 @@
 
 package de.huxhorn.lilith.tracing;
 
-import org.slf4j.Logger;
-import org.slf4j.Marker;
-import org.slf4j.MarkerFactory;
-
+import java.util.Objects;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
@@ -45,12 +42,15 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import org.slf4j.Logger;
+import org.slf4j.Marker;
+import org.slf4j.MarkerFactory;
 
 public class StatisticProfilingHandler
 	extends BasicProfilingHandler
 {
-	public static final int DEFAULT_STEP_SIZE = 1000;
-	public static final String STATISTICS_MARKER_NAME = "STATISTICS";
+	private static final int DEFAULT_STEP_SIZE = 1000;
+	private static final String STATISTICS_MARKER_NAME = "STATISTICS";
 
 	private static final Marker STATISTICS_MARKER = MarkerFactory.getDetachedMarker(STATISTICS_MARKER_NAME);
 
@@ -61,14 +61,9 @@ public class StatisticProfilingHandler
 
 	private static final char SEPARATOR = ';';
 
-	private final ConcurrentMap<String, Entry> entries = new ConcurrentHashMap<String, Entry>();
+	private final ConcurrentMap<String, Entry> entries = new ConcurrentHashMap<>();
 	private final AtomicInteger counter = new AtomicInteger();
 	private int stepSize = DEFAULT_STEP_SIZE;
-
-	public int getStepSize()
-	{
-		return stepSize;
-	}
 
 	public void setStepSize(int stepSize)
 	{
@@ -114,12 +109,12 @@ public class StatisticProfilingHandler
 		}
 		try
 		{
-			SortedSet<Entry> entrySet = new TreeSet<Entry>();
+			SortedSet<Entry> entrySet = new TreeSet<>();
 			for(Entry current : entries.values())
 			{
 				entrySet.add(current.clone());
 			}
-			StringBuilder msg = new StringBuilder();
+			StringBuilder msg = new StringBuilder(1000);
 			msg.append("methodName").append(SEPARATOR)
 					.append("counter").append(SEPARATOR)
 					.append("minimumNanoSeconds").append(SEPARATOR)
@@ -128,10 +123,7 @@ public class StatisticProfilingHandler
 					.append("averageNanoSeconds");
 			for(Entry current : entrySet)
 			{
-				if(msg.length() != 0)
-				{
-					msg.append("\n");
-				}
+				msg.append('\n');
 				long counter = current.getCounter();
 				long totalNanoSeconds = current.getTotalNanoSeconds();
 				msg.append(current.getMethodBaseName()).append(SEPARATOR)
@@ -167,22 +159,23 @@ public class StatisticProfilingHandler
 		implements Cloneable, Comparable<Entry>
 	{
 		private final Lock lock = new ReentrantLock(true);
-		private String methodBaseName;
+		private final String methodBaseName;
 		private long counter;
 		private long totalNanoSeconds;
 		private long minimumNanoSeconds=Long.MAX_VALUE;
 		private long maximumNanoSeconds;
 
-		public Entry(String methodBaseName)
+		Entry(String methodBaseName)
 		{
 			this.methodBaseName = methodBaseName;
 		}
 
-		public String getMethodBaseName()
+		String getMethodBaseName()
 		{
 			return methodBaseName;
 		}
 
+		@Override
 		public Entry clone()
 				throws CloneNotSupportedException
 		{
@@ -197,7 +190,7 @@ public class StatisticProfilingHandler
 			}
 		}
 
-		public void addNanoSeconds(long nanoSeconds)
+		void addNanoSeconds(long nanoSeconds)
 		{
 			lock.lock();
 			try
@@ -220,13 +213,13 @@ public class StatisticProfilingHandler
 		}
 
 		// only call on cloned instance
-		public long getCounter()
+		long getCounter()
 		{
 			return counter;
 		}
 
 		// only call on cloned instance
-		public long getTotalNanoSeconds()
+		long getTotalNanoSeconds()
 		{
 			return totalNanoSeconds;
 		}
@@ -246,22 +239,15 @@ public class StatisticProfilingHandler
 		@Override
 		public int compareTo(Entry other)
 		{
-			if(other == null)
-			{
-				throw new NullPointerException("other must not be null!");
-			}
+			Objects.requireNonNull(other, "other must not be null!");
 			long difference = totalNanoSeconds - other.totalNanoSeconds;
-			if(difference == 0)
+			if(difference > 0)
 			{
-				return 0;
+				return 1;
 			}
 			if(difference < 0)
 			{
 				return -1;
-			}
-			if(difference > 0)
-			{
-				return 1;
 			}
 			return methodBaseName.compareTo(other.methodBaseName);
 		}

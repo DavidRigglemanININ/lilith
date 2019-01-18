@@ -1,6 +1,6 @@
 /*
  * Lilith - a log event viewer.
- * Copyright (C) 2007-2011 Joern Huxhorn
+ * Copyright (C) 2007-2017 Joern Huxhorn
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,17 +15,19 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package de.huxhorn.lilith.swing.table.renderer;
 
-import java.awt.*;
-
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Graphics;
+import java.awt.Insets;
 import javax.swing.border.AbstractBorder;
-
 
 /**
  * This is basically a mutable, simplified LineBorder-EmptyBorder combination.
  */
-public class ConditionalBorder
+public final class ConditionalBorder
 	extends AbstractBorder
 {
 	private static final long serialVersionUID = -2372658104457011019L;
@@ -33,16 +35,6 @@ public class ConditionalBorder
 	private int thickness;
 	private int innerThickness;
 	private Color borderColor;
-
-	public ConditionalBorder(Color color)
-	{
-		this(color, 1, 0);
-	}
-
-	public ConditionalBorder(Color color, int thickness)
-	{
-		this(color, thickness, 0);
-	}
 
 	public ConditionalBorder(Color color, int thickness, int innerThickness)
 	{
@@ -62,6 +54,7 @@ public class ConditionalBorder
 	 * @param width  the width of the painted border
 	 * @param height the height of the painted border
 	 */
+	@Override
 	public void paintBorder(Component c, Graphics g, int x, int y, int width, int height)
 	{
 		if(borderColor != null && thickness > 0)
@@ -84,6 +77,7 @@ public class ConditionalBorder
 	 *
 	 * @param c the component for which this border insets value applies
 	 */
+	@Override
 	public Insets getBorderInsets(Component c)
 	{
 		int actualThickness = thickness + innerThickness;
@@ -96,6 +90,7 @@ public class ConditionalBorder
 	 * @param c      the component for which this border insets value applies
 	 * @param insets the object to be reinitialized
 	 */
+	@Override
 	public Insets getBorderInsets(Component c, Insets insets)
 	{
 		int actualThickness = thickness + innerThickness;
@@ -180,10 +175,9 @@ public class ConditionalBorder
 	/**
 	 * Returns whether or not the border is opaque.
 	 */
+	@Override
 	public boolean isBorderOpaque()
 	{
 		return innerThickness == 0 && thickness > 0 && borderColor != null;
 	}
-
-
 }

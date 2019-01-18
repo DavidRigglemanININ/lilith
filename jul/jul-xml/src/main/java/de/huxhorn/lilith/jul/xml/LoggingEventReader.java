@@ -1,23 +1,23 @@
 /*
  * Lilith - a log event viewer.
- * Copyright (C) 2007-2011 Joern Huxhorn
- * 
+ * Copyright (C) 2007-2018 Joern Huxhorn
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 /*
- * Copyright 2007-2011 Joern Huxhorn
+ * Copyright 2007-2018 Joern Huxhorn
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,17 +41,14 @@ import de.huxhorn.lilith.data.logging.ThreadInfo;
 import de.huxhorn.lilith.data.logging.ThrowableInfo;
 import de.huxhorn.sulky.stax.GenericStreamReader;
 import de.huxhorn.sulky.stax.StaxUtilities;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
-
 import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class LoggingEventReader
 	implements GenericStreamReader<LoggingEvent>, LoggingEventSchemaConstants
@@ -60,15 +57,11 @@ public class LoggingEventReader
 
 	private static final String MESSAGE_SEPARATOR = ": ";
 
-	public LoggingEventReader()
-	{
-	}
-
+	@Override
 	public LoggingEvent read(XMLStreamReader reader)
 		throws XMLStreamException
 	{
-		LoggingEvent result = null;
-		String rootNamespace = NAMESPACE_URI;
+
 		int type = reader.getEventType();
 		if(XMLStreamConstants.START_DOCUMENT == type)
 		{
@@ -78,13 +71,12 @@ public class LoggingEventReader
 				type = reader.getEventType();
 			}
 			while(type != XMLStreamConstants.START_ELEMENT || !RECORD_NODE.equals(reader.getLocalName()));
-			rootNamespace = null;
 		}
 		if(XMLStreamConstants.START_ELEMENT == type && RECORD_NODE.equals(reader.getLocalName()))
 		{
 			reader.nextTag();
 
-			result = new LoggingEvent();
+			LoggingEvent result = new LoggingEvent();
 
 			String dateStr = StaxUtilities.readSimpleTextNodeIfAvailable(reader, null, DATE_NODE);
 			String millisStr = StaxUtilities.readSimpleTextNodeIfAvailable(reader, null, MILLIS_NODE);
@@ -103,10 +95,7 @@ public class LoggingEventReader
 			if(timeStamp == null && dateStr != null)
 			{
 				// TODO: parse from string
-				if(logger.isInfoEnabled())
-				{
-					logger.info("Parsing date hasn't been implemented since millis is mandatory in Schema.");
-				}
+				if(logger.isInfoEnabled()) logger.info("Parsing date hasn't been implemented since millis is mandatory in Schema."); // NOPMD
 			}
 			result.setTimeStamp(timeStamp);
 
@@ -131,7 +120,7 @@ public class LoggingEventReader
 			{
 				ExtendedStackTraceElement[] callStack = new ExtendedStackTraceElement[]
 					{
-						new ExtendedStackTraceElement(classStr, methodStr, null, -1)
+						new ExtendedStackTraceElement(classStr, methodStr, null, -1),
 					};
 				result.setCallStack(callStack);
 			}
@@ -158,8 +147,8 @@ public class LoggingEventReader
 			{
 				String keyStr = StaxUtilities.readSimpleTextNodeIfAvailable(reader, null, KEY_NODE);
 				String catalogStr = StaxUtilities.readSimpleTextNodeIfAvailable(reader, null, CATALOG_NODE);
-				List<String> paramList = new ArrayList<String>();
-				for(; ;)
+				List<String> paramList = new ArrayList<>();
+				for(;;)
 				{
 					String paramStr = StaxUtilities.readSimpleTextNodeIfAvailable(reader, null, PARAM_NODE);
 					if(paramStr == null)
@@ -168,18 +157,14 @@ public class LoggingEventReader
 					}
 					paramList.add(paramStr);
 				}
-				if(keyStr != null || catalogStr != null || paramList.size() > 0)
+				if(keyStr != null || catalogStr != null || !paramList.isEmpty())
 				{
-					if(logger.isInfoEnabled())
-					{
-						logger
-							.info("Ignoring the following message infos: key={}, catalog={}, params={}", new Object[]{keyStr, catalogStr, paramList});
-					}
+					if(logger.isInfoEnabled()) logger.info("Ignoring the following message info: key={}, catalog={}, params={}", keyStr, catalogStr, paramList); // NOPMD
 				}
 			}
 			result.setThrowable(readThrowableInfo(reader));
 			reader.require(XMLStreamConstants.END_ELEMENT, null, RECORD_NODE);
-			for(; ;)
+			for(;;)
 			{
 				reader.next();
 				type = reader.getEventType();
@@ -194,7 +179,7 @@ public class LoggingEventReader
 			}
 			return result;
 		}
-		return result;
+		return null;
 	}
 
 
@@ -226,8 +211,8 @@ public class LoggingEventReader
 				result.setMessage(messageStr);
 				result.setName(className);
 			}
-			List<ExtendedStackTraceElement> stackTraceList = new ArrayList<ExtendedStackTraceElement>();
-			for(; ;)
+			List<ExtendedStackTraceElement> stackTraceList = new ArrayList<>();
+			for(;;)
 			{
 				ExtendedStackTraceElement current = parseFrame(reader);
 				if(current == null)
@@ -236,7 +221,7 @@ public class LoggingEventReader
 				}
 				stackTraceList.add(current);
 			}
-			result.setStackTrace(stackTraceList.toArray(new ExtendedStackTraceElement[stackTraceList.size()]));
+			result.setStackTrace(stackTraceList.toArray(ExtendedStackTraceElement.ARRAY_PROTOTYPE));
 			reader.require(XMLStreamConstants.END_ELEMENT, null, EXCEPTION_NODE);
 			reader.nextTag();
 			return result;

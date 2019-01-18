@@ -1,6 +1,6 @@
 /*
  * Lilith - a log event viewer.
- * Copyright (C) 2007-2013 Joern Huxhorn
+ * Copyright (C) 2007-2016 Joern Huxhorn
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,58 +17,31 @@
  */
 package de.huxhorn.lilith.swing.actions;
 
-import de.huxhorn.lilith.conditions.HttpRequestUriCondition;
-import de.huxhorn.lilith.swing.TextPreprocessor;
+import de.huxhorn.lilith.conditions.HttpRequestUriStartsWithCondition;
 import de.huxhorn.sulky.conditions.Condition;
-
-import javax.swing.*;
+import java.awt.event.ActionEvent;
 
 public class FocusHttpRequestUriAction
-		extends AbstractAccessFilterAction
+		extends AbstractBasicFilterAction
 {
-	private static final long serialVersionUID = -5114706063267599039L;
+	private static final long serialVersionUID = 6081844747737213317L;
 
-	private String searchString;
+	private final String requestUri;
 
-	public FocusHttpRequestUriAction()
+	public FocusHttpRequestUriAction(String requestUri)
 	{
-		super("Request URI");
-	}
-
-	protected void setSearchString(String searchString)
-	{
-		this.searchString = searchString;
-		putValue(Action.SHORT_DESCRIPTION, TextPreprocessor.cropLine(searchString));
-
-		setEnabled(searchString != null);
+		super(requestUri, false);
+		this.requestUri = requestUri;
+		viewContainerUpdated();
 	}
 
 	@Override
-	protected void updateState()
+	public Condition resolveCondition(ActionEvent e)
 	{
-		if(viewContainer == null)
-		{
-			setSearchString(null);
-			return;
-		}
-
-		if(accessEvent != null)
-		{
-			setSearchString(accessEvent.getRequestURI());
-		}
-		else
-		{
-			setSearchString(null);
-		}
-	}
-
-	@Override
-	public Condition resolveCondition()
-	{
-		if(searchString == null)
+		if(!isEnabled())
 		{
 			return null;
 		}
-		return new HttpRequestUriCondition(searchString);
+		return new HttpRequestUriStartsWithCondition(requestUri);
 	}
 }

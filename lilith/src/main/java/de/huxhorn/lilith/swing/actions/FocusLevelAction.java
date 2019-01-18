@@ -1,6 +1,6 @@
 /*
  * Lilith - a log event viewer.
- * Copyright (C) 2007-2013 Joern Huxhorn
+ * Copyright (C) 2007-2016 Joern Huxhorn
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,14 +18,13 @@
 package de.huxhorn.lilith.swing.actions;
 
 import de.huxhorn.lilith.conditions.LevelCondition;
-import de.huxhorn.lilith.data.eventsource.EventWrapper;
 import de.huxhorn.lilith.data.logging.LoggingEvent;
 import de.huxhorn.sulky.conditions.Condition;
-
-import javax.swing.*;
+import java.awt.event.ActionEvent;
+import javax.swing.Action;
 
 public class FocusLevelAction
-		extends AbstractFilterAction
+		extends AbstractBasicFilterAction
 {
 	private static final long serialVersionUID = -7615646386307125745L;
 
@@ -33,32 +32,19 @@ public class FocusLevelAction
 
 	public FocusLevelAction(LoggingEvent.Level level)
 	{
-		super(level.name());
+		super(level.name(), false);
 		this.level = level;
-		putValue(Action.SHORT_DESCRIPTION, resolveCondition().toString());
-		setViewContainer(null);
+		putValue(Action.SHORT_DESCRIPTION, new LevelCondition(level.name()).toString());
+		viewContainerUpdated();
 	}
 
 	@Override
-	protected void updateState()
+	public Condition resolveCondition(ActionEvent e)
 	{
-		if(viewContainer == null)
+		if(!isEnabled())
 		{
-			setEnabled(false);
-			return;
+			return null;
 		}
-		setEnabled(true);
-	}
-
-	@Override
-	public void setEventWrapper(EventWrapper eventWrapper)
-	{
-		// ignore
-	}
-
-	@Override
-	public Condition resolveCondition()
-	{
 		return new LevelCondition(level.name());
 	}
 }

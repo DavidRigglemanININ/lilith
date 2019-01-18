@@ -1,7 +1,6 @@
 package de.huxhorn.lilith.debug;
 
 import de.huxhorn.lilith.logback.classic.NDC;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -15,6 +14,7 @@ public class LogNdcRunnable
 		super(delay);
 	}
 
+	@Override
 	public void runIt()
 		throws InterruptedException
 	{

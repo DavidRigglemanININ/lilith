@@ -1,6 +1,6 @@
 /*
  * Lilith - a log event viewer.
- * Copyright (C) 2007-2014 Joern Huxhorn
+ * Copyright (C) 2007-2018 Joern Huxhorn
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -17,7 +17,7 @@
  */
 
 /*
- * Copyright 2007-2014 Joern Huxhorn
+ * Copyright 2007-2018 Joern Huxhorn
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,19 +31,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package de.huxhorn.lilith.data.access;
 
-import static de.huxhorn.sulky.junit.JUnitTools.testSerialization;
-import static de.huxhorn.sulky.junit.JUnitTools.testXmlSerialization;
 import de.huxhorn.lilith.data.eventsource.LoggerContext;
-
-import static org.junit.Assert.*;
-import org.junit.Before;
-import org.junit.Test;
-
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import org.junit.Before;
+import org.junit.Test;
+
+import static de.huxhorn.sulky.junit.JUnitTools.testSerialization;
+import static de.huxhorn.sulky.junit.JUnitTools.testXmlSerialization;
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
 
 public class AccessEventTest
 {
@@ -72,9 +74,9 @@ public class AccessEventTest
 		AccessEvent instance = new AccessEvent();
 
 		LoggerContext value = new LoggerContext();
-		value.setBirthTime(1234567890000L);
+		value.setBirthTime(1_234_567_890_000L);
 		value.setName("contextName");
-		Map<String, String> properties = new HashMap<String, String>();
+		Map<String, String> properties = new HashMap<>();
 		properties.put("foo", "bar");
 		value.setProperties(properties);
 		instance.setLoggerContext(value);
@@ -82,12 +84,12 @@ public class AccessEventTest
 		{
 			AccessEvent obj = testSerialization(instance);
 			assertEquals(value, obj.getLoggerContext());
-			assertFalse(fresh.equals(obj));
+			assertNotEquals(fresh, obj);
 		}
 		{
 			AccessEvent obj = testXmlSerialization(instance);
 			assertEquals(value, obj.getLoggerContext());
-			assertFalse(fresh.equals(obj));
+			assertNotEquals(fresh, obj);
 		}
 	}
 
@@ -103,12 +105,12 @@ public class AccessEventTest
 		{
 			AccessEvent obj = testSerialization(instance);
 			assertEquals(value, obj.getMethod());
-			assertFalse(fresh.equals(obj));
+			assertNotEquals(fresh, obj);
 		}
 		{
 			AccessEvent obj = testXmlSerialization(instance);
 			assertEquals(value, obj.getMethod());
-			assertFalse(fresh.equals(obj));
+			assertNotEquals(fresh, obj);
 		}
 	}
 
@@ -124,12 +126,12 @@ public class AccessEventTest
 		{
 			AccessEvent obj = testSerialization(instance);
 			assertEquals(value, obj.getProtocol());
-			assertFalse(fresh.equals(obj));
+			assertNotEquals(fresh, obj);
 		}
 		{
 			AccessEvent obj = testXmlSerialization(instance);
 			assertEquals(value, obj.getProtocol());
-			assertFalse(fresh.equals(obj));
+			assertNotEquals(fresh, obj);
 		}
 	}
 
@@ -146,12 +148,12 @@ public class AccessEventTest
 		{
 			AccessEvent obj = testSerialization(instance);
 			assertEquals(value, obj.getRemoteAddress());
-			assertFalse(fresh.equals(obj));
+			assertNotEquals(fresh, obj);
 		}
 		{
 			AccessEvent obj = testXmlSerialization(instance);
 			assertEquals(value, obj.getRemoteAddress());
-			assertFalse(fresh.equals(obj));
+			assertNotEquals(fresh, obj);
 		}
 	}
 
@@ -167,12 +169,12 @@ public class AccessEventTest
 		{
 			AccessEvent obj = testSerialization(instance);
 			assertEquals(value, obj.getRemoteHost());
-			assertFalse(fresh.equals(obj));
+			assertNotEquals(fresh, obj);
 		}
 		{
 			AccessEvent obj = testXmlSerialization(instance);
 			assertEquals(value, obj.getRemoteHost());
-			assertFalse(fresh.equals(obj));
+			assertNotEquals(fresh, obj);
 		}
 	}
 
@@ -188,12 +190,12 @@ public class AccessEventTest
 		{
 			AccessEvent obj = testSerialization(instance);
 			assertEquals(value, obj.getRemoteUser());
-			assertFalse(fresh.equals(obj));
+			assertNotEquals(fresh, obj);
 		}
 		{
 			AccessEvent obj = testXmlSerialization(instance);
 			assertEquals(value, obj.getRemoteUser());
-			assertFalse(fresh.equals(obj));
+			assertNotEquals(fresh, obj);
 		}
 	}
 
@@ -209,12 +211,12 @@ public class AccessEventTest
 		{
 			AccessEvent obj = testSerialization(instance);
 			assertEquals(value, obj.getRequestURI());
-			assertFalse(fresh.equals(obj));
+			assertNotEquals(fresh, obj);
 		}
 		{
 			AccessEvent obj = testXmlSerialization(instance);
 			assertEquals(value, obj.getRequestURI());
-			assertFalse(fresh.equals(obj));
+			assertNotEquals(fresh, obj);
 		}
 	}
 
@@ -230,12 +232,12 @@ public class AccessEventTest
 		{
 			AccessEvent obj = testSerialization(instance);
 			assertEquals(value, obj.getRequestURL());
-			assertFalse(fresh.equals(obj));
+			assertNotEquals(fresh, obj);
 		}
 		{
 			AccessEvent obj = testXmlSerialization(instance);
 			assertEquals(value, obj.getRequestURL());
-			assertFalse(fresh.equals(obj));
+			assertNotEquals(fresh, obj);
 		}
 	}
 
@@ -251,12 +253,12 @@ public class AccessEventTest
 		{
 			AccessEvent obj = testSerialization(instance);
 			assertEquals(value, obj.getServerName());
-			assertFalse(fresh.equals(obj));
+			assertNotEquals(fresh, obj);
 		}
 		{
 			AccessEvent obj = testXmlSerialization(instance);
 			assertEquals(value, obj.getServerName());
-			assertFalse(fresh.equals(obj));
+			assertNotEquals(fresh, obj);
 		}
 	}
 
@@ -266,19 +268,19 @@ public class AccessEventTest
 	{
 		AccessEvent instance = new AccessEvent();
 
-		Map<String, String> value = new HashMap<String, String>();
+		Map<String, String> value = new HashMap<>();
 		value.put("foo", "bar");
 		instance.setRequestHeaders(value);
 
 		{
 			AccessEvent obj = testSerialization(instance);
 			assertEquals(value, obj.getRequestHeaders());
-			assertFalse(fresh.equals(obj));
+			assertNotEquals(fresh, obj);
 		}
 		{
 			AccessEvent obj = testXmlSerialization(instance);
 			assertEquals(value, obj.getRequestHeaders());
-			assertFalse(fresh.equals(obj));
+			assertNotEquals(fresh, obj);
 		}
 	}
 
@@ -288,7 +290,7 @@ public class AccessEventTest
 	{
 		AccessEvent instance = new AccessEvent();
 
-		Map<String, String[]> value = new HashMap<String, String[]>();
+		Map<String, String[]> value = new HashMap<>();
 		String[] array = new String[]{"bar"};
 		value.put("foo", array);
 		instance.setRequestParameters(value);
@@ -313,19 +315,19 @@ public class AccessEventTest
 	{
 		AccessEvent instance = new AccessEvent();
 
-		Map<String, String> value = new HashMap<String, String>();
+		Map<String, String> value = new HashMap<>();
 		value.put("foo", "bar");
 		instance.setResponseHeaders(value);
 
 		{
 			AccessEvent obj = testSerialization(instance);
 			assertEquals(value, obj.getResponseHeaders());
-			assertFalse(fresh.equals(obj));
+			assertNotEquals(fresh, obj);
 		}
 		{
 			AccessEvent obj = testXmlSerialization(instance);
 			assertEquals(value, obj.getResponseHeaders());
-			assertFalse(fresh.equals(obj));
+			assertNotEquals(fresh, obj);
 		}
 	}
 
@@ -335,18 +337,18 @@ public class AccessEventTest
 	{
 		AccessEvent instance = new AccessEvent();
 
-		Long value = 1234567890000L;
+		Long value = 1_234_567_890_000L;
 		instance.setTimeStamp(value);
 
 		{
 			AccessEvent obj = testSerialization(instance);
 			assertEquals(value, obj.getTimeStamp());
-			assertFalse(fresh.equals(obj));
+			assertNotEquals(fresh, obj);
 		}
 		{
 			AccessEvent obj = testXmlSerialization(instance);
 			assertEquals(value, obj.getTimeStamp());
-			assertFalse(fresh.equals(obj));
+			assertNotEquals(fresh, obj);
 		}
 	}
 
@@ -356,18 +358,18 @@ public class AccessEventTest
 	{
 		AccessEvent instance = new AccessEvent();
 
-		Long value = 1234567890000L;
+		Long value = 1_234_567_890_000L;
 		instance.setElapsedTime(value);
 
 		{
 			AccessEvent obj = testSerialization(instance);
 			assertEquals(value, obj.getElapsedTime());
-			assertFalse(fresh.equals(obj));
+			assertNotEquals(fresh, obj);
 		}
 		{
 			AccessEvent obj = testXmlSerialization(instance);
 			assertEquals(value, obj.getElapsedTime());
-			assertFalse(fresh.equals(obj));
+			assertNotEquals(fresh, obj);
 		}
 	}
 
@@ -383,12 +385,12 @@ public class AccessEventTest
 		{
 			AccessEvent obj = testSerialization(instance);
 			assertEquals(value, obj.getLocalPort());
-			assertFalse(fresh.equals(obj));
+			assertNotEquals(fresh, obj);
 		}
 		{
 			AccessEvent obj = testXmlSerialization(instance);
 			assertEquals(value, obj.getLocalPort());
-			assertFalse(fresh.equals(obj));
+			assertNotEquals(fresh, obj);
 		}
 	}
 
@@ -404,12 +406,12 @@ public class AccessEventTest
 		{
 			AccessEvent obj = testSerialization(instance);
 			assertEquals(value, obj.getStatusCode());
-			assertFalse(fresh.equals(obj));
+			assertNotEquals(fresh, obj);
 		}
 		{
 			AccessEvent obj = testXmlSerialization(instance);
 			assertEquals(value, obj.getStatusCode());
-			assertFalse(fresh.equals(obj));
+			assertNotEquals(fresh, obj);
 		}
 	}
 }

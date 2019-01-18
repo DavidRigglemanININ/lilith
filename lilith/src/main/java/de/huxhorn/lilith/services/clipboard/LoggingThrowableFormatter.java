@@ -1,6 +1,6 @@
 /*
  * Lilith - a log event viewer.
- * Copyright (C) 2007-2011 Joern Huxhorn
+ * Copyright (C) 2007-2017 Joern Huxhorn
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,70 +15,33 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package de.huxhorn.lilith.services.clipboard;
 
-import de.huxhorn.lilith.data.eventsource.EventWrapper;
-import de.huxhorn.lilith.data.logging.LoggingEvent;
 import de.huxhorn.lilith.data.logging.ThrowableInfo;
+import de.huxhorn.lilith.swing.LilithActionId;
+
+import static de.huxhorn.lilith.services.clipboard.FormatterTools.resolveThrowableInfo;
 
 public class LoggingThrowableFormatter
-	implements ClipboardFormatter
+		extends AbstractNativeClipboardFormatter
 {
-	private static final long serialVersionUID = 830054294833389446L;
+	private static final long serialVersionUID = -6171487305959096092L;
 
-	public String getName()
+	public LoggingThrowableFormatter()
 	{
-		return "Copy Throwable";
+		super(LilithActionId.COPY_THROWABLE);
 	}
 
-	public String getDescription()
-	{
-		return "Copies the Throwable of the logging event to the clipboard.";
-	}
-
-	public String getAccelerator()
-	{
-		return "command shift alt T";
-	}
-
+	@Override
 	public boolean isCompatible(Object object)
 	{
-		if(object instanceof EventWrapper)
-		{
-			EventWrapper wrapper = (EventWrapper) object;
-			if(wrapper.getEvent() != null)
-			{
-				Object eventObj = wrapper.getEvent();
-				if(eventObj instanceof LoggingEvent)
-				{
-					LoggingEvent loggingEvent = (LoggingEvent) eventObj;
-					return loggingEvent.getThrowable() != null;
-				}
-			}
-		}
-		return false;
+		return resolveThrowableInfo(object).isPresent();
 	}
 
+	@Override
 	public String toString(Object object)
 	{
-		if(object instanceof EventWrapper)
-		{
-			EventWrapper wrapper = (EventWrapper) object;
-			if(wrapper.getEvent() != null)
-			{
-				Object eventObj = wrapper.getEvent();
-				if(eventObj instanceof LoggingEvent)
-				{
-					LoggingEvent loggingEvent = (LoggingEvent) eventObj;
-					ThrowableInfo info = loggingEvent.getThrowable();
-					if(info != null)
-					{
-						return info.toString();
-					}
-				}
-			}
-		}
-
-		return null;
+		return resolveThrowableInfo(object).map(ThrowableInfo::toString).orElse(null);
 	}
 }

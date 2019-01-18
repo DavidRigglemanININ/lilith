@@ -10,7 +10,7 @@
 <body>
 <p><a href="index.xhtml">ToC</a></p>
 
-<h1><a name="top">Using Lilith Encoders with Logback FileAppender</a></h1>
+<h1 id="top">Using Lilith Encoders with Logback FileAppender</h1>
 
 <p>Starting with Lilith 0.9.38 and Logback 0.9.19, you can write Lilith files directly from within Logback.</p>
 <p>Those files can be opened by Lilith using either the Open command or drag&amp;drop.</p>
@@ -24,13 +24,6 @@
   <scope>runtime</scope>
 </dependency>]]></code></pre>
 
-<!--
-<p>If you aren't using <a href="http://maven.apache.org">Maven</a> you can find a list of all required dependencies
-	here:<br/>
-	<a href="http://lilith.huxhorn.de/projects/de.huxhorn.lilith.logback.encoder.classic/dependencies.html">http://lilith.huxhorn.de/projects/de.huxhorn.lilith.logback.encoder.classic/dependencies.html</a>
-</p>
--->
-
 <p>Then, add the following to your <code>logback.xml</code> file:</p>
 		<pre><code><![CDATA[<appender name="FILE" class="ch.qos.logback.core.FileAppender">
   <file>classic.lilith</file>
@@ -40,14 +33,14 @@
 </appender>]]></code></pre>
 
 
-<p>You also have to attach the appender to some logger, e.g. the root logger...</p>
+<p>You also have to attach the appender to some logger, e.g. the root logger…</p>
 		<pre><code><![CDATA[<root>
   <level value="INFO"/>
   <appender-ref ref="FILE"/>
 </root>]]></code></pre>
 
 
-<p>... or a specific logger...</p>
+<p>… or a specific logger…</p>
 		<pre><code><![CDATA[<logger name="foo.Bar">
   <level value="DEBUG"/>
   <appender-ref ref="FILE"/>
@@ -115,11 +108,6 @@
   </dependencies>
 </plugin>]]></code></pre>
 
-<!--
-<p>If you aren't using <a href="http://maven.apache.org">Maven</a> you can find a list of all required dependencies here:<br/>
-<a href="http://lilith.huxhorn.de/projects/de.huxhorn.lilith.logback.appender.multiplex-access/dependencies.html">http://lilith.huxhorn.de/projects/de.huxhorn.lilith.logback.appender.multiplex-access/dependencies.html</a></p>
--->
-
 <p>Then, put the following into <code>src/main/jetty/logback-access.xml</code> file:</p>
 		<pre><code><![CDATA[<configuration>
   <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
@@ -129,7 +117,7 @@
   </appender>
   <appender name="FILE" class="ch.qos.logback.core.FileAppender">
     <file>access.lilith</file>
-    <encoder class="de.huxhorn.lilith.logback.encoder.AccessLilithEncoder"/>
+    <encoder class="de.huxhorn.lilith.logback.encoder.access.AccessLilithEncoder"/>
   </appender>
 
   <appender-ref ref="FILE" />

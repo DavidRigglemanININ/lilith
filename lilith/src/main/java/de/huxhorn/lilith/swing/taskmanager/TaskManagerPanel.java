@@ -1,6 +1,6 @@
 /*
  * Lilith - a log event viewer.
- * Copyright (C) 2007-2011 Joern Huxhorn
+ * Copyright (C) 2007-2017 Joern Huxhorn
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,60 +15,49 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package de.huxhorn.lilith.swing.taskmanager;
 
+import de.huxhorn.lilith.swing.Icons;
 import de.huxhorn.lilith.swing.taskmanager.table.TaskTable;
-import de.huxhorn.sulky.swing.Tables;
 import de.huxhorn.sulky.tasks.Task;
 import de.huxhorn.sulky.tasks.TaskManager;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Point;
 import java.awt.event.ActionEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
-import java.net.URL;
-
-import javax.swing.*;
+import javax.swing.AbstractAction;
+import javax.swing.Action;
+import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
+import javax.swing.JScrollPane;
+import javax.swing.JSplitPane;
+import javax.swing.JTextArea;
+import javax.swing.JToolBar;
+import javax.swing.ListSelectionModel;
+import javax.swing.ScrollPaneConstants;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class TaskManagerPanel<T>
 	extends JPanel
 {
+	private static final long serialVersionUID = 4514870616761988724L;
+
 	private final Logger logger = LoggerFactory.getLogger(TaskManagerPanel.class);
 
-	private static final Icon CANCEL_TOOLBAR_ICON;
-
-	static
-	{
-		ImageIcon icon;
-		{
-			URL url = TaskManagerPanel.class.getResource("/tango/16x16/actions/process-stop.png");
-			if(url != null)
-			{
-				icon = new ImageIcon(url);
-			}
-			else
-			{
-				icon = null;
-			}
-		}
-		CANCEL_TOOLBAR_ICON = icon;
-
-	}
-
-	private CancelTaskAction cancelAction;
-	private TaskTable<T> table;
-	private JPopupMenu popup;
-	private JTextArea details;
+	private final CancelTaskAction cancelAction;
+	private final TaskTable<T> table;
+	private final JPopupMenu popup;
+	private final JTextArea details;
 
 	public TaskManagerPanel(TaskManager<T> taskManager)
 	{
 		setLayout(new BorderLayout());
-		table = new TaskTable<T>(taskManager);
+		table = new TaskTable<>(taskManager);
 		ListSelectionModel rowSM = table.getSelectionModel();
 		rowSM.addListSelectionListener(new TaskSelectionListener());
 
@@ -105,15 +94,11 @@ public class TaskManagerPanel<T>
 		table.setPaused(paused);
 	}
 
-	public boolean isPaused()
-	{
-		return table.isPaused();
-	}
-
 	private class TaskSelectionListener
 		implements ListSelectionListener
 	{
 
+		@Override
 		public void valueChanged(ListSelectionEvent e)
 		{
 			if(e.getValueIsAdjusting()) return;
@@ -127,7 +112,7 @@ public class TaskManagerPanel<T>
 			{
 				int selectedRow = lsm.getMinSelectionIndex();
 
-				selectedRow = Tables.convertRowIndexToModel(table, selectedRow);
+				selectedRow = table.convertRowIndexToModel(selectedRow);
 				Task<T> task = table.getTaskTableModel().getValueAt(selectedRow);
 				setSelectedTask(task);
 			}
@@ -136,7 +121,7 @@ public class TaskManagerPanel<T>
 
 	private void setSelectedTask(Task<T> task)
 	{
-		if(logger.isInfoEnabled()) logger.info("Selected task {}.", task);
+		if(logger.isDebugEnabled()) logger.debug("Selected task {}.", task);
 		cancelAction.setTask(task);
 		if(task != null && task.getDescription() != null)
 		{
@@ -156,10 +141,10 @@ public class TaskManagerPanel<T>
 
 		private Task task;
 
-		public CancelTaskAction()
+		CancelTaskAction()
 		{
 			super("Cancel task");
-			putValue(Action.SMALL_ICON, CANCEL_TOOLBAR_ICON);
+			putValue(Action.SMALL_ICON, Icons.STOP_16_ICON);
 			putValue(Action.SHORT_DESCRIPTION, "Cancels the selected task.");
 			//putValue(Action.MNEMONIC_KEY, Integer.valueOf('c'));
 			setEnabled(false);
@@ -176,6 +161,7 @@ public class TaskManagerPanel<T>
 			setEnabled(this.task != null);
 		}
 
+		@Override
 		public void actionPerformed(ActionEvent e)
 		{
 			if(task != null)
@@ -190,6 +176,7 @@ public class TaskManagerPanel<T>
 		implements MouseListener
 	{
 
+		@Override
 		public void mouseClicked(MouseEvent e)
 		{
 			if(e.isPopupTrigger())
@@ -202,6 +189,7 @@ public class TaskManagerPanel<T>
 			}
 		}
 
+		@Override
 		public void mousePressed(MouseEvent e)
 		{
 			Point p = e.getPoint();
@@ -212,6 +200,7 @@ public class TaskManagerPanel<T>
 			}
 		}
 
+		@Override
 		public void mouseReleased(MouseEvent e)
 		{
 			if(e.isPopupTrigger())
@@ -220,6 +209,7 @@ public class TaskManagerPanel<T>
 			}
 		}
 
+		@Override
 		public void mouseEntered(MouseEvent e)
 		{
 			if(e.isPopupTrigger())
@@ -228,6 +218,7 @@ public class TaskManagerPanel<T>
 			}
 		}
 
+		@Override
 		public void mouseExited(MouseEvent e)
 		{
 			if(e.isPopupTrigger())

@@ -1,6 +1,6 @@
 /*
  * Lilith - a log event viewer.
- * Copyright (C) 2007-2011 Joern Huxhorn
+ * Copyright (C) 2007-2017 Joern Huxhorn
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,84 +15,61 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package de.huxhorn.lilith.services.clipboard;
 
-import de.huxhorn.lilith.data.eventsource.EventWrapper;
 import de.huxhorn.lilith.data.logging.LoggingEvent;
 import de.huxhorn.lilith.data.logging.Message;
+import de.huxhorn.lilith.swing.LilithActionId;
 
-import java.util.Map;
-import java.util.SortedMap;
-import java.util.TreeMap;
+import static de.huxhorn.lilith.services.clipboard.FormatterTools.isNullOrEmpty;
+import static de.huxhorn.lilith.services.clipboard.FormatterTools.resolveLoggingEvent;
 
 public class LoggingNdcFormatter
-	implements ClipboardFormatter
+		extends AbstractNativeClipboardFormatter
 {
-	private static final long serialVersionUID = 5898595765166630166L;
+	private static final long serialVersionUID = 8250337181083260675L;
 
-	public String getName()
+	public LoggingNdcFormatter()
 	{
-		return "Copy NDC";
+		super(LilithActionId.COPY_NDC);
 	}
 
-	public String getDescription()
-	{
-		return "Copies the Nested Diagnostic Context of the logging event to the clipboard.";
-	}
-
-	public String getAccelerator()
-	{
-		return null;
-	}
-
+	@Override
 	public boolean isCompatible(Object object)
 	{
-		if(object instanceof EventWrapper)
-		{
-			EventWrapper wrapper = (EventWrapper) object;
-			if(wrapper.getEvent() != null)
-			{
-				Object eventObj = wrapper.getEvent();
-				if(eventObj instanceof LoggingEvent)
-				{
-					LoggingEvent loggingEvent = (LoggingEvent) eventObj;
-					Message[] ndc = loggingEvent.getNdc();
-					return ndc != null && ndc.length>0;
-				}
-			}
-		}
-		return false;
+		return resolveLoggingEvent(object).map(it -> !isNullOrEmpty(it.getNdc())).orElse(false);
 	}
 
+	@Override
 	public String toString(Object object)
 	{
-		if(object instanceof EventWrapper)
+		return resolveLoggingEvent(object).map(LoggingNdcFormatter::toStringOrNull).orElse(null);
+	}
+
+	private static String toStringOrNull(LoggingEvent value)
+	{
+		Message[] ndc = value.getNdc();
+		if (!isNullOrEmpty(ndc))
 		{
-			EventWrapper wrapper = (EventWrapper) object;
-			if(wrapper.getEvent() != null)
+			StringBuilder text = new StringBuilder();
+			for (Message current : ndc)
 			{
-				Object eventObj = wrapper.getEvent();
-				if(eventObj instanceof LoggingEvent)
+				if (text.length() != 0)
 				{
-					LoggingEvent loggingEvent = (LoggingEvent) eventObj;
-					Message[] ndc = loggingEvent.getNdc();
-					if(ndc != null && ndc.length>0)
-					{
-						StringBuilder text = new StringBuilder();
-						for(Message current : ndc)
-						{
-							if(text.length() != 0)
-							{
-								text.append("\n");
-							}
-							text.append(current.getMessage());
-						}
-						return text.toString();
-					}
+					text.append('\n');
+				}
+				if (current != null)
+				{
+					text.append(current.getMessage());
+				}
+				else
+				{
+					text.append((String) null);
 				}
 			}
+			return text.toString();
 		}
-
 		return null;
 	}
 }

@@ -1,6 +1,6 @@
 /*
  * Lilith - a log event viewer.
- * Copyright (C) 2014 Joern Huxhorn
+ * Copyright (C) 2014-2017 Joern Huxhorn
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,8 +15,10 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package de.huxhorn.lilith.services.details;
 
+import de.huxhorn.lilith.DateTimeFormatters;
 import de.huxhorn.lilith.data.access.AccessEvent;
 import de.huxhorn.lilith.data.eventsource.EventWrapper;
 import de.huxhorn.lilith.data.logging.LoggingEvent;
@@ -25,11 +27,11 @@ import de.huxhorn.sulky.formatting.SimpleXml;
 import de.huxhorn.sulky.groovy.GroovyInstance;
 import groovy.lang.Binding;
 import groovy.lang.Script;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.File;
 import java.io.Serializable;
+import java.net.URL;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class GroovyEventWrapperHtmlFormatter
 	extends AbstractHtmlFormatter
@@ -38,7 +40,7 @@ public class GroovyEventWrapperHtmlFormatter
 
 	private final ApplicationPreferences applicationPreferences;
 
-	private GroovyInstance groovyInstance;
+	private final GroovyInstance groovyInstance;
 
 	public GroovyEventWrapperHtmlFormatter(ApplicationPreferences applicationPreferences)
 	{
@@ -90,6 +92,8 @@ public class GroovyEventWrapperHtmlFormatter
 					accessEvent = (AccessEvent) event;
 				}
 
+				URL messageViewRootUrl = applicationPreferences.getDetailsViewRootUrl();
+
 				Binding binding = new Binding();
 
 				binding.setVariable(LOGGER_VARIABLE, logger);
@@ -98,9 +102,13 @@ public class GroovyEventWrapperHtmlFormatter
 				binding.setVariable(LOGGING_EVENT_VARIABLE, loggingEvent);
 				binding.setVariable(ACCESS_EVENT_VARIABLE, accessEvent);
 
-				binding.setVariable(COMPLETE_CALL_STACK_OPTION_VARIABLE, applicationPreferences.isShowingFullCallstack());
+				binding.setVariable(COMPLETE_CALL_STACK_OPTION_VARIABLE, applicationPreferences.isShowingFullCallStack());
 				binding.setVariable(SHOW_STACK_TRACE_OPTION_VARIABLE, applicationPreferences.isShowingStackTrace());
 				binding.setVariable(WRAPPED_EXCEPTION_STYLE_OPTION_VARIABLE, applicationPreferences.isUsingWrappedExceptionStyle());
+
+				binding.setVariable(DOCUMENT_ROOT_VARIABLE, messageViewRootUrl.toExternalForm());
+
+				binding.setVariable(DATETIME_FORMATTER_VARIABLE, DateTimeFormatters.DATETIME_IN_SYSTEM_ZONE_SPACE);
 
 				instance.setBinding(binding);
 				Object result = instance.run();

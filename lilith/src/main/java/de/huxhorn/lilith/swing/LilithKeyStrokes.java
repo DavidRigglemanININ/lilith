@@ -1,132 +1,160 @@
+/*
+ * Lilith - a log event viewer.
+ * Copyright (C) 2007-2017 Joern Huxhorn
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 package de.huxhorn.lilith.swing;
 
 import de.huxhorn.sulky.swing.KeyStrokes;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import javax.swing.KeyStroke;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import javax.swing.KeyStroke;
 
-public class LilithKeyStrokes
+public final class LilithKeyStrokes
 {
-	private static final Map<String, KeyStroke> actionKeyStrokes=new HashMap<String, KeyStroke>();
-	private static final Map<KeyStroke, String> keyStrokeActions=new HashMap<KeyStroke, String>();
+	private static final Map<String, String> UNPROCESSED_KEY_STROKE_STRINGS =new HashMap<>();
+	private static final Map<String, KeyStroke> ACTION_KEY_STROKES =new HashMap<>();
+	private static final Map<KeyStroke, String> KEY_STROKE_ACTIONS =new HashMap<>();
 
-	private static void addKeyStroke(String actionName, String keyStrokeString)
+	public static final String ENTER = "ENTER";
+	public static final String ESCAPE = "ESCAPE";
+
+	private LilithKeyStrokes() {}
+
+	static void addKeyStroke(String keyStrokeString, String actionName)
 	{
-		final Logger logger = LoggerFactory.getLogger(LilithKeyStrokes.class);
-
+		Objects.requireNonNull(keyStrokeString, "keyStrokeString must not be null!");
+		Objects.requireNonNull(actionName, "actionName must not be null!");
 		KeyStroke keyStroke = KeyStrokes.resolveAcceleratorKeyStroke(keyStrokeString);
 		if(keyStroke == null)
 		{
-			if(logger.isErrorEnabled()) logger.error("KeyStroke '{}' for '{}' did not resolve to a KeyStroke!", keyStrokeString, actionName);
-			return;
+			throw new IllegalArgumentException("keyStrokeString '"+keyStrokeString+"' did not resolve to a KeyStroke!");
 		}
-		String existingActionName = keyStrokeActions.get(keyStroke);
-		if(existingActionName != null)
-		{
-			if(logger.isWarnEnabled()) logger.warn("KeyStroke '{}' is already used for '{}'! Ignoring '{}'.", new Object[]{keyStrokeString, existingActionName, actionName});
-			return;
-		}
-		KeyStroke existingKeyStroke = actionKeyStrokes.get(actionName);
+
+		KeyStroke existingKeyStroke = ACTION_KEY_STROKES.get(actionName);
 		if(existingKeyStroke != null)
 		{
-			if(logger.isWarnEnabled()) logger.warn("Duplicate entry for '{}'! Won't overwrite '{}' with '{}'.", new Object[]{actionName, existingKeyStroke, keyStroke});
-			return;
+			throw new IllegalStateException("Duplicate action name entry '"+actionName+"'!");
 		}
-		actionKeyStrokes.put(actionName, keyStroke);
-		keyStrokeActions.put(keyStroke, actionName);
+
+		String existingActionName = KEY_STROKE_ACTIONS.get(keyStroke);
+		if(existingActionName != null)
+		{
+			throw new IllegalStateException("Duplicate action name entry for '"+keyStrokeString+"': '"+existingActionName+"' and '"+actionName+"'");
+		}
+
+		UNPROCESSED_KEY_STROKE_STRINGS.put(actionName, keyStrokeString);
+		ACTION_KEY_STROKES.put(actionName, keyStroke);
+		KEY_STROKE_ACTIONS.put(keyStroke, actionName);
 	}
 
-	public static final String ATTACH_ACTION = "ATTACH_ACTION";
-	public static final String CLEAN_ALL_INACTIVE_LOGS_ACTION = "CLEAN_ALL_INACTIVE_LOGS_ACTION";
-	public static final String CLOSE_ALL_ACTION = "CLOSE_ALL_ACTION";
-	public static final String CLOSE_FILTER_ACTION = "CLOSE_FILTER_ACTION";
-	public static final String CLOSE_OTHER_FILTERS_ACTION = "CLOSE_OTHER_FILTERS_ACTION";
-	public static final String COPY_SELECTION_ACTION = "COPY_SELECTION_ACTION";
-	public static final String DISCONNECT_ACTION = "DISCONNECT_ACTION";
-	public static final String EDIT_CONDITION_ACTION = "EDIT_CONDITION_ACTION";
-	public static final String EDIT_SOURCE_NAME_ACTION = "EDIT_SOURCE_NAME_ACTION";
-	public static final String ENTER = "ENTER";
-	public static final String ESCAPE = "ESCAPE";
-	public static final String EXIT_ACTION = "EXIT_ACTION";
-	public static final String EXPORT_ACTION = "EXPORT_ACTION";
-	public static final String FIND_ACTION = "FIND_ACTION";
-	public static final String FIND_NEXT_ACTION = "FIND_NEXT_ACTION";
-	public static final String FIND_NEXT_ACTIVE_ACTION = "FIND_NEXT_ACTIVE_ACTION";
-	public static final String FIND_PREVIOUS_ACTION = "FIND_PREVIOUS_ACTION";
-	public static final String FIND_PREVIOUS_ACTIVE_ACTION = "FIND_PREVIOUS_ACTIVE_ACTION";
-	public static final String FOCUS_EVENTS_ACTION = "FOCUS_EVENTS_ACTION";
-	public static final String FOCUS_MESSAGE_ACTION = "FOCUS_MESSAGE_ACTION";
-	public static final String HELP_ACTION = "HELP_ACTION";
-	public static final String IMPORT_ACTION = "IMPORT_ACTION";
-	public static final String NEXT_TAB_ACTION = "NEXT_TAB_ACTION";
-	public static final String OPEN_ACTION = "OPEN_ACTION";
-	public static final String OPEN_INACTIVE_ACTION = "OPEN_INACTIVE_ACTION";
-	public static final String PASTE_STACK_TRACE_ELEMENT_ACTION = "PASTE_STACK_TRACE_ELEMENT_ACTION";
-	public static final String PAUSE_ACTION = "PAUSE_ACTION";
-	public static final String PREFERENCES_ACTION = "PREFERENCES_ACTION";
-	public static final String PREVIOUS_TAB_ACTION = "PREVIOUS_TAB_ACTION";
-	public static final String REMOVE_INACTIVE_ACTION = "REMOVE_INACTIVE_ACTION";
-	public static final String REPLACE_FILTER_ACTION = "REPLACE_FILTER_ACTION";
-	public static final String RESET_FIND_ACTION = "RESET_FIND_ACTION";
-	public static final String SCROLL_TO_BOTTOM_ACTION = "SCROLL_TO_BOTTOM_ACTION";
-	public static final String VIEW_GLOBAL_ACCESS_LOGS_ACTION = "VIEW_GLOBAL_ACCESS_LOGS_ACTION";
-	public static final String VIEW_GLOBAL_CLASSIC_LOGS_ACTION = "VIEW_GLOBAL_CLASSIC_LOGS_ACTION";
-	public static final String VIEW_LILITH_LOGS_ACTION = "VIEW_LILITH_LOGS_ACTION";
-	public static final String ZOOM_IN_ACTION = "ZOOM_IN_ACTION";
-	public static final String ZOOM_OUT_ACTION = "ZOOM_OUT_ACTION";
+	private static void addKeyStroke(String keyStrokeString, LilithActionId id)
+	{
+		addKeyStroke(keyStrokeString, id.name());
+	}
 
 	static
 	{
-		addKeyStroke(ATTACH_ACTION, KeyStrokes.COMMAND_ALIAS + " shift A");
-		addKeyStroke(CLEAN_ALL_INACTIVE_LOGS_ACTION, KeyStrokes.COMMAND_ALIAS + " shift X");
-		addKeyStroke(CLOSE_ALL_ACTION, KeyStrokes.COMMAND_ALIAS+" shift alt W");
-		addKeyStroke(CLOSE_FILTER_ACTION, KeyStrokes.COMMAND_ALIAS + " W");
-		addKeyStroke(CLOSE_OTHER_FILTERS_ACTION, KeyStrokes.COMMAND_ALIAS + " shift W");
-		addKeyStroke(COPY_SELECTION_ACTION, KeyStrokes.COMMAND_ALIAS + " C");
-		addKeyStroke(DISCONNECT_ACTION, KeyStrokes.COMMAND_ALIAS + " shift D");
-		addKeyStroke(EDIT_CONDITION_ACTION, KeyStrokes.COMMAND_ALIAS + " I");
-		addKeyStroke(EDIT_SOURCE_NAME_ACTION, KeyStrokes.COMMAND_ALIAS + " B");
-		addKeyStroke(ENTER, "ENTER");
-		addKeyStroke(ESCAPE, "ESCAPE");
-		addKeyStroke(EXIT_ACTION, KeyStrokes.COMMAND_ALIAS + " Q");
-		addKeyStroke(EXPORT_ACTION, KeyStrokes.COMMAND_ALIAS + " shift E");
-		addKeyStroke(FIND_ACTION, KeyStrokes.COMMAND_ALIAS + " F");
-		addKeyStroke(FIND_NEXT_ACTION, KeyStrokes.COMMAND_ALIAS + " shift G");
-		addKeyStroke(FIND_NEXT_ACTIVE_ACTION, KeyStrokes.COMMAND_ALIAS + " shift L");
-		addKeyStroke(FIND_PREVIOUS_ACTION, KeyStrokes.COMMAND_ALIAS + " G");
-		addKeyStroke(FIND_PREVIOUS_ACTIVE_ACTION, KeyStrokes.COMMAND_ALIAS + " L");
-		addKeyStroke(FOCUS_EVENTS_ACTION, KeyStrokes.COMMAND_ALIAS + " E");
-		addKeyStroke(FOCUS_MESSAGE_ACTION, KeyStrokes.COMMAND_ALIAS + " M");
-		addKeyStroke(HELP_ACTION, "F1");
-		addKeyStroke(IMPORT_ACTION, KeyStrokes.COMMAND_ALIAS + " shift I");
-		addKeyStroke(NEXT_TAB_ACTION, KeyStrokes.COMMAND_ALIAS + " K");
-		addKeyStroke(OPEN_ACTION, KeyStrokes.COMMAND_ALIAS + " O");
-		addKeyStroke(OPEN_INACTIVE_ACTION, KeyStrokes.COMMAND_ALIAS + " shift O");
-		addKeyStroke(PASTE_STACK_TRACE_ELEMENT_ACTION, KeyStrokes.COMMAND_ALIAS + " shift V");
-		addKeyStroke(PAUSE_ACTION, KeyStrokes.COMMAND_ALIAS + " P");
-		addKeyStroke(PREFERENCES_ACTION, KeyStrokes.COMMAND_ALIAS + " COMMA");
-		addKeyStroke(PREVIOUS_TAB_ACTION, KeyStrokes.COMMAND_ALIAS + " J");
-		addKeyStroke(REMOVE_INACTIVE_ACTION, KeyStrokes.COMMAND_ALIAS + " R");
-		addKeyStroke(REPLACE_FILTER_ACTION, "shift ENTER");
-		addKeyStroke(RESET_FIND_ACTION, KeyStrokes.COMMAND_ALIAS + " shift F");
-		addKeyStroke(SCROLL_TO_BOTTOM_ACTION, KeyStrokes.COMMAND_ALIAS + " T");
-		addKeyStroke(VIEW_GLOBAL_ACCESS_LOGS_ACTION, KeyStrokes.COMMAND_ALIAS + " 2");
-		addKeyStroke(VIEW_GLOBAL_CLASSIC_LOGS_ACTION, KeyStrokes.COMMAND_ALIAS + " 1");
-		addKeyStroke(VIEW_LILITH_LOGS_ACTION, KeyStrokes.COMMAND_ALIAS + " 0");
-		addKeyStroke(ZOOM_IN_ACTION, KeyStrokes.COMMAND_ALIAS + " PERIOD");
-		addKeyStroke(ZOOM_OUT_ACTION, KeyStrokes.COMMAND_ALIAS + " shift PERIOD");
+		new LilithKeyStrokes(); // coverage report shall stfu
+		addKeyStroke("ENTER", ENTER);
+		addKeyStroke("ESCAPE", ESCAPE);
+		addKeyStroke("F1", LilithActionId.HELP_TOPICS);
+		addKeyStroke("shift ENTER", LilithActionId.REPLACE_FILTER);
+		addKeyStroke(KeyStrokes.COMMAND_ALIAS + " 0", LilithActionId.VIEW_LILITH_LOGS);
+		addKeyStroke(KeyStrokes.COMMAND_ALIAS + " 1", LilithActionId.VIEW_GLOBAL_CLASSIC_LOGS);
+		addKeyStroke(KeyStrokes.COMMAND_ALIAS + " 2", LilithActionId.VIEW_GLOBAL_ACCESS_LOGS);
+		addKeyStroke(KeyStrokes.COMMAND_ALIAS + " B", LilithActionId.EDIT_SOURCE_NAME);
+		addKeyStroke(KeyStrokes.COMMAND_ALIAS + " C", LilithActionId.COPY_SELECTION);
+		addKeyStroke(KeyStrokes.COMMAND_ALIAS + " D", LilithActionId.GO_TO_SOURCE);
+		addKeyStroke(KeyStrokes.COMMAND_ALIAS + " COMMA", LilithActionId.PREFERENCES);
+		addKeyStroke(KeyStrokes.COMMAND_ALIAS + " E", LilithActionId.FOCUS_EVENTS);
+		addKeyStroke(KeyStrokes.COMMAND_ALIAS + " F", LilithActionId.FIND);
+		addKeyStroke(KeyStrokes.COMMAND_ALIAS + " G", LilithActionId.FIND_PREVIOUS);
+		addKeyStroke(KeyStrokes.COMMAND_ALIAS + " I", LilithActionId.SAVE_CONDITION);
+		addKeyStroke(KeyStrokes.COMMAND_ALIAS + " J", LilithActionId.NEXT_VIEW);
+		addKeyStroke(KeyStrokes.COMMAND_ALIAS + " K", LilithActionId.CLEAR);
+		addKeyStroke(KeyStrokes.COMMAND_ALIAS + " L", LilithActionId.FIND_PREVIOUS_ACTIVE);
+		addKeyStroke(KeyStrokes.COMMAND_ALIAS + " M", LilithActionId.FOCUS_MESSAGE);
+		addKeyStroke(KeyStrokes.COMMAND_ALIAS + " O", LilithActionId.OPEN);
+		addKeyStroke(KeyStrokes.COMMAND_ALIAS + " PERIOD", LilithActionId.ZOOM_IN);
+		addKeyStroke(KeyStrokes.COMMAND_ALIAS + " Q", LilithActionId.EXIT);
+		addKeyStroke(KeyStrokes.COMMAND_ALIAS + " R", LilithActionId.REMOVE_INACTIVE);
+		addKeyStroke(KeyStrokes.COMMAND_ALIAS + " T", LilithActionId.TAIL);
+		addKeyStroke(KeyStrokes.COMMAND_ALIAS + " U", LilithActionId.SHOW_UNFILTERED_EVENT);
+		addKeyStroke(KeyStrokes.COMMAND_ALIAS + " W", LilithActionId.CLOSE_FILTER);
+		addKeyStroke(KeyStrokes.COMMAND_ALIAS + " shift A", LilithActionId.ATTACH);
+		addKeyStroke(KeyStrokes.COMMAND_ALIAS + " shift C", LilithActionId.COPY_MESSAGE);
+		addKeyStroke(KeyStrokes.COMMAND_ALIAS + " shift D", LilithActionId.DISCONNECT);
+		addKeyStroke(KeyStrokes.COMMAND_ALIAS + " shift E", LilithActionId.EXPORT);
+		addKeyStroke(KeyStrokes.COMMAND_ALIAS + " shift F", LilithActionId.RESET_FIND);
+		addKeyStroke(KeyStrokes.COMMAND_ALIAS + " shift G", LilithActionId.FIND_NEXT);
+		addKeyStroke(KeyStrokes.COMMAND_ALIAS + " shift I", LilithActionId.IMPORT);
+		addKeyStroke(KeyStrokes.COMMAND_ALIAS + " shift J", LilithActionId.PREVIOUS_VIEW);
+		addKeyStroke(KeyStrokes.COMMAND_ALIAS + " shift L", LilithActionId.FIND_NEXT_ACTIVE);
+		addKeyStroke(KeyStrokes.COMMAND_ALIAS + " shift N", LilithActionId.COPY_LOGGER_NAME);
+		addKeyStroke(KeyStrokes.COMMAND_ALIAS + " shift O", LilithActionId.OPEN_INACTIVE);
+		addKeyStroke(KeyStrokes.COMMAND_ALIAS + " shift PERIOD", LilithActionId.ZOOM_OUT);
+		addKeyStroke(KeyStrokes.COMMAND_ALIAS + " shift S", LilithActionId.COPY_CALL_LOCATION);
+		addKeyStroke(KeyStrokes.COMMAND_ALIAS + " shift T", LilithActionId.COPY_THROWABLE);
+		addKeyStroke(KeyStrokes.COMMAND_ALIAS + " shift V", LilithActionId.PASTE_STACK_TRACE_ELEMENT);
+		addKeyStroke(KeyStrokes.COMMAND_ALIAS + " shift W", LilithActionId.CLOSE_OTHER_FILTERS);
+		addKeyStroke(KeyStrokes.COMMAND_ALIAS + " shift X", LilithActionId.CLEAN_ALL_INACTIVE_LOGS);
+		addKeyStroke(KeyStrokes.COMMAND_ALIAS + " shift alt C", LilithActionId.COPY_MESSAGE_PATTERN);
+		addKeyStroke(KeyStrokes.COMMAND_ALIAS + " shift alt S", LilithActionId.COPY_CALL_STACK);
+		addKeyStroke(KeyStrokes.COMMAND_ALIAS + " shift alt T", LilithActionId.COPY_THROWABLE_NAME);
+		addKeyStroke(KeyStrokes.COMMAND_ALIAS + " shift alt W", LilithActionId.CLOSE_ALL);
+
+		new LilithKeyStrokes(); // stfu
+	}
+
+	static Set<String> getActionNames()
+	{
+		return Collections.unmodifiableSet(UNPROCESSED_KEY_STROKE_STRINGS.keySet());
+	}
+
+	public static String getUnprocessedKeyStrokeString(String actionName)
+	{
+		return UNPROCESSED_KEY_STROKE_STRINGS.get(actionName);
 	}
 
 	public static KeyStroke getKeyStroke(String actionName)
 	{
-		return actionKeyStrokes.get(actionName);
+		return ACTION_KEY_STROKES.get(actionName);
+	}
+
+	public static KeyStroke getKeyStroke(LilithActionId id)
+	{
+		return ACTION_KEY_STROKES.get(id.name());
+	}
+
+	public static String getKeyStrokeString(LilithActionId id)
+	{
+		KeyStroke result = ACTION_KEY_STROKES.get(id.name());
+		if(result == null)
+		{
+			return null;
+		}
+		return result.toString();
 	}
 
 	public static String getActionName(KeyStroke keyStroke)
 	{
-		return keyStrokeActions.get(keyStroke);
+		return KEY_STROKE_ACTIONS.get(keyStroke);
 	}
 }

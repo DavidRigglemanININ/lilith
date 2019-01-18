@@ -1,44 +1,308 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [8.3.0][unreleased] - TBD
 
-## 0.9.45 - TBD
+### Changed
+- Demand Java 8 `1.8.0_191`.
+
+### Fixed
+- Groovy 2.5.5, Spring 5.1.4, commons-lang 3.8.1, jackson 2.9.8, commons-text 1.5, flying-saucer 9.1.16, aspectj 1.9.2, woodstox 5.2.0
+
+## [8.2.0] - 2018-08-09
 
 ### Added
-- `CHANGELOG.md` in the spirit of [Keep a CHANGELOG](http://keepachangelog.com/).
-- Rough `TODO.md` listing some things that should be done.
-- Better view icons in `Window` menu. They now represent the state of the view, e.g. whether the connection is still alive and if a window of the view is already open.
-- Using Java 7 or above on Mac vs. the old Java 6.
+- Added "Find previous active" and "Find next active" buttons to toolbar. 
+- Added "Find previous" and "Find next" buttons to toolbar.
+- Added lots of missing mnemonics.
+- If the connection is lost then Message/RequestURI in table will now show "Connection closed." instead of nothing.
+- Added smooth horizontal table scrolling option that is enabled by default.
+- Added support for Log4j 2 `JsonLayout`, `YamlLayout` and `XmlLayout`. `SerializedLayout` has been deprecated in log4j2 2.9.0 so you should use one of the other options instead.
+- Added Automatic-Module-Names for artifacts where appropriate. See [Automatic-Module-Name: Calling all Java Library Maintainers](http://branchandbound.net/blog/java/2017/12/automatic-module-name/).
+
+### Changed
+- "Clean all inactive logs" is now less noisy in the Lilith log.
+- Changed icons for "Find previous active" and "Find next active". They now differ from "Find previous" and "Find next" as they should.
+- Refactored actions and icon handling.
+- Don't add null events to global logs.
+- Unchecking "Enable global logs." in Preferences is now deleting existing global log files automatically.
+- Keyboard help will now always be up-to-date.
+- Demand Java 8 `1.8.0_181`.
 
 ### Deprecated
 - Nothing.
 
 ### Removed
-- Some `HttpStatus` enum values have been renamed. Code explicitely using them would need to be changed.
-- `TroubleshootingPanel.reset(ViewContainer<?> container)`
+- "Previous" and "Next" buttons in find panel.
+- "Pause" action. Pausing only paused updating of the table, not receiving of events. This was confusing (even me) and served no actual purpose. This action was a left-over from the early days of Lilith when it was used for debugging during development.
 
 ### Fixed
-- Updated `HttpStatus` enum to RFC 7231/7232/7233/7235/7238. Some enum values have been renamed in the process.
-- sulky `SafeString` is now always printing a Date as an ISO8601-DateTime with timezone UTC.
-- Using "127.0.0.1" instead of "localhost" in `SerializingGoToSource` to prevent IPv6 SNAFU.
-- Conditions-Focus/Exclude menu of detached windows are now updated on saved condition change.
-- Preventing useless focus traversal warnings in EventWrapperViewPanel and FindPanel.
-- Reduced log level of broken stream message in event producers.
-- SLF4J 1.7.12, Logback 1.1.3, Spring 4.1.6, Groovy 2.4.3, commons-codec 1.9, commons-lang3 3.4, joda-time 2.7, httpclient 4.4.1, httpcore 4.4.1, jackson 2.5.2, log4j2 2.2, aspectj 1.8.5, Thymeleaf 2.1.4, substance 7.3, protobuf 2.6.1, jcommander 1.47, glazedlists 1.9.1 
+- All L&F support mac screen menu bar with Java 9 or higher.
+- Zero-delimited event receivers did not add a `null` event when end of stream was reached.
+- Fixed initial enabled state of "Go to source".
+- Fixed enabled state of "Edit" menu. Mustn't be disabled anymore because "Paste StackTraceElement" is always available.
+- Fixed enabled state of "Copy selection".
+- Menu entries related to global logs are now disabled if "Enable global logs." is unchecked in Preferences.
+- Added more dependencies and entries to the deserialization whitelist. This is essentially necessary because `logback-access` does not have an `AccessEventVO`. See also [LOGBACK-1182 - Problem deserializing AccessEvent.](http://jira.qos.ch/browse/LOGBACK-1182).
+- Not all event producers expect a heartbeat.
+- Made sure that "You have changed the look & feel." and "You have changed the application path." dialogs aren't hidden by the preferences dialog.
+- Fixed java executable detection in Windows bat file. Thanks, [tha2015](https://github.com/tha2015)!
+- Logback 1.2.3, log4j2 2.11.1, Groovy 2.5.1, jackson 2.9.6, spring 5.0.8, protobuf 3.6.1, junique 1.0.4, jcommander 1.72, commons-lang 3.7, commons-text 1.4, commons-io 2.6, flying-saucer 9.1.14, glazedlists 1.10.0, aspectj 1.9.1, httpcore 4.4.10, httpclient 4.5.6, woodstox 5.1.0
+- Fixed several split package issues. Because of this, some classes have changed package names:
+  - the two most commonly used classes `de.huxhorn.lilith.logback.appender.ClassicMultiplexSocketAppender` and `de.huxhorn.lilith.logback.encoder.ClassicLilithEncoder` have not been moved. 
+  - `de.huxhorn.lilith.logback.encoder.AccessLilithEncoder` changed to `de.huxhorn.lilith.logback.encoder.access.AccessLilithEncoder`.
+  - `de.huxhorn.lilith.logback.appender.AccessMultiplexSocketAppender` changed to `de.huxhorn.lilith.logback.appender.access.AccessMultiplexSocketAppender`.
+  - `de.huxhorn.lilith.logback.appender.ClassicJsonMultiplexSocketAppender` changed to `de.huxhorn.lilith.logback.appender.json.ClassicJsonMultiplexSocketAppender`.
+  - `de.huxhorn.lilith.logback.appender.ZeroDelimitedClassicJsonMultiplexSocketAppender` changed to `de.huxhorn.lilith.logback.appender.json.ZeroDelimitedClassicJsonMultiplexSocketAppender`.
+  - `de.huxhorn.lilith.logback.appender.ClassicXmlMultiplexSocketAppender` changed to `de.huxhorn.lilith.logback.appender.xml.ClassicXmlMultiplexSocketAppender`.
+  - `de.huxhorn.lilith.logback.appender.ZeroDelimitedClassicXmlMultiplexSocketAppender` changed to `de.huxhorn.lilith.logback.appender.xml.ZeroDelimitedClassicXmlMultiplexSocketAppender`.
+
+### Security
+- Nothing.
+
+### Known issues
+- logback-access `AccessEvent` sent by `SocketAppender` isn't guaranteed to be deserializable at the moment. You can use the Lilith Multiplex Socket Appender in the meantime.
+  See [LOGBACK-1182 - Problem deserializing AccessEvent.](http://jira.qos.ch/browse/LOGBACK-1182).
+- Logback 1.1.0 introduced some message formatting regressions.
+  See [LOGBACK-1183 - Message formatting regression](http://jira.qos.ch/browse/LOGBACK-1183).
+- <del>Binary Lilith log files will only work in case of `append=false`.</del> Implemented a workaround.
+  See [LOGBACK-1257 - Invalid files in case of append=true and Encoder with non-null headerBytes() / footerBytes()](https://jira.qos.ch/browse/LOGBACK-1257)
+- log4j 1 won't be able to send Java 9 `ClassLoaderName`, `ModuleName` and `ModuleVersion` for the call location of the event. Search `LOG4J_MODULE` in the source to take a look at the problem. Since [Log4j 1 End-Of-Life](https://blogs.apache.org/foundation/entry/apache_logging_services_project_announces) has been announced 2015-08-06, chances are pretty slim that this will be fixed. Upgrade to [log4j 2](http://logging.apache.org/log4j/2.x/) or [Logback](https://logback.qos.ch/).
+- Flying Saucer related issues:
+  - Selection in the HTML view is currently somewhat buggy, especially in case of scaled view.
+    See [Issue 79: SelectionHighlighter not compatible with ScalableXHTMLPanel](https://code.google.com/archive/p/flying-saucer/issues/79).
+  - Jumping to anchors is currently not supported so the navigation in help and details view isn't as good as it could be.
+    See [Issue 105: URLs with anchors](https://code.google.com/archive/p/flying-saucer/issues/105).
+- [glazedlists #485 - AutoCompleteSupport: Arrowing down on the popup and pressing enter fails to update combobox](https://github.com/glazedlists/glazedlists/issues/485) is happening in the find panel on macOS. Select the correct entry with the mouse as a workaround.
 
 
 ---
 
-## 0.9.44 - 2014-04-21
+## [8.1.1] - 2017-03-17
 
 ### Added
-- Added alternative behavior for Focus/Exclude actions.  
+- Added dependency versions to Troubleshooting section of preferences. This was suggested in [issue #29](https://github.com/huxi/lilith/issues/29) by [@Pesegato](https://github.com/Pesegato).
+
+### Changed
+- Nothing.
+
+### Deprecated
+- Nothing.
+
+### Removed
+- Usage of sulky-io IOUtilities.
+
+### Fixed
+- cglib 3.2.5, slf4j 1.7.25, logback 1.2.2
+
+### Security
+- Nothing.
+
+### Known issues
+- logback-access `AccessEvent` sent by `SocketAppender` isn't guaranteed to be deserializable at the moment. You can use the Lilith Multiplex Socket Appender in the meantime.
+  See [LOGBACK-1182 - Problem deserializing AccessEvent.](http://jira.qos.ch/browse/LOGBACK-1182).
+- Logback 1.1.0 introduced some message formatting regressions.
+  See [LOGBACK-1183 - Message formatting regression](http://jira.qos.ch/browse/LOGBACK-1183).
+- <del>Binary Lilith log files will only work in case of `append=false`.</del> Implemented a workaround.
+  See [LOGBACK-1257 - Invalid files in case of append=true and Encoder with non-null headerBytes() / footerBytes()](https://jira.qos.ch/browse/LOGBACK-1257)
+- log4j 1 won't be able to send `ClassLoaderName`, `ModuleName` and `ModuleVersion` for the call location of the event. Search `LOG4J_MODULE` in the source to take a look at the problem. Since [Log4j 1 End-Of-Life](https://blogs.apache.org/foundation/entry/apache_logging_services_project_announces) has been announced 2015-08-06, chances are pretty slim that this will be fixed. Upgrade to [log4j 2](http://logging.apache.org/log4j/2.x/) or [Logback](https://logback.qos.ch/).
+- Flying Saucer related issues:
+  - Selection in the HTML view is currently somewhat buggy, especially in case of scaled view.
+    See [Issue 79: SelectionHighlighter not compatible with ScalableXHTMLPanel](https://code.google.com/archive/p/flying-saucer/issues/79).
+  - Jumping to anchors is currently not supported so the navigation in help and details view isn't as good as it could be.
+    See [Issue 105: URLs with anchors](https://code.google.com/archive/p/flying-saucer/issues/105).
+- [GLAZEDLISTS-469 - AutoCompleteSupport: Arrowing down on the popup and pressing enter fails to update combobox](https://java.net/jira/browse/GLAZEDLISTS-469) is happening in the find panel on macOS. Select the correct entry with the mouse as a workaround.
+
+
+---
+
+## [8.1.0] - 2017-03-15
+
+### Added
+- Added `TemporalAccessor` support to `SafeString`.
+- Added log4j2 `Marker` support.
+- Added "Copy logger name" accelerator "command shift N".
+- Added "Copy message" accelerator "command shift C".
+- Added "Copy message pattern" accelerator "command shift alt C".
+- Added "Copy Throwable name" action with accelerator "command shift alt T".
+- Added "Throwable" condition.
+- Added "Focus Throwables"/"Exclude Throwables" matching events with any Throwable.
+- Added "Focus Throwable"/"Exclude Throwable" matching events with a specific Throwable class name.
+- Added "Copy call location" accelerator "command shift S".
+- Added "Copy call stack" accelerator "command shift alt S".
+- Added "Copy request URL".
+- Added "Copy request headers".
+- Added "Copy request parameters".
+- Added "Copy response headers".
+- Added thread priority to thread info of logging event.
+- Added "Copy thread name".
+- Added "Copy thread group name".
+- Added "ThreadName" condition.
+- Added "ThreadGroupName" condition.
+- Added "Focus Thread name"/"Exclude Thread name".
+- Added "Focus Thread group name"/"Exclude Thread group name".
+- Added "Focus Request URI"/"Exclude Request URI" menus.
+- Added lots of filter tests.
+- Added "Focus Request Parameter"/"Exclude Request Parameter".
+- Added "Focus Request Header"/"Exclude Request Header".
+- Added "Focus Response Header"/"Exclude Response Header".
+- Added alternative behavior for "MDC", "Request Parameter", "Request Header" and "Response Header" Focus/Exclude menu items. Pressing `Alt` while selecting Action will match any value for the given key.
+- Added support for `ClassLoaderName`, `ModuleName` and `ModuleVersion` in Java 9 `StackTraceElement`.
+- Added some more tips.
+- Added "Show unfiltered" accelerator "command U". Also added the action to the "Search" menu.
+- Added "Go to source" accelerator "command D". Also added the action to the "Edit" menu.
+
+### Changed
+- Using `java.time.format` instead of `SimpleDateFormat`.
+- Don't create copy of whitelist Set in `WhitelistObjectInputStream`.
+- Demand Java 8 `1.8.0_121`.
+- Added option to start application even if Java version requirements are not met.
+- Changed accelerator of "Copy Throwable" from "command shift alt T" to "command shift T".
+- Changed specification of HTTP status code 451 from draft to RFC 7725.
+- Changed meaning of `ThrowableCondition`. Condition now evaluates to true if search string is one of the `Throwable` contained in the hierarchy (including cause, suppressed) instead of only checking the root exception.
+- `EventContainsCondition` is now evaluating `Throwable`, NDC and any contained `StackTraceElement` values.
+- `appendTo` methods of `ThrowableInfo` and `ExtendedStackTraceElement` now throw a `NullPointerException` if `StringBuilder` is `null`.
+- `ExtendedStackTraceElement.appendExtended` is now private.
+- `ExtendedStackTraceElement.toString(true)` is now printing `"na"` instead of empty string if codeLocation or version is null.
+- `HttpStatusTypeCondition` understands more input. "SUCCESSFUL", "su", "2", "2X" and " 2x " will all evaluate to `HttpStatus.Type.SUCCESSFUL`.
+- `CallLocationCondition` understands more input. "at " and whitespace is now automatically removed.
+- `HttpRemoteUserCondition` is less strict. String is first trimmed for both condition and remote user of event. Empty string and "-" are both considered "no user name" and the condition matches accordingly.
+- `MDCContainsCondition` without value will now match if the MDC of an event contains any value (even null) for the given key.
+- `SafeString`/`MessageFormatter` changes. Those only have an effect if Lilith appenders are used.
+   - `String` instances contained in `Collection`, `Map` or `Object[]` are now wrapped in apostrophes. This means that an empty `Set` will look differently than one containing an empty `String`. Similarly, a `null` element will look differently than `'null'`.
+   - `Map` instances are now formatted in Groovy style (`[key:value, key2:value2]`) instead of Java style (`{key=value, key2=value2}`).
+   - `byte[]`, `Byte[]` and `Byte` are now converted to hex values. Because `[0xCA, 0xFE, 0xBA, 0xBE]` has better readability than `[-54, -2, -70, -66]`.
+   - This is not a compatibility contest. It's about usability.
+- "Paste StackTraceElement" (command shift V) is now much more effective. It parses the text from the clipboard and opens the first `StackTraceElement` it finds in IDEA (if the necessary IDEA plugin is installed). Parsing is much more lenient.
+- Using `SafeString` for "Copy MDC".
+- Details view is now showing all available thread information.
+- XML is now handled by Woodstox.
+- Moved "Logger" in "Focus"/"Exclude" menus from bottom to top.
+- `applicationUUID` is now actually a [ULID](https://github.com/alizain/ulid). The existing methods `setCreatingUUID`/`isCreatingUUID` and `getUUID` in the multiplex appenders are not renamed for compatibility reasons. ULID generation is handled in the new `de.huxhorn.sulky:de.huxhorn.sulky.ulid` module.
+- Activated automatic graphics switching on Mac, i.e. don't demand the high-performance, energy-hungry GPU. This fixes [issue #27](https://github.com/huxi/lilith/issues/27). Thanks to Nikita Belenkiy for the detailed issue.
+- Enhanced preferences dialog. This fixes [issue #17](https://github.com/huxi/lilith/issues/17).
+
+### Deprecated
+- Nothing.
+
+### Removed
+- Removed `SourceInfo` and related classes. They were all unused and also terrible.
+- Removed `LoggingEvents` and related classes. Same as above.
+- Removed `AccessEvents` and related classes. Same as above.
+- Removed unused methods `getTextColor()`, `getBackgroundColor()` and `getBorderColor()` of class `SavedCondition`.
+- Removed unused c'tors in `AbstractFilterAction`, `AbstractLoggingFilterAction` and `AbstractAccessFilterAction`.
+- Removed RRD statistics.
+- Removed unused SenderService and jMDNS.
+- Removed unused and broken `UserNotificationLoggingEventHandler` and `UserNotificationAccessEventHandler`.
+- Removed macify to ensure Java 9 compatibility.
+- Removed `de.huxhorn.lilith.jul-slf4j-handler`. Use `org.slf4j:jul-to-slf4j` and enable `ch.qos.logback.classic.jul.LevelChangePropagator` instead.
+- Removed Substance look & feel. The [Insubstantial](https://github.com/Insubstantial/insubstantial/) fork is broken in Java 9 and isn't maintained anymore. The just-revived original [substance](https://github.com/kirill-grouchnikov/substance) won't provide Maven artifacts because those are just ["the latest chic"](https://github.com/kirill-grouchnikov/substance/issues/20#issuecomment-282442844).
+- Removed JGoodies look & feel. The current version is broken in Java 9 and the next version will be closed-source and payware.
+
+### Fixed
+- Make frames entirely visible after selecting them from the Windows Menu.
+- Added some more classes to deserialization whitelist. The missing classes prevented deserialization of some log4j2 events. This fixes [issue #21](https://github.com/huxi/lilith/issues/21).
+- Added another class to deserialization whitelist. The missing class prevented deserialization of logback 1.2.x events.
+- Fixed NPE in LoggingEventProtobufEncoder. This fixes [issue #22](https://github.com/huxi/lilith/issues/22).
+- Fixed NPE in CheckForUpdateRunnable in case of broken network connection.
+- Fixed handling of invalid XML created by `java.util.logging.XMLFormatter`. This fixes [issue #26](https://github.com/huxi/lilith/issues/26).
+- Being less strict about the required Java version. It seems certain Linux distros have a Java version string like `1.8.0_66-internal` which is - strictly speaking - less than `1.8.0_66` since `-internal` is a pre-release identifier. Lilith will now accept versions like this if ignoring the pre-release identifier satisfies the version requirement.
+- Making sure selected event is reset when last view is closed.
+- log4j2 2.8.1, slf4j 1.7.24, Logback 1.2.1, jackson 2.8.7, Spring 4.3.7, Groovy 2.4.9, aspectj 1.8.10, httpclient 4.5.3, httpcore 4.4.6, commons-io 2.5, Thymeleaf 2.1.5, protobuf 3.2.0, jcommander 1.64, commons-lang3 3.5, flying-saucer 9.1.4
+
+### Security
+- Nothing.
+
+### Known issues
+- logback-access `AccessEvent` sent by `SocketAppender` isn't guaranteed to be deserializable at the moment. You can use the Lilith Multiplex Socket Appender in the meantime.
+  See [LOGBACK-1182 - Problem deserializing AccessEvent.](http://jira.qos.ch/browse/LOGBACK-1182).
+- Logback 1.1.0 introduced some message formatting regressions.
+  See [LOGBACK-1183 - Message formatting regression](http://jira.qos.ch/browse/LOGBACK-1183).
+- <del>Binary Lilith log files will only work in case of `append=false`.</del> Implemented a workaround.
+  See [LOGBACK-1257 - Invalid files in case of append=true and Encoder with non-null headerBytes() / footerBytes()](https://jira.qos.ch/browse/LOGBACK-1257)
+- log4j 1 won't be able to send `ClassLoaderName`, `ModuleName` and `ModuleVersion` for the call location of the event. Search `LOG4J_MODULE` in the source to take a look at the problem. Since [Log4j 1 End-Of-Life](https://blogs.apache.org/foundation/entry/apache_logging_services_project_announces) has been announced 2015-08-06, chances are pretty slim that this will be fixed. Upgrade to [log4j 2](http://logging.apache.org/log4j/2.x/) or [Logback](https://logback.qos.ch/).
+- Flying Saucer related issues:
+  - Selection in the HTML view is currently somewhat buggy, especially in case of scaled view.
+    See [Issue 79: SelectionHighlighter not compatible with ScalableXHTMLPanel](https://code.google.com/archive/p/flying-saucer/issues/79).
+  - Jumping to anchors is currently not supported so the navigation in help and details view isn't as good as it could be.
+    See [Issue 105: URLs with anchors](https://code.google.com/archive/p/flying-saucer/issues/105).
+- [GLAZEDLISTS-469 - AutoCompleteSupport: Arrowing down on the popup and pressing enter fails to update combobox](https://java.net/jira/browse/GLAZEDLISTS-469) is happening in the find panel on macOS. Select the correct entry with the mouse as a workaround.
+
+
+---
+
+## [8.0.0] - 2015-11-15
+
+### Added
+- `CHANGELOG.md` in the spirit of [Keep a CHANGELOG](http://keepachangelog.com/).
+- Rough `TODO.md` listing some things that should be done.
+- Error dialog if Lilith is started with Java prior to `1.8.0_66`.
+- Added "Clear view" shortcut Cmd-K. K for clear.
+- Added lilith.version.bundle to system properties.
+- Displaying release notes of "newzest version" if already available.
+- Option to ignore the secondary identifier of event sources, ignoring by default.
+
+### Changed
+- Requires Java 8.
+- left-aligned most table cells.
+- Better view icons in `Window` menu. They now represent the state of the view, e.g. whether the connection is still alive and if a window of the view is already open.
+- Using `EventQueue` instead of `SwingUtilities`.
+- Using `java.time.format` instead of `SimpleDateFormat` or `joda-time`.
+- Renamed "Previous tab" to "Previous view" and "Next tab" to "Next view".
+- Changed "Next view" shortcut from Cmd-K to Cmd-J and "Previous view" shortcut from Cmd-J to Cmd-shift-J.
+- Switched "Next view" and "Previous view" in "View" menu.
+- Better error message in case of broken detailsView.
+- `SimpleSendBytesService.DEFAULT_POLL_INTERVALL` renamed to `SimpleSendBytesService.DEFAULT_POLL_INTERVAL`.
+- Removed `BufferedOutputStream` wrapper in `SocketDataOutputStreamFactory`. `BufferedOutputStream` prevented `TimeoutOutputStream` from working reliably.
+- `reconnectionDelay` in multiplex appenders is now `long` instead of `int`.
+- Using Groovy for Lilith logging configuration.
+- Recompressed images with latest [ImageOptim](https://imageoptim.com/) version.
+- Better app icon on Mac. Thanks to Christian Balog!
+- Tried to ensure that license dialog is always visible.
+- Changed default of `Show primary identifier even for named sources.` preferences to `false`.
+- Enhanced `Open inactive log...` dialog.
+
+### Deprecated
+- Nothing.
+
+### Removed
+- Some `HttpStatus` enum values have been renamed. Code explicitly using them would need to be changed.
+- `TroubleshootingPanel.reset(ViewContainer<?> container)`
+- joda-time dependency.
+- stax-api and stax dependencies.
+
+### Fixed
+- Updated `HttpStatus` enum to [RFC 7231](https://tools.ietf.org/html/rfc7231), [RFC 7232](https://tools.ietf.org/html/rfc7232), [RFC 7233](https://tools.ietf.org/html/rfc7233), [RFC 7235](https://tools.ietf.org/html/rfc7235) and [RFC 7238](https://tools.ietf.org/html/rfc7238). Some enum values have been renamed in the process.
+- sulky `SafeString` is now always printing a `Date` as an ISO8601-DateTime with timezone UTC.
+- Using "127.0.0.1" instead of "localhost" in `SerializingGoToSource` to prevent IPv6 SNAFU.
+- Conditions-Focus/Exclude menu of detached windows are now updated on saved condition change.
+- Preventing useless focus traversal warnings in EventWrapperViewPanel and FindPanel.
+- Reduced log level of broken stream message in event producers.
+- Fixed initialization of "Attach/Detach" action.
+- Fixed statistics in case of Java != 1.6
+- Fixed "Focus" and "Exclude" menu tooltips on Mac. Those displayed HTML source if system menu bar was used.
+- Fixed [Groovy](http://groovy-lang.org/) links in help.
+- SLF4J 1.7.13, Logback 1.1.3, Spring 4.2.2, Groovy 2.4.5, commons-codec 1.9, commons-lang3 3.4, httpclient 4.5.1, httpcore 4.4.4, jackson 2.6.3, log4j2 2.4.1, aspectj 1.8.7, Thymeleaf 2.1.4, substance 7.3, protobuf 2.6.1, jcommander 1.48, glazedlists 1.9.1, servlet-api 3.1.0, flying-saucer 9.0.6, cglib 3.1, rrd4j 2.2.1
+
+### Security
+- Keep your Java version up-to-date. Lilith now demands the latest Java version.
+- Implemented whitelisting of classes allowed for deserialization to circumvent issues described in [AppSecCali 2015: Marshalling Pickles - how deserializing objects will ruin your day](http://frohoff.github.io/appseccali-marshalling-pickles/).
+  - [Apache Commons statement to widespread Java object de-serialisation vulnerability](https://blogs.apache.org/foundation/entry/apache_commons_statement_to_widespread)
+  - [What Do WebLogic, WebSphere, JBoss, Jenkins, OpenNMS, and Your Application Have in Common? This Vulnerability.](http://foxglovesecurity.com/2015/11/06/what-do-weblogic-websphere-jboss-jenkins-opennms-and-your-application-have-in-common-this-vulnerability/)
+  - [Look-ahead Java deserialization](http://www.ibm.com/developerworks/library/se-lookahead/)
+
+
+---
+
+## [0.9.44] - 2014-04-21
+
+### Added
+- Added alternative behavior for Focus/Exclude actions.
   By default, those actions are replacing the current views filter, if available, with the new combined filter. Hold shift to create a new view instead.
 - Added corresponding "Focus" and "Exclude" menus to the "Search" menu.
 - Added two Substance look&feels to the mix.
 - Added "Paste StackTraceElement" (Cmd-shift V) which opens the respective source code in the IDE, if a proper plugin is installed.
 - Added fishing-for-compliments technology.
-
 
 ### Deprecated
 - Nothing.
@@ -64,12 +328,12 @@ All notable changes to this project will be documented in this file.
 
 ---
 
-## 0.9.43 - 2013-04-29
+## [0.9.43] - 2013-04-29
 
 ### Added
-- Added ability to reconnect views after disconnect. All multiplex appenders are now creating a `UUID` upon startup and add that id to the logger context.  
-  To revert to the old behavior, i.e. one view for every single connection, you can disable usage of `UUID` in the configuration of the appender.  
-  `<CreatingUUID>false</CreatingUUID>`  
+- Added ability to reconnect views after disconnect. All multiplex appenders are now creating a `UUID` upon startup and add that id to the logger context.
+  To revert to the old behavior, i.e. one view for every single connection, you can disable usage of `UUID` in the configuration of the appender.
+  `<CreatingUUID>false</CreatingUUID>`
   This was suggested by Joe.
 - Added HTTP status codes 208, 226, 308, 420, 451, 508, 598 & 599.
 - Added `filter` command that filters all events of an input file that match a given condition into an output file. This is faster than filtering in Lilith itself since the UI isn't eating up CPU while filtering. This was suggested by Joe.
@@ -90,7 +354,7 @@ All notable changes to this project will be documented in this file.
 
 ---
 
-## 0.9.42.1 - 2012-03-12
+## [0.9.42.1] - 2012-03-12
 
 ### Added
 - Nothing.
@@ -107,7 +371,7 @@ All notable changes to this project will be documented in this file.
 
 ---
 
-## 0.9.42 - 2012-03-12
+## [0.9.42] - 2012-03-12
 
 ### Added
 - Added support for new Java SE 7 try-with-resources statement suppressed Throwables. See [Better Resource Management with Java SE 7: Beyond Syntactic Sugar](http://www.oracle.com/technetwork/articles/java/trywithresources-401775.html).
@@ -138,14 +402,14 @@ All notable changes to this project will be documented in this file.
     - "Find next active match" is now Ctrl+Shift+L.
 - "Copy Throwable" does now have the shortcut "command shift alt T". This was suggested by snstanton.
 - SLF4J 1.6.4, Logback 1.0.1, Groovy 1.8.6, commons-lang 3.0.1, protobuf-java 2.4.1, jackson 1.9.2, jcommander 1.23, aspectj 1.6.11, cglib 2.2.2, httpclient 4.1.2, httpcore 4.1.3, commons-codec 1.5, JUnit 4.10, Spring 3.1.1.RELEASE
-			
+
 
 ---
 
-## 0.9.41 - 2011-05-02
+## [0.9.41] - 2011-05-02
 
 ### Added
-- Minimize to system tray.  
+- Minimize to system tray.
   Added support for (optional, default is on) system tray icon. Double-clicking the icon hides/shows all windows. The menu also contains a Quit action. If system tray icon is active (supported and enabled) then closing the main frame does not exit the application. This will now hide all windows, instead. This was requested by Adrien Sales and Joe.
 - Implemented custom "Copy to clipboard" functionality using Groovy. This was suggested by Joe.
 - Added support for cat/tail of Lilith AccessEvent files.
@@ -161,7 +425,7 @@ All notable changes to this project will be documented in this file.
 - Nothing.
 
 ### Fixed
-- The NDC behavior has changed a bit since it does not inherit the NDC  of the parent threads anymore. This is actually a better behavior. Inheriting does not make much sense for an NDC - in contrast to MDC where it is very helpful - since it resembles a contextual "stacktrace".  
+- The NDC behavior has changed a bit since it does not inherit the NDC  of the parent threads anymore. This is actually a better behavior. Inheriting does not make much sense for an NDC - in contrast to MDC where it is very helpful - since it resembles a contextual "stacktrace".
   I never documented the previous behavior, anyway. Problem? ;)
 - Fixed two classloader-leak-issues that prevented proper unloading of webapps upon undeploy/redeploy. This issue was discovered and reported by Andy Goossens. Thank you very much!
     1. The threads startet by the Lilith multiplex appenders did stop but I didn't bother to wait until they finished doing so. This has been fixed now. All threads are destroyed before stop() returns.
@@ -176,7 +440,7 @@ All notable changes to this project will be documented in this file.
 
 ---
 
-## 0.9.40 - 2010-11-11
+## [0.9.40] - 2010-11-11
 
 ### Added
 - Color-Schemes (as used by saved conditions, for example) can now be defined partially, i.e. one condition can set a border while the text-color might be defined by a different condition.
@@ -184,7 +448,7 @@ All notable changes to this project will be documented in this file.
 - Added -T/--print-timestamp command line argument that prints the timestamp and date of build.
 - SNAPSHOT pre-releases will now contain the date and time of the build in the window title.
 - Added support for java.util.logging SocketHandler. Lilith is listening on port 11020 for incoming connections. I'd still recommend to switch to SLF4J/Logback, though!
-- Added JSON-Appenders and JSON-Receivers.  
+- Added JSON-Appenders and JSON-Receivers.
   Lilith is listening for message-based JSON-Events on port 10030 (uncompressed) and 10031 (compressed). Zero-delimited JSON-Events are consumed on port 11010.
 - Added support for Log4j SocketAppender. Lilith is listening on port 4445 for incoming connections. I'd still recommend to switch to SLF4J/Logback, though!
 - Added "Find previous active" (*command* T) and "Find next active" (*command* shift T) functionality to quickly jump to events that match any active condition.
@@ -204,9 +468,9 @@ All notable changes to this project will be documented in this file.
 ### Fixed
 - Maps, e.g. MDC, are now sorted by key-value in the details view. This was suggested by Joe.
 - If the used version is a SNAPSHOT, Lilith will always check for a new SNAPSHOT pre-release regardless of the "Check for updates on startup." settings.
-- Enhanced "Check for update" functionality.  
+- Enhanced "Check for update" functionality.
   No more false update warnings in case of SNAPSHOT pre-releases. A new release takes precedence over a new pre-release.
-- Replaced Commons-CLI with JCommander. Very nice replacement.  
+- Replaced Commons-CLI with JCommander. Very nice replacement.
   I'd like to take this opportunity to thank Cédric Beust for his great (and fast!) support. You should seriously check JCommander out if your application is handling command line arguments at all.
 - Fixed glitch in case of "Find next"/"Find prev" while search is already running. Additional searches are now ignored.
 - Polling events every 100ms instead of every 2s. This results in less congestion and a much snappier feeling.
@@ -215,22 +479,20 @@ All notable changes to this project will be documented in this file.
 - Fixed issue that could lead to exception while checking for update of files that are recreated by `<append>false</append>`. This issue was raised by Jeff Jensen (jeffjensen).
 - Fixed the regression that the internal Lilith log wouldn't show up in the menu anymore.
 - Changed update interval of opened files from 5 seconds to 1 second.
-- Spring 3.0.5.RELEASE
-- Groovy 1.7.5
-- SLF4J 1.6.1
-- Logback 0.9.26
+- Spring 3.0.5.RELEASE, Groovy 1.7.5, SLF4J 1.6.1, 0.9.26
+
 
 ---
 
-## 0.9.39 - 2010-05-12
+## [0.9.39] - 2010-05-12
 
 ### Added
 - Added some error messages.
 - Added "recent files" menu. This was requested by Jeff Jensen (jeffjensen).
 - Added special icons for views opened from a file, different ones for refreshing (Lilith) and non-refreshing (imported) ones. They arguably suck a little bit. ;)
 - Added automatic refreshing of opened Lilith files. This should work but isn't tested very thoroughly, yet. This was requested by Jeff Jensen (jeffjensen).
-- Added cat (-c) and tail (-t, -f) functionality to Lilith so it's possible to print entries of binary Lilith log-files to the console. Number of printed entries can be configured using -n. The format string of for the event can be given at runtime.  
-  Unfortunately, this is only possible with Logback-Classic, not Logback-Access. The reason for this shortcoming is [LOGBACK-322 - Please add IAccessEvent (and AccessEventVO) similar to the LoggingEvent counterparts ](http://jira.qos.ch/browse/LOGBACK-322).  
+- Added cat (-c) and tail (-t, -f) functionality to Lilith so it's possible to print entries of binary Lilith log-files to the console. Number of printed entries can be configured using -n. The format string of for the event can be given at runtime.
+  Unfortunately, this is only possible with Logback-Classic, not Logback-Access. The reason for this shortcoming is [LOGBACK-322 - Please add IAccessEvent (and AccessEventVO) similar to the LoggingEvent counterparts ](http://jira.qos.ch/browse/LOGBACK-322).
   The following parts of LoggingEvent aren't supported yet:
     - LoggerContextVO
     - IThrowableProxy
@@ -246,12 +508,12 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 - lilith.bat does not strictly require a %JAVA_HOME% environment variable anymore. This was requested by Gareth Doutch (gdoutch).
-- Removed LogbackClassic appender from default logback.xml of Lilith to prevent warning during startup. Those would be especially annoying in case of cat or tail.  
+- Removed LogbackClassic appender from default logback.xml of Lilith to prevent warning during startup. Those would be especially annoying in case of cat or tail.
   This is a workaround for [LOGBACK-628 - SocketAppender is reporting an WARN if connection could not be established](http://jira.qos.ch/browse/LOGBACK-628).
 - Changed autocomplete of find combos from uber-annoying swingx to much less annoying Glazed Lists.
   This annoyed Alfred and me.
 - Neither "Window" menu nor status bar did update properly if "Automatically open new views on connection." was deselected. This bug was found by Joe.
-- Changed the license of all files previously licensed as LGPLv3 to both LGPLv3 and ASLv2 instead. Use whichever license suits you better.  
+- Changed the license of all files previously licensed as LGPLv3 to both LGPLv3 and ASLv2 instead. Use whichever license suits you better.
   This was requested by Ekkehard Gentz.
 - It wasn't possible to cancel an exit-request executed by closing the main frame. This bug was found by Gareth Doutch (gdoutch).
 - Replaced all `<layout>` with `<encoder>` in logback*.xml. See [Logback error messages and their meanings](http://logback.qos.ch/codes.html#layoutInsteadOfEncoder) for info.
@@ -260,12 +522,12 @@ All notable changes to this project will be documented in this file.
 
 ---
 
-## 0.9.38 - 2010-03-26
+## [0.9.38] - 2010-03-26
 
 ### Added
 - Added help about using Lilith encoders in FileAppender.
 - Added detection of outdated index files and the option to reindex a log file in that case. This is helpful while reopening log files created by a FileAppender.
-- Added new modules `de.huxhorn.lilith.logback.encoder.classic` and `de.huxhorn.lilith.logback.encoder.access` to support writing of Lilith logfiles using Logback `FileAppender`.  
+- Added new modules `de.huxhorn.lilith.logback.encoder.classic` and `de.huxhorn.lilith.logback.encoder.access` to support writing of Lilith logfiles using Logback `FileAppender`.
   Thanks to Ceki for supporting this!
 - Added some more tips.
 - Added shortcut for "Close all" action.
@@ -285,18 +547,18 @@ All notable changes to this project will be documented in this file.
 - Implemented the workaround for Apple Problem ID #7240026 suggested by GalaJon. Thanks a lot! See http://bit.ly/5vF5M2
 - Of-by-one error in message renderer [+x lines].
 - Lilith log is now showing uncaught exceptions as errors.
-- The find panel has been heavily refactored.  
-  Instead of a text-field it now features a combobox containing the previous 15 searches that were used for filtered views. Additionally, there's a new filter type "Named" that populates the combobox with named/saved conditions. Similarly, selecting "Level>=" populates the combobox with the correct values from TRACE to ERROR. The comboboxes, both filter type selection and filter text, feature autocompletion of entered text.  
+- The find panel has been heavily refactored.
+  Instead of a text-field it now features a combobox containing the previous 15 searches that were used for filtered views. Additionally, there's a new filter type "Named" that populates the combobox with named/saved conditions. Similarly, selecting "Level>=" populates the combobox with the correct values from TRACE to ERROR. The comboboxes, both filter type selection and filter text, feature autocompletion of entered text.
   This was suggested by Joe.
 - Groovy 1.7.0, Logback 0.9.19, SLF4J 1.5.11, Protobuf 2.3.0
 
 
 ---
 
-## 0.9.37 - 2009-11-11
+## [0.9.37] - 2009-11-11
 
 ### Added
-- Prevented duplicate start of application by the same user.  
+- Prevented duplicate start of application by the same user.
   Duplicate startup by a different user is still possible but quite useless until the event receivers are configurable. This was requested by Joe.
 - Added option to disable the creation of statistics.
 - Added "Copy call location" action. This is quite useful in combination with the CallLocation condition.
@@ -333,19 +595,20 @@ All notable changes to this project will be documented in this file.
 - Copy actions are now working correctly in case of external frames. This was reported by Matthias "Alfred" Neumann.
 - Jumping to the unfiltered event didn't work the first time if Tail was enabled. This was reported by Joe.
 - Table and message view are now having reasonable preferred sizes (needed because of splitpane).
-- Replaced tabs of event view with a combobox.  
+- Replaced tabs of event view with a combobox.
   The combobox is only visible if there are filtered views. There's also more room for the condition string. Something like this was suggested by Scott Stanton and Joe.
 - Updated keyboard help. Better symbol for "Ctrl"/"cmd".
 - Events did sometimes show up twice in filtered views. This was caused by a classic off-by-one error. Reported by Joe.
 - Fixed a remaining hang in the multiplex appenders in case of certain network problems.
 - Updated protobuf to 2.2.0.
 - Updated Groovy to 1.6.5.
-- Updated Logback to 0.9.17.  
+- Updated Logback to 0.9.17.
   This fixes an issue that was caused by a Logback bug. Thanks for the fast fix, Ceki!
+
 
 ---
 
-## 0.9.36 - 2009-07-20
+## [0.9.36] - 2009-07-20
 
 ### Added
 - Added new messageRegex example groovy condition.
@@ -375,7 +638,7 @@ All notable changes to this project will be documented in this file.
 
 ---
 
-## 0.9.35 - 2009-05-01
+## [0.9.35] - 2009-05-01
 
 ### Added
 - Added header to Lilith file format.
@@ -413,7 +676,7 @@ All notable changes to this project will be documented in this file.
 - MessageFormatter: Special handling of array in case of a single placeholder.
 - MessageFormatter: Special handling of `java.util.Date`. It's now converted to ISO 8601 representation.
 - Known problems and FAQ in help did not reflect the latest version.
-- In case of `#groovy#<scriptname>` the script received that string as search string.  
+- In case of `#groovy#<scriptname>` the script received that string as search string.
   This has been fixed, now "" is used as search string.
 - Detailsview displayed an error message if the file was just empty.
 - In case of a new view, select first event if scroll to bottom is not enabled.
@@ -425,13 +688,14 @@ All notable changes to this project will be documented in this file.
 - DetailsView: Better support for multi-line messages of Throwables.
 - Better help including more links, symbols for keys.
 - Renamed "Show/Hide" to "Columns" as suggested by Joe.
-- Changed some licenses from GPLv3 to LGPLv3. Some poms didn't override the license appropriately.  
+- Changed some licenses from GPLv3 to LGPLv3. Some poms didn't override the license appropriately.
   Added some missing license infos.
 - Groovy 1.6.2
 
+
 ---
 
-## 0.9.34 - 2009-01-04
+## [0.9.34] - 2009-01-04
 
 ### Added
 - Added unit-tests for all datatypes.
@@ -448,7 +712,7 @@ All notable changes to this project will be documented in this file.
 
 ---
 
-## 0.9.33 - 2009-01-03
+## [0.9.33] - 2009-01-03
 
 ### Added
 - Added help about groovy filters.
@@ -456,9 +720,9 @@ All notable changes to this project will be documented in this file.
 - Copy callstack (Suggested by Ekke)
 - new pre style as suggested by Alexander Kosenkov. Thanks a lot!
 - Support for Map and Collection containing Arrays in MessageFormatter.
-- Ability to save and reset layout of the tables.  
-  There are 4 table layouts: logging, loggingGlobal, access, accessGlobal.  
-  The global layouts are used in the global views "global (Logging)" and "global (Access)" while the non-global ones are used in ordinary views, as well as in "Lilith (Logging)".  
+- Ability to save and reset layout of the tables.
+  There are 4 table layouts: logging, loggingGlobal, access, accessGlobal.
+  The global layouts are used in the global views "global (Logging)" and "global (Access)" while the non-global ones are used in ordinary views, as well as in "Lilith (Logging)".
   Functionality is available in View -> Layout and popup on table header.
 - Ability to select look and feel in Preferences. Yes, the preferences dialog needs a lot of work :p
 - JGoodies Looks added as a look and feel alternative.
@@ -482,9 +746,9 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 - Support for recursive Maps and Collections in `MessageFormatter`. This would previously throw a `StackOverflowError`.
-- Better string representation for recursive `Map`, `Collection` and `Object[]`.  
+- Better string representation for recursive `Map`, `Collection` and `Object[]`.
   It will now print `[...fully.qualified.ClassName@identityHash...]`.
-- Support for Exception during toString().  
+- Support for Exception during toString().
   It will now result in `[!!!fully.qualified.ClassName=>fully.qualified.Throwable:ThrowableMessage!!!]`.
 - Don't reset prefs after accepting license. Also added -L option to flush licensed for easier debugging.
 - Improved general section of preferences dialog but I'm still not very happy about it.
@@ -494,7 +758,7 @@ All notable changes to this project will be documented in this file.
 - Disabled "Clear" in case of a filtered buffer. Previous functionality was pretty useless.
 - Cropping the message popup to a sane sizes...
 - Supporting conditions with empty argument. This is necessary because it might make sense for groovy conditions.
-- Added `EventIdentifier` that will be needed for caching of condition results.  
+- Added `EventIdentifier` that will be needed for caching of condition results.
   Changed `EventWrapper` to use `EventIdentifier` instead of Source ID + localId. Since this changes serialization anyway I took the opportunity to also add `omittedElements` to `ThrowableInfo`. Updated xml IO accordingly.
 - Updated and uploaded new logging schema.
 - Jumping to bottom in table+scrollToBottom even if table did not change.
@@ -505,7 +769,7 @@ All notable changes to this project will be documented in this file.
 
 ---
 
-## 0.9.32 - 2008-10-21
+## [0.9.32] - 2008-10-21
 
 ### Added
 - Added documentation about `java.lang.OutOfMemoryError: PermGen space` problem and implemented `LogbackShutdownServletContextListener` for proper shut down of logback.
@@ -526,12 +790,12 @@ All notable changes to this project will be documented in this file.
 - sulky: Made sure that `TimeoutOutputStream-Watchdog-Thread` is stopped under all circumstances. Added testcases for every scenario.
 - sulky: Fixed a stupid problem that could result in a deadlock in Lilith internal log view.
 - Implemented changed message formatting logic introduced in SLF4J 1.5.3.
-- Prepared for logback 0.9.10. This required changes to `LoggingEvent and contained `StackTraceElement`s. Serialized `LoggingEvents` are not compatible to previous version.
+- Prepared for logback 0.9.10. This required changes to `LoggingEvent` and contained `StackTraceElement`s. Serialized `LoggingEvents` are not compatible to previous version.
 - New xml schema 1.1 to support logback 0.9.10 features, i.e. CodeLocation, Version and Exact.
 - Removed mac-specific UserNotification[..]EventConsumer because it crashes the app if J2SE 6 is used. It didn't work, anyway :p
 - `detailsView.groovy` does now support CodeLocation, Version and Exact as well as null eventwrappers that can happen if deserialization fails.
 - "Clean all inactive logs" on another thread.
-- Made sure that every TimeoutOutputStream is *always* properly closed in the multiplex-appenders. This should finally fix `java.lang.OutOfMemoryError: PermGen space` problems in webapps, at least those caused by Lilith. :p  
+- Made sure that every TimeoutOutputStream is *always* properly closed in the multiplex-appenders. This should finally fix `java.lang.OutOfMemoryError: PermGen space` problems in webapps, at least those caused by Lilith. :p
   For the record: Do *NOT* use IOUtils.closeQuietly in multithreaded webapp code!!!
 - Accept license once for every version.
 - Updated groovy dependency to 1.5.7.
@@ -540,7 +804,7 @@ All notable changes to this project will be documented in this file.
 
 ---
 
-## 0.9.31 - 2008-08-11
+## [0.9.31] - 2008-08-11
 
 ### Added
 - Implemented internal Lilith logging.
@@ -556,18 +820,18 @@ All notable changes to this project will be documented in this file.
 ### Fixed
 - XML appenders are now sending the message pattern instead of the formatted message.
 - Removed shutdown hook from JmDNS. This fixes the shutdown deadlock but Lilith is still crashing badly on Mac OS X because of JmDNS problems.
-- Disabled bonjour by default because it's just too unstable :(  
+- Disabled bonjour by default because it's just too unstable :(
   Activate it using -b command line argument.
 - Updated assembly file to a more sane behavior, i.e. bin with sh and bat, lib with jar, LICENSE, README
 
 
 ---
 
-## 0.9.30 - 2008-08-01
+## [0.9.30] - 2008-08-01
 
 ### Added
-- Added support for Exceptions in case of parameter array, i.e. `log.debug("{} {}", new Object[]{"One", "Two", new Throwable())` will both evaluate the parameters in the message and the additional `Throwable` as the `Throwable` of the `LoggingEvent`.  
-  See [Bug 70 - "logging a stack trace along with a parameterized string" solution proposal](http://bugzilla.slf4j.org/show_bug.cgi?id=70).  
+- Added support for Exceptions in case of parameter array, i.e. `log.debug("{} {}", new Object[]{"One", "Two", new Throwable())` will both evaluate the parameters in the message and the additional `Throwable` as the `Throwable` of the `LoggingEvent`.
+  See [Bug 70 - "logging a stack trace along with a parameterized string" solution proposal](http://bugzilla.slf4j.org/show_bug.cgi?id=70).
   This feature will only work if one of the Lilith appenders is used, not with the original `ch.qos.logback.classic.net.SocketAppender`. (Reported as a Lilith bug by Alfred.)
 
 ### Deprecated
@@ -578,8 +842,8 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 - Implemented own message formatting in MessageFormatter that does not rely on slf4j anymore.
-- LoggingEvent.getMessage() does now return a lazily initialized formatted log message. There's no `setMessage` method anymore. Instead, there are `set/getMessagePattern` methods.  
-  All code in Lilith has been changed to not perform the message formatting manually but using `getMessage` instead.  
+- LoggingEvent.getMessage() does now return a lazily initialized formatted log message. There's no `setMessage` method anymore. Instead, there are `set/getMessagePattern` methods.
+  All code in Lilith has been changed to not perform the message formatting manually but using `getMessage` instead.
   People that have not changed `[user.home]/.lilith/detailsView/detailsView.groovy` themselves should simply delete that file and restart Lilith. While this is not strictly necessary it will result in increased performance.
 - Updated Macify dependency to 1.1.
 - Cleanup of poms and dependencies for submission to central maven repository.
@@ -588,7 +852,7 @@ All notable changes to this project will be documented in this file.
 
 ---
 
-## 0.9.29 - 2008-07-02
+## [0.9.29] - 2008-07-02
 
 ### Added
 - Added SCM and distribution info to pom files. Source is now available in SVN repository at sourceforge.net.
@@ -637,6 +901,7 @@ All notable changes to this project will be documented in this file.
 - JmDNS for multiple interfaces
 - Don't play sounds etc. if source is not in whitelist/blacklisted. Black/whitelisting is now handled on global queue level. This is more efficient anyway. (Reported by Alfred.)
 - Changed all artifactIds - again! Closed beta is something beautiful :)
+
 
 ---
 
@@ -816,7 +1081,7 @@ All notable changes to this project will be documented in this file.
 - UI-Change: Toolbar in frame instead of event view
 - Glasspane in case of internal frames is set to visible in case of inactive frame. Implemented special handling of this case.
 
-  
+
 ---
 
 ## 0.9.20 - 2007-10-28
@@ -834,6 +1099,7 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 - UI-Change: Removed Progress and Cancel of search from search panel. Using glasspane overlay instead.
+
 
 ---
 
@@ -886,6 +1152,7 @@ All notable changes to this project will be documented in this file.
 ### Fixed
 - Fixed xml-escaping of exceptions in both message and tooltip.
 
+
 ---
 
 ## 0.9.17 - 2007-10-09
@@ -901,6 +1168,9 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 - Fixed critical bug in RrdEventConsumer.
+
+
+---
 
 ## 0.9.16 - 2007-10-05
 
@@ -937,6 +1207,7 @@ All notable changes to this project will be documented in this file.
 ### Fixed
 - Fixed SoftReferenceCachingBuffer.
 - Removed unnecessary initialization in OpenPreviousDialog c'tor
+
 
 ---
 
@@ -1109,3 +1380,26 @@ All notable changes to this project will be documented in this file.
 - Finished switch to Tango icons.
 - Use default scrollToBottom for filtered views.
 - Prevented icon-change in case of filtered view.
+
+[unreleased]: https://github.com/huxi/lilith/compare/v8.2.0...HEAD
+[8.2.0]: https://github.com/huxi/lilith/compare/v8.1.1...v8.2.0
+[8.1.1]: https://github.com/huxi/lilith/compare/v8.1.0...v8.1.1
+[8.1.0]: https://github.com/huxi/lilith/compare/v8.0.0...v8.1.0
+[8.0.0]: https://github.com/huxi/lilith/compare/v0.9.44...v8.0.0
+[0.9.44]: https://github.com/huxi/lilith/compare/v0.9.43...v0.9.44
+[0.9.43]: https://github.com/huxi/lilith/compare/v0.9.42.1...v0.9.43
+[0.9.42.1]: https://github.com/huxi/lilith/compare/v0.9.42...v0.9.42.1
+[0.9.42]: https://github.com/huxi/lilith/compare/v0.9.41...v0.9.42
+[0.9.41]: https://github.com/huxi/lilith/compare/v0.9.40...v0.9.41
+[0.9.40]: https://github.com/huxi/lilith/compare/v0.9.39...v0.9.40
+[0.9.39]: https://github.com/huxi/lilith/compare/v0.9.38...v0.9.39
+[0.9.38]: https://github.com/huxi/lilith/compare/v0.9.37...v0.9.38
+[0.9.37]: https://github.com/huxi/lilith/compare/v0.9.36...v0.9.37
+[0.9.36]: https://github.com/huxi/lilith/compare/v0.9.35...v0.9.36
+[0.9.35]: https://github.com/huxi/lilith/compare/v0.9.34...v0.9.35
+[0.9.34]: https://github.com/huxi/lilith/compare/v0.9.33...v0.9.34
+[0.9.33]: https://github.com/huxi/lilith/compare/v0.9.32...v0.9.33
+[0.9.32]: https://github.com/huxi/lilith/compare/v0.9.31...v0.9.32
+[0.9.31]: https://github.com/huxi/lilith/compare/v0.9.30...v0.9.31
+[0.9.30]: https://github.com/huxi/lilith/compare/v0.9.29...v0.9.30
+[0.9.29]: https://github.com/huxi/lilith/compare/init...v0.9.29

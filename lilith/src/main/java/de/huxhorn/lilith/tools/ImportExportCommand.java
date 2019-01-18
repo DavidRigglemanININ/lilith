@@ -1,6 +1,6 @@
 /*
  * Lilith - a log event viewer.
- * Copyright (C) 2007-2011 Joern Huxhorn
+ * Copyright (C) 2007-2018 Joern Huxhorn
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,66 +15,71 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package de.huxhorn.lilith.tools;
 
 import de.huxhorn.lilith.prefs.LilithPreferences;
 import de.huxhorn.lilith.prefs.protobuf.LilithPreferencesStreamingDecoder;
 import de.huxhorn.lilith.prefs.protobuf.LilithPreferencesStreamingEncoder;
 import de.huxhorn.lilith.swing.ApplicationPreferences;
-import de.huxhorn.sulky.io.IOUtilities;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-public class ImportExportCommand
+public final class ImportExportCommand
 {
 	private static final int MAX_FILE_SIZE = 5 * 1024 * 1024;
 
-	public static Map<String, byte[]> exportGroovyConditions(ApplicationPreferences prefs)
+	static
 	{
-		String[] files = prefs.getAllGroovyConditionScriptFiles();
+		new ImportExportCommand(); // stfu
+	}
+
+	private ImportExportCommand() {}
+
+	private static Map<String, byte[]> exportGroovyConditions(ApplicationPreferences preferences)
+	{
+		String[] files = preferences.getAllGroovyConditionScriptFiles();
 		if(files == null)
 		{
 			return null;
 		}
-		return exportFiles(prefs.getGroovyConditionsPath(), files);
+		return exportFiles(preferences.getGroovyConditionsPath(), files);
 	}
 
-	public static Map<String, byte[]> exportClipboardFormatterScriptFiles(ApplicationPreferences prefs)
+	private static Map<String, byte[]> exportClipboardFormatterScriptFiles(ApplicationPreferences preferences)
 	{
-		String[] files = prefs.getClipboardFormatterScriptFiles();
+		String[] files = preferences.getClipboardFormatterScriptFiles();
 		if(files == null)
 		{
 			return null;
 		}
-		return exportFiles(prefs.getGroovyConditionsPath(), files);
+		return exportFiles(preferences.getGroovyConditionsPath(), files);
 	}
 
-	public static Map<String, byte[]> exportDetailsView(ApplicationPreferences prefs)
+	private static Map<String, byte[]> exportDetailsView(ApplicationPreferences preferences)
 	{
 		String[] files = new String[]
 			{
 				ApplicationPreferences.DETAILS_VIEW_CSS_FILENAME,
 				ApplicationPreferences.DETAILS_VIEW_GROOVY_FILENAME,
 			};
-		return exportFiles(prefs.getDetailsViewRoot(), files);
+		return exportFiles(preferences.getDetailsViewRoot(), files);
 	}
 
-	public static Map<String, byte[]> exportRootFiles(ApplicationPreferences prefs)
+	private static Map<String, byte[]> exportRootFiles(ApplicationPreferences preferences)
 	{
 		String[] files = new String[]
 			{
@@ -89,14 +94,15 @@ public class ImportExportCommand
 				ApplicationPreferences.STATUS_COLORS_XML_FILENAME,
 				ApplicationPreferences.LEVEL_COLORS_XML_FILENAME,
 			};
-		return exportFiles(prefs.getStartupApplicationPath(), files);
+		return exportFiles(preferences.getStartupApplicationPath(), files);
 	}
 
-	public static Map<String, byte[]> exportFiles(File basePath, String[] files)
+	@SuppressWarnings("PMD.AvoidInstantiatingObjectsInLoops")
+	private static Map<String, byte[]> exportFiles(File basePath, String[] files)
 	{
 		final Logger logger = LoggerFactory.getLogger(ImportExportCommand.class);
 
-		Map<String,byte[]> result=new HashMap<String,byte[]>();
+		Map<String,byte[]> result=new HashMap<>();
 
 		for(String current : files)
 		{
@@ -120,17 +126,16 @@ public class ImportExportCommand
 			}
 			else
 			{
-				DataInputStream is=null;
-				try
+				long length=currentFile.length();
+				if(length > MAX_FILE_SIZE)
 				{
-					long length=currentFile.length();
-					if(length > MAX_FILE_SIZE)
-					{
-						if(logger.isInfoEnabled()) logger.info("Ignoring '{}' because it's too big ({} bytes).", currentFile.getAbsolutePath(), length);
-						continue;
-					}
+					if(logger.isInfoEnabled()) logger.info("Ignoring '{}' because it's too big ({} bytes).", currentFile.getAbsolutePath(), length);
+					continue;
+				}
+
+				try(DataInputStream is=new DataInputStream(Files.newInputStream(currentFile.toPath())))
+				{
 					byte[] bytes=new byte[(int) length];
-					is=new DataInputStream(new FileInputStream(currentFile));
 					is.readFully(bytes);
 					result.put(current, bytes);
 				}
@@ -138,22 +143,18 @@ public class ImportExportCommand
 				{
 					if(logger.isWarnEnabled()) logger.warn("Exception while reading '"+currentFile.getAbsolutePath()+"'! Ignoring file...", e);
 				}
-				finally
-				{
-					IOUtilities.closeQuietly(is);
-				}
 			}
 		}
 
 		if(logger.isInfoEnabled())
 		{
-			SortedMap<String, byte[]> sortedResult=new TreeMap<String,byte[]>(result);
+			SortedMap<String, byte[]> sortedResult=new TreeMap<>(result);
 			StringBuilder msg=new StringBuilder();
 			msg.append("Exported files:\n");
 			for(Map.Entry<String, byte[]> current: sortedResult.entrySet())
 			{
-				msg.append("- ").append(current.getKey()).append("\n");
-				msg.append("  ").append(current.getValue().length).append(" bytes\n");
+				msg.append("- ").append(current.getKey()).append("\n  ")
+						.append(current.getValue().length).append(" bytes\n");
 			}
 			logger.info(msg.toString());
 		}
@@ -161,13 +162,14 @@ public class ImportExportCommand
 		return result;
 	}
 
-	public static void importFiles(File basePath, Map<String, byte[]> files)
+	@SuppressWarnings("PMD.AvoidInstantiatingObjectsInLoops")
+	private static void importFiles(File basePath, Map<String, byte[]> files)
 	{
 		final Logger logger = LoggerFactory.getLogger(ImportExportCommand.class);
 
 		if(basePath.mkdirs())
 		{
-			if(logger.isInfoEnabled()) logger.info("Created directory '{}'.", basePath.getAbsolutePath());
+			if(logger.isInfoEnabled()) logger.info("Created directory '{}'.", basePath.getAbsolutePath()); // NOPMD
 		}
 
 		for(Map.Entry<String, byte[]> current : files.entrySet())
@@ -179,20 +181,14 @@ public class ImportExportCommand
 
 			if(!currentFile.isFile() || currentFile.canWrite())
 			{
-				DataOutputStream os=null;
-				try
+				try(DataOutputStream os=new DataOutputStream(Files.newOutputStream(currentFile.toPath())))
 				{
-					os=new DataOutputStream(new FileOutputStream(currentFile));
 					os.write(value);
 					if(logger.isInfoEnabled()) logger.info("Wrote {} bytes into '{}'.", value.length, currentFile.getAbsolutePath());
 				}
 				catch(IOException e)
 				{
 					if(logger.isWarnEnabled()) logger.warn("Exception while writing '"+currentFile.getAbsolutePath()+"'! Ignoring file...", e);
-				}
-				finally
-				{
-					IOUtilities.closeQuietly(os);
 				}
 			}
 			else
@@ -202,109 +198,111 @@ public class ImportExportCommand
 		}
 	}
 
-	public static LilithPreferences exportPersistence(ApplicationPreferences prefs)
+	private static LilithPreferences exportPersistence(ApplicationPreferences preferences)
 	{
 		LilithPreferences p=new LilithPreferences();
-		p.setGroovyConditions(exportGroovyConditions(prefs));
-		p.setGroovyClipboardFormatters(exportClipboardFormatterScriptFiles(prefs));
-		p.setDetailsView(exportDetailsView(prefs));
-		p.setRootFiles(exportRootFiles(prefs));
+		p.setGroovyConditions(exportGroovyConditions(preferences));
+		p.setGroovyClipboardFormatters(exportClipboardFormatterScriptFiles(preferences));
+		p.setDetailsView(exportDetailsView(preferences));
+		p.setRootFiles(exportRootFiles(preferences));
 
 		// String
-		p.setBlackListName(prefs.getBlackListName());
-		p.setWhiteListName(prefs.getWhiteListName());
-		p.setLookAndFeel(prefs.getLookAndFeel());
+		p.setBlackListName(preferences.getBlackListName());
+		p.setWhiteListName(preferences.getWhiteListName());
+		p.setLookAndFeel(preferences.getLookAndFeel());
 
 		// boolean
-		p.setAskingBeforeQuit(prefs.isAskingBeforeQuit());
-		p.setAutoClosing(prefs.isAutoClosing());
-		p.setAutoFocusingWindow(prefs.isAutoFocusingWindow());
-		p.setAutoOpening(prefs.isAutoOpening());
-		p.setCheckingForUpdate(prefs.isCheckingForUpdate());
-		p.setCheckingForSnapshot(prefs.isCheckingForSnapshot());
-		p.setCleaningLogsOnExit(prefs.isCleaningLogsOnExit());
-		p.setColoringWholeRow(prefs.isColoringWholeRow());
-		p.setGlobalLoggingEnabled(prefs.isGlobalLoggingEnabled());
-		p.setHidingOnClose(prefs.isHidingOnClose());
-		p.setLoggingStatisticEnabled(prefs.isLoggingStatisticEnabled());
-		p.setMaximizingInternalFrames(prefs.isMaximizingInternalFrames());
-		p.setMute(prefs.isMute());
-		p.setScrollingToBottom(prefs.isScrollingToBottom());
-		p.setShowingFullCallstack(prefs.isShowingFullCallstack());
-		p.setUsingWrappedExceptionStyle(prefs.isUsingWrappedExceptionStyle());
-		p.setShowingFullRecentPath(prefs.isShowingFullRecentPath());
-		p.setShowingIdentifier(prefs.isShowingIdentifier());
-		p.setShowingStatusbar(prefs.isShowingStatusbar());
-		p.setShowingStackTrace(prefs.isShowingStackTrace());
-		p.setShowingTipOfTheDay(prefs.isShowingTipOfTheDay());
-		p.setShowingToolbar(prefs.isShowingToolbar());
-		p.setSplashScreenDisabled(prefs.isSplashScreenDisabled());
-		p.setTrayActive(prefs.isTrayActive());
-		p.setUsingInternalFrames(prefs.isUsingInternalFrames());
-		p.setSourceFiltering(prefs.getSourceFiltering());
+		p.setAskingBeforeQuit(preferences.isAskingBeforeQuit());
+		p.setAutoClosing(preferences.isAutoClosing());
+		p.setAutoFocusingWindow(preferences.isAutoFocusingWindow());
+		p.setAutoOpening(preferences.isAutoOpening());
+		p.setCheckingForUpdate(preferences.isCheckingForUpdate());
+		p.setCheckingForSnapshot(preferences.isCheckingForSnapshot());
+		p.setCleaningLogsOnExit(preferences.isCleaningLogsOnExit());
+		p.setColoringWholeRow(preferences.isColoringWholeRow());
+		p.setGlobalLoggingEnabled(preferences.isGlobalLoggingEnabled());
+		p.setHidingOnClose(preferences.isHidingOnClose());
+		p.setMaximizingInternalFrames(preferences.isMaximizingInternalFrames());
+		p.setMute(preferences.isMute());
+		p.setScrollingSmoothly(preferences.isScrollingSmoothly());
+		p.setScrollingToBottom(preferences.isScrollingToBottom());
+		p.setShowingFullCallStack(preferences.isShowingFullCallStack());
+		p.setUsingWrappedExceptionStyle(preferences.isUsingWrappedExceptionStyle());
+		p.setShowingFullRecentPath(preferences.isShowingFullRecentPath());
+		p.setShowingPrimaryIdentifier(preferences.isShowingPrimaryIdentifier());
+		p.setShowingSecondaryIdentifier(preferences.isShowingSecondaryIdentifier());
+		p.setShowingStatusBar(preferences.isShowingStatusBar());
+		p.setShowingStackTrace(preferences.isShowingStackTrace());
+		p.setShowingTipOfTheDay(preferences.isShowingTipOfTheDay());
+		p.setShowingToolbar(preferences.isShowingToolbar());
+		p.setSplashScreenDisabled(preferences.isSplashScreenDisabled());
+		p.setTrayActive(preferences.isTrayActive());
+		p.setUsingInternalFrames(preferences.isUsingInternalFrames());
+		p.setSourceFiltering(preferences.getSourceFiltering());
 		return p;
 	}
 
-	public static void importPersistence(ApplicationPreferences prefs, LilithPreferences p)
+	private static void importPersistence(ApplicationPreferences preferences, LilithPreferences p)
 	{
 		if(p.getGroovyConditions() != null)
 		{
-			importFiles(prefs.getGroovyConditionsPath(), p.getGroovyConditions());
+			importFiles(preferences.getGroovyConditionsPath(), p.getGroovyConditions());
 		}
 		if(p.getGroovyConditions() != null)
 		{
-			importFiles(prefs.getGroovyClipboardFormattersPath(), p.getGroovyClipboardFormatters());
+			importFiles(preferences.getGroovyClipboardFormattersPath(), p.getGroovyClipboardFormatters());
 		}
 		if(p.getDetailsView() != null)
 		{
-			importFiles(prefs.getDetailsViewRoot(), p.getDetailsView());
+			importFiles(preferences.getDetailsViewRoot(), p.getDetailsView());
 		}
 		if(p.getRootFiles() != null)
 		{
-			importFiles(prefs.getStartupApplicationPath(), p.getRootFiles());
+			importFiles(preferences.getStartupApplicationPath(), p.getRootFiles());
 		}
 
 		// String
-		prefs.setBlackListName(p.getBlackListName());
-		prefs.setWhiteListName(p.getWhiteListName());
-		prefs.setLookAndFeel(p.getLookAndFeel());
+		preferences.setBlackListName(p.getBlackListName());
+		preferences.setWhiteListName(p.getWhiteListName());
+		preferences.setLookAndFeel(p.getLookAndFeel());
 
 		// boolean
-		prefs.setAskingBeforeQuit(p.isAskingBeforeQuit());
-		prefs.setAutoClosing(p.isAutoClosing());
-		prefs.setAutoFocusingWindow(p.isAutoFocusingWindow());
-		prefs.setAutoOpening(p.isAutoOpening());
-		prefs.setCheckingForUpdate(p.isCheckingForUpdate());
-		prefs.setCheckingForSnapshot(p.isCheckingForSnapshot());
-		prefs.setCleaningLogsOnExit(p.isCleaningLogsOnExit());
-		prefs.setColoringWholeRow(p.isColoringWholeRow());
-		prefs.setGlobalLoggingEnabled(p.isGlobalLoggingEnabled());
-		prefs.setHidingOnClose(p.isHidingOnClose());
-		prefs.setLoggingStatisticEnabled(p.isLoggingStatisticEnabled());
-		prefs.setMaximizingInternalFrames(p.isMaximizingInternalFrames());
-		prefs.setMute(p.isMute());
-		prefs.setScrollingToBottom(p.isScrollingToBottom());
-		prefs.setShowingFullCallstack(p.isShowingFullCallstack());
-		prefs.setUsingWrappedExceptionStyle(p.isUsingWrappedExceptionStyle());
-		prefs.setShowingFullRecentPath(p.isShowingFullRecentPath());
-		prefs.setShowingIdentifier(p.isShowingIdentifier());
-		prefs.setShowingStatusbar(p.isShowingStatusbar());
-		prefs.setShowingStackTrace(p.isShowingStackTrace());
-		prefs.setShowingTipOfTheDay(p.isShowingTipOfTheDay());
-		prefs.setShowingToolbar(p.isShowingToolbar());
-		prefs.setSplashScreenDisabled(p.isSplashScreenDisabled());
-		prefs.setTrayActive(p.isTrayActive());
-		prefs.setUsingInternalFrames(p.isUsingInternalFrames());
-		prefs.setSourceFiltering(p.getSourceFiltering());
+		preferences.setAskingBeforeQuit(p.isAskingBeforeQuit());
+		preferences.setAutoClosing(p.isAutoClosing());
+		preferences.setAutoFocusingWindow(p.isAutoFocusingWindow());
+		preferences.setAutoOpening(p.isAutoOpening());
+		preferences.setCheckingForUpdate(p.isCheckingForUpdate());
+		preferences.setCheckingForSnapshot(p.isCheckingForSnapshot());
+		preferences.setCleaningLogsOnExit(p.isCleaningLogsOnExit());
+		preferences.setColoringWholeRow(p.isColoringWholeRow());
+		preferences.setGlobalLoggingEnabled(p.isGlobalLoggingEnabled());
+		preferences.setHidingOnClose(p.isHidingOnClose());
+		preferences.setMaximizingInternalFrames(p.isMaximizingInternalFrames());
+		preferences.setMute(p.isMute());
+		preferences.setScrollingSmoothly(p.isScrollingSmoothly());
+		preferences.setScrollingToBottom(p.isScrollingToBottom());
+		preferences.setShowingFullCallStack(p.isShowingFullCallStack());
+		preferences.setUsingWrappedExceptionStyle(p.isUsingWrappedExceptionStyle());
+		preferences.setShowingFullRecentPath(p.isShowingFullRecentPath());
+		preferences.setShowingPrimaryIdentifier(p.isShowingPrimaryIdentifier());
+		preferences.setShowingSecondaryIdentifier(p.isShowingSecondaryIdentifier());
+		preferences.setShowingStatusBar(p.isShowingStatusBar());
+		preferences.setShowingStackTrace(p.isShowingStackTrace());
+		preferences.setShowingTipOfTheDay(p.isShowingTipOfTheDay());
+		preferences.setShowingToolbar(p.isShowingToolbar());
+		preferences.setSplashScreenDisabled(p.isSplashScreenDisabled());
+		preferences.setTrayActive(p.isTrayActive());
+		preferences.setUsingInternalFrames(p.isUsingInternalFrames());
+		preferences.setSourceFiltering(p.getSourceFiltering());
 	}
 
 	public static void exportPreferences(File file)
 	{
 		final Logger logger = LoggerFactory.getLogger(ImportExportCommand.class);
 
-		ApplicationPreferences prefs = new ApplicationPreferences();
+		ApplicationPreferences preferences = new ApplicationPreferences();
 
-		LilithPreferences p = exportPersistence(prefs);
+		LilithPreferences p = exportPersistence(preferences);
 
 		try
 		{
@@ -320,12 +318,12 @@ public class ImportExportCommand
 	{
 		final Logger logger = LoggerFactory.getLogger(ImportExportCommand.class);
 
-		ApplicationPreferences prefs = new ApplicationPreferences();
+		ApplicationPreferences preferences = new ApplicationPreferences();
 
 		try
 		{
 			LilithPreferences p = readPersistence(file);
-			importPersistence(prefs, p);
+			importPersistence(preferences, p);
 		}
 		catch(IOException e)
 		{
@@ -339,7 +337,7 @@ public class ImportExportCommand
 		GZIPOutputStream os = null;
 		try
 		{
-			os = new GZIPOutputStream(new BufferedOutputStream(new FileOutputStream(file)));
+			os = new GZIPOutputStream(new BufferedOutputStream(Files.newOutputStream(file.toPath())));
 			LilithPreferencesStreamingEncoder encoder = new LilithPreferencesStreamingEncoder();
 			encoder.encode(p, os);
 		}
@@ -359,7 +357,7 @@ public class ImportExportCommand
 		GZIPInputStream is = null;
 		try
 		{
-			is = new GZIPInputStream(new BufferedInputStream(new FileInputStream(file)));
+			is = new GZIPInputStream(new BufferedInputStream(Files.newInputStream(file.toPath())));
 			LilithPreferencesStreamingDecoder decoder = new LilithPreferencesStreamingDecoder();
 			return decoder.decode(is);
 		}

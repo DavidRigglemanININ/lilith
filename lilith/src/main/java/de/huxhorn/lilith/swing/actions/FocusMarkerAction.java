@@ -1,6 +1,6 @@
 /*
  * Lilith - a log event viewer.
- * Copyright (C) 2007-2013 Joern Huxhorn
+ * Copyright (C) 2007-2017 Joern Huxhorn
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,50 +15,31 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package de.huxhorn.lilith.swing.actions;
 
 import de.huxhorn.lilith.conditions.MarkerContainsCondition;
-import de.huxhorn.lilith.data.eventsource.EventWrapper;
-import de.huxhorn.lilith.swing.ViewContainer;
 import de.huxhorn.sulky.conditions.Condition;
-
-import javax.swing.*;
+import java.awt.event.ActionEvent;
 
 public class FocusMarkerAction
-		extends AbstractFilterAction
+		extends AbstractBasicFilterAction
 {
 	private static final long serialVersionUID = -4897396873005451863L;
 
-	private String markerName;
+	private final String markerName;
 
-	public FocusMarkerAction(ViewContainer viewContainer, String markerName)
+	public FocusMarkerAction(String markerName)
 	{
-		super(markerName);
+		super(markerName, false);
 		this.markerName = markerName;
-		setViewContainer(viewContainer);
+		viewContainerUpdated();
 	}
 
 	@Override
-	protected void updateState()
+	public Condition resolveCondition(ActionEvent e)
 	{
-		if(viewContainer == null)
-		{
-			setEnabled(false);
-			return;
-		}
-		setEnabled(true);
-	}
-
-	@Override
-	public void setEventWrapper(EventWrapper eventWrapper)
-	{
-		// ignore
-	}
-
-	@Override
-	public Condition resolveCondition()
-	{
-		if(markerName == null)
+		if(!isEnabled())
 		{
 			return null;
 		}

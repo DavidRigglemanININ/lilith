@@ -1,20 +1,21 @@
 /*
  * Lilith - a log event viewer.
- * Copyright (C) 2007-2011 Joern Huxhorn
- * 
+ * Copyright (C) 2007-2018 Joern Huxhorn
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package de.huxhorn.lilith.swing.callables;
 
 import de.huxhorn.sulky.codec.filebuffer.DefaultDataStrategy;
@@ -25,14 +26,12 @@ import de.huxhorn.sulky.codec.filebuffer.FileHeaderStrategy;
 import de.huxhorn.sulky.codec.filebuffer.IndexStrategy;
 import de.huxhorn.sulky.codec.filebuffer.SparseDataStrategy;
 import de.huxhorn.sulky.tasks.AbstractProgressingCallable;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Should only be executed on inactive files.
@@ -73,6 +72,7 @@ public class IndexingCallable
 	 * @return computed result
 	 * @throws Exception if unable to compute a result
 	 */
+	@Override
 	public Long call()
 		throws Exception
 	{
@@ -156,11 +156,7 @@ public class IndexingCallable
 					setCurrentStep(offset);
 				}
 			}
-			catch(IOException e)
-			{
-				ex = e;
-			}
-			catch(InterruptedException e)
+			catch(IOException | InterruptedException e)
 			{
 				ex = e;
 			}
@@ -173,10 +169,7 @@ public class IndexingCallable
 			{
 				if(!indexFile.delete())
 				{
-					if(logger.isWarnEnabled())
-					{
-						logger.warn("Failed to delete index file '{}'!", indexFile.getAbsolutePath());
-					}
+					if(logger.isWarnEnabled()) logger.warn("Failed to delete index file '{}'!", indexFile.getAbsolutePath()); // NOPMD
 				}
 				throw ex; // rethrow
 			}

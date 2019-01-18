@@ -1,17 +1,17 @@
 /*
  * Lilith - a log event viewer.
- * Copyright (C) 2007-2011 Joern Huxhorn
- * 
+ * Copyright (C) 2007-2018 Joern Huxhorn
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
@@ -26,49 +26,49 @@ import de.huxhorn.lilith.engine.EventSourceListener;
 import de.huxhorn.lilith.engine.EventSourceProducer;
 import de.huxhorn.lilith.engine.SourceManager;
 import de.huxhorn.sulky.buffers.BlockingCircularBuffer;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class SourceManagerImpl<T extends Serializable>
 	implements SourceManager<T>
 {
 	private final Logger logger = LoggerFactory.getLogger(SourceManagerImpl.class);
 
-	private BlockingCircularBuffer<EventWrapper<T>> queue;
-	private Set<EventSourceListener<T>> listeners;
-	private PropertyChangeSupport changeSupport;
-	private List<EventSource<T>> sources;
+	private static final String NUMBER_OF_SOURCES = "numberOfSources";
+
+	private final BlockingCircularBuffer<EventWrapper<T>> queue;
+	private final Set<EventSourceListener<T>> listeners;
+	private final PropertyChangeSupport changeSupport;
+	private final List<EventSource<T>> sources;
 	private final Set<EventProducer<T>> eventProducers;
 	private final Lock eventProducersLock;
-	private EventPoller<T> eventPoller;
+	private final EventPoller<T> eventPoller;
 
-	private static final String NUMBER_OF_SOURCES = "numberOfSources";
-	private List<EventSourceProducer<T>> eventSourceProducers;
+	private final List<EventSourceProducer<T>> eventSourceProducers;
 
 	public SourceManagerImpl(BlockingCircularBuffer<EventWrapper<T>> queue)
 	{
-		this.queue = queue;
-		eventPoller = new EventPoller<T>(queue);
-		eventPoller.setPollDelay(100);
+		this.queue = Objects.requireNonNull(queue, "queue must not be null!");
+		eventPoller = new EventPoller<>(queue, 100);
 		eventProducersLock = new ReentrantLock();
-		eventProducers = new HashSet<EventProducer<T>>();
-		eventSourceProducers = new ArrayList<EventSourceProducer<T>>();
-		listeners = new HashSet<EventSourceListener<T>>();
+		eventProducers = new HashSet<>();
+		eventSourceProducers = new ArrayList<>();
+		listeners = new HashSet<>();
 		changeSupport = new PropertyChangeSupport(this);
-		sources = new ArrayList<EventSource<T>>();
+		sources = new ArrayList<>();
 	}
 
+	@Override
 	public void addSource(EventSource<T> source)
 	{
 		//SourceIdentifier si=source.getSourceIdentifier();
@@ -84,10 +84,11 @@ public class SourceManagerImpl<T extends Serializable>
 	}
 
 
+	@Override
 	public void removeSource(SourceIdentifier source)
 	{
 		int oldSize = sources.size();
-		List<EventSource<T>> removedSources = new ArrayList<EventSource<T>>();
+		List<EventSource<T>> removedSources = new ArrayList<>();
 		for(EventSource<T> src : sources)
 		{
 			if(source.equals(src.getSourceIdentifier()))
@@ -122,17 +123,20 @@ public class SourceManagerImpl<T extends Serializable>
 		}
 	}
 
+	@Override
 	public List<EventSource<T>> getSources()
 	{
-		return new ArrayList<EventSource<T>>(sources);
+		return new ArrayList<>(sources);
 	}
 
 
+	@Override
 	public int getNumberOfSources()
 	{
 		return sources.size();
 	}
 
+	@Override
 	public void addEventSourceProducer(EventSourceProducer<T> producer)
 	{
 		producer.setQueue(queue);
@@ -140,7 +144,6 @@ public class SourceManagerImpl<T extends Serializable>
 		eventSourceProducers.add(producer);
 	}
 
-	// SourceIdentifiers can change so they are not suitable as the key of a Map.
 	private EventProducer<T> findProducer(SourceIdentifier id)
 	{
 		if(id == null)
@@ -150,6 +153,9 @@ public class SourceManagerImpl<T extends Serializable>
 		eventProducersLock.lock();
 		try
 		{
+			// The SourceIdentifier of an EventProducer can change so it is not
+			// suitable as the key of a Map.
+			// See SourceIdentifierUpdater and its implementations.
 			for(EventProducer<T> current : eventProducers)
 			{
 				if(id.equals(current.getSourceIdentifier()))
@@ -165,23 +171,12 @@ public class SourceManagerImpl<T extends Serializable>
 		}
 	}
 
+	@Override
 	public void addEventProducer(EventProducer<T> producer)
 	{
 		SourceIdentifier id = producer.getSourceIdentifier();
-		EventProducer previous = findProducer(id);
-		if(previous != null)
-		{
-			previous.close();
-			eventProducersLock.lock();
-			try
-			{
-				eventProducers.remove(previous);
-			}
-			finally
-			{
-				eventProducersLock.unlock();
-			}
-		}
+		removeEventProducer(id);
+
 		eventProducersLock.lock();
 		try
 		{
@@ -195,6 +190,7 @@ public class SourceManagerImpl<T extends Serializable>
 		if(logger.isDebugEnabled()) logger.debug("Started {}.", producer);
 	}
 
+	@Override
 	public void removeEventProducer(SourceIdentifier id)
 	{
 		EventProducer previous = findProducer(id);
@@ -213,17 +209,20 @@ public class SourceManagerImpl<T extends Serializable>
 		}
 	}
 
+	@Override
 	public void setEventHandlers(List<EventHandler<T>> handlers)
 	{
 		eventPoller.setEventHandlers(handlers);
 	}
 
+	@Override
 	public List<EventHandler<T>> getEventHandlers()
 	{
 		return eventPoller.getEventHandlers();
 	}
 
 
+	@Override
 	public void addEventSourceListener(EventSourceListener<T> listener)
 	{
 		if(!listeners.contains(listener))
@@ -232,6 +231,7 @@ public class SourceManagerImpl<T extends Serializable>
 		}
 	}
 
+	@Override
 	public void removeEventSourceListener(EventSourceListener<T> listener)
 	{
 		if(listeners.contains(listener))
@@ -245,11 +245,13 @@ public class SourceManagerImpl<T extends Serializable>
 		changeSupport.addPropertyChangeListener(listener);
 	}
 
+	@SuppressWarnings("unused")
 	public void removePropertyChangeListener(PropertyChangeListener listener)
 	{
 		changeSupport.removePropertyChangeListener(listener);
 	}
 
+	@Override
 	public void start()
 	{
 		// start poller...
@@ -264,7 +266,7 @@ public class SourceManagerImpl<T extends Serializable>
 		{
 			if(handler instanceof Runnable)
 			{
-				Thread t = new Thread((Runnable) handler, "Consumer-Thread");
+				Thread t = new Thread((Runnable) handler, "Consumer-Thread"); // NOPMD - AvoidInstantiatingObjectsInLoops
 				t.setDaemon(true);
 				t.start();
 				if(logger.isInfoEnabled()) logger.info("Started {}.", t);
@@ -276,7 +278,7 @@ public class SourceManagerImpl<T extends Serializable>
 		{
 			if(current instanceof Runnable)
 			{
-				Thread t = new Thread((Runnable) current, "Producer-Thread-" + current);
+				Thread t = new Thread((Runnable) current, "Producer-Thread-" + current); // NOPMD - AvoidInstantiatingObjectsInLoops
 				t.setDaemon(true);
 				t.start();
 				if(logger.isInfoEnabled()) logger.info("Started {}.", t);

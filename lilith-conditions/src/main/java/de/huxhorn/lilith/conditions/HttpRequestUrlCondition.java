@@ -1,6 +1,6 @@
 /*
  * Lilith - a log event viewer.
- * Copyright (C) 2007-2013 Joern Huxhorn
+ * Copyright (C) 2007-2017 Joern Huxhorn
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,13 +15,14 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package de.huxhorn.lilith.conditions;
 
 import de.huxhorn.lilith.data.access.AccessEvent;
 import de.huxhorn.lilith.data.eventsource.EventWrapper;
 
 public class HttpRequestUrlCondition
-	implements LilithCondition, SearchStringCondition
+	implements LilithCondition, SearchStringCondition, Cloneable
 {
 	private static final long serialVersionUID = -2026756450071662287L;
 
@@ -44,16 +45,19 @@ public class HttpRequestUrlCondition
 		this.searchString = searchString;
 	}
 
+	@Override
 	public String getSearchString()
 	{
 		return searchString;
 	}
 
+	@Override
 	public String getDescription()
 	{
 		return DESCRIPTION;
 	}
 
+	@Override
 	public boolean isTrue(Object value)
 	{
 		if(searchString == null)
@@ -86,9 +90,7 @@ public class HttpRequestUrlCondition
 
 		HttpRequestUrlCondition that = (HttpRequestUrlCondition) o;
 
-		if (searchString != null ? !searchString.equals(that.searchString) : that.searchString != null) return false;
-
-		return true;
+		return searchString != null ? searchString.equals(that.searchString) : that.searchString == null;
 	}
 
 	@Override
@@ -97,6 +99,7 @@ public class HttpRequestUrlCondition
 		return searchString != null ? searchString.hashCode() : 0;
 	}
 
+	@Override
 	public HttpRequestUrlCondition clone()
 		throws CloneNotSupportedException
 	{
@@ -108,7 +111,14 @@ public class HttpRequestUrlCondition
 	{
 		StringBuilder result = new StringBuilder();
 		result.append(getDescription());
-		result.append(searchString);
+		if(searchString != null)
+		{
+			result.append('"').append(searchString).append('"');
+		}
+		else
+		{
+			result.append("null");
+		}
 		return result.toString();
 	}
 }

@@ -1,23 +1,23 @@
 /*
  * Lilith - a log event viewer.
- * Copyright (C) 2007-2011 Joern Huxhorn
- * 
+ * Copyright (C) 2007-2017 Joern Huxhorn
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 /*
- * Copyright 2007-2011 Joern Huxhorn
+ * Copyright 2007-2017 Joern Huxhorn
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,8 +36,8 @@ package de.huxhorn.lilith.data.logging.xml;
 
 public interface LoggingEventSchemaConstants
 {
-	String NAMESPACE_URI = "http://lilith.sf.net/schema/logging/14";
-	String NAMESPACE_LOCATION = "http://lilith.sf.net/schema/logging/14/LoggingEvent.xsd";
+	String NAMESPACE_URI = "http://lilith.sf.net/schema/logging/16";
+	String NAMESPACE_LOCATION = "http://lilith.sf.net/schema/logging/16/LoggingEvent.xsd";
 
 	String DEFAULT_NAMESPACE_PREFIX = "log";
 
@@ -56,6 +56,7 @@ public interface LoggingEventSchemaConstants
 	String THREAD_ID_ATTRIBUTE = "threadId";
 	String THREAD_GROUP_NAME_ATTRIBUTE = "threadGroup";
 	String THREAD_GROUP_ID_ATTRIBUTE = "threadGroupId";
+	String THREAD_PRIORITY_ATTRIBUTE = "threadPriority";
 	String TIMESTAMP_ATTRIBUTE = "timeStamp";
 	String TIMESTAMP_MILLIS_ATTRIBUTE = "timeStampMillis";
 
@@ -82,6 +83,9 @@ public interface LoggingEventSchemaConstants
 
 	String STACK_TRACE_NODE = "StackTrace";
 	String STACK_TRACE_ELEMENT_NODE = "StackTraceElement";
+	String ST_CLASS_LOADER_NAME_ATTRIBUTE = "classLoaderName";
+	String ST_MODULE_NAME_ATTRIBUTE = "moduleName";
+	String ST_MODULE_VERSION_ATTRIBUTE = "moduleVersion";
 	String ST_CLASS_NAME_ATTRIBUTE = "className";
 	String ST_METHOD_NAME_ATTRIBUTE = "methodName";
 	String ST_FILE_NAME_ATTRIBUTE = "fileName";

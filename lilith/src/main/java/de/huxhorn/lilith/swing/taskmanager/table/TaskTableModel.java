@@ -1,6 +1,6 @@
 /*
  * Lilith - a log event viewer.
- * Copyright (C) 2007-2011 Joern Huxhorn
+ * Copyright (C) 2007-2018 Joern Huxhorn
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,76 +15,70 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package de.huxhorn.lilith.swing.taskmanager.table;
 
-import de.huxhorn.sulky.io.IOUtilities;
 import de.huxhorn.sulky.swing.RowBasedTableModel;
 import de.huxhorn.sulky.tasks.Task;
 import de.huxhorn.sulky.tasks.TaskListener;
 import de.huxhorn.sulky.tasks.TaskManager;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ExecutionException;
-
 import javax.swing.event.EventListenerList;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-public class TaskTableModel<T>
+public final class TaskTableModel<T>
 	implements RowBasedTableModel<Task<T>>
 {
 	private final Logger logger = LoggerFactory.getLogger(TaskTableModel.class);
 
 	private final List<Task<T>> tasks;
 	private final EventListenerList eventListenerList;
-	private Comparator<Task<T>> taskComparator = new Comparator<Task<T>>()
-	{
-		public int compare(Task<T> task1, Task<T> task2)
-		{
-			return (int) (task1.getId() - task2.getId());
-		}
-	};
+	private final Comparator<Task<T>> taskComparator =
+			(task1, task2) -> (int) (task1.getId() - task2.getId());
 
-	public static final int ID_INDEX = 0;
-	public static final int NAME_INDEX = 1;
-	public static final int PROGRESS_INDEX = 2;
+	static final int ID_INDEX = 0;
+	static final int NAME_INDEX = 1;
+	static final int PROGRESS_INDEX = 2;
 
 	private static final Class[] COLUMN_CLASSES =
 		{
 			Long.class,
 			String.class,
-			Integer.class
+			Integer.class,
 		};
 
 	private static final String[] COLUMN_NAMES =
 		{
 			"ID",
 			"Name",
-			"Progress"
+			"Progress",
 		};
 
-	private TaskManager<T> taskManager;
+	private final TaskManager<T> taskManager;
 	private boolean paused;
-	private TaskListener<T> taskListener;
 
-
-	public TaskTableModel(TaskManager<T> taskManager)
+	TaskTableModel(TaskManager<T> taskManager)
 	{
-		this.tasks = new ArrayList<Task<T>>();
+		this.tasks = new ArrayList<>();
 		this.paused = true;
 		this.eventListenerList = new EventListenerList();
-		this.taskListener = new UpdateViewTaskListener();
 
-		setTaskManager(taskManager);
+		TaskListener<T> taskListener = new UpdateViewTaskListener();
+
+		this.taskManager = Objects.requireNonNull(taskManager, "taskManager must not be null!");
+		this.taskManager.addTaskListener(taskListener);
 	}
 
+	@Override
 	public Class<?> getColumnClass(int columnIndex)
 	{
 		if(columnIndex >= 0 && columnIndex < COLUMN_CLASSES.length)
@@ -94,11 +88,13 @@ public class TaskTableModel<T>
 		return null;
 	}
 
+	@Override
 	public boolean isCellEditable(int rowIndex, int columnIndex)
 	{
 		return false;
 	}
 
+	@Override
 	public Object getValueAt(int rowIndex, int columnIndex)
 	{
 		Task<T> task = getValueAt(rowIndex);
@@ -114,14 +110,18 @@ public class TaskTableModel<T>
 				return task.getName();
 			case PROGRESS_INDEX:
 				return task.getProgress();
+			default:
+				return null;
 		}
-		return null;
 	}
 
+	@Override
 	public void setValueAt(Object o, int rowIndex, int columnIndex)
 	{
+		// read-only
 	}
 
+	@Override
 	public void addTableModelListener(TableModelListener l)
 	{
 		synchronized(eventListenerList)
@@ -130,6 +130,7 @@ public class TaskTableModel<T>
 		}
 	}
 
+	@Override
 	public void removeTableModelListener(TableModelListener l)
 	{
 		synchronized(eventListenerList)
@@ -138,16 +139,19 @@ public class TaskTableModel<T>
 		}
 	}
 
+	@Override
 	public int getRowCount()
 	{
 		return tasks.size();
 	}
 
+	@Override
 	public int getColumnCount()
 	{
 		return COLUMN_CLASSES.length;
 	}
 
+	@Override
 	public String getColumnName(int columnIndex)
 	{
 		if(columnIndex >= 0 && columnIndex < COLUMN_NAMES.length)
@@ -157,13 +161,14 @@ public class TaskTableModel<T>
 		return null;
 	}
 
+	@Override
 	public Task<T> getValueAt(int row)
 	{
 		logger.debug("getValueAt {}", row);
 		if(row >= 0 && row < tasks.size())
 		{
 			Task<T> result = tasks.get(row);
-			logger.debug("getValueAt {} result={}", result);
+			logger.debug("getValueAt {} result={}", row, result);
 			return result;
 		}
 		logger.debug("getValueAt {} is null!", row);
@@ -195,7 +200,6 @@ public class TaskTableModel<T>
 				catch(Throwable ex)
 				{
 					if(logger.isWarnEnabled()) logger.warn("Exception while firing change!", ex);
-					IOUtilities.interruptIfNecessary(ex);
 				}
 			}
 		}
@@ -266,35 +270,10 @@ public class TaskTableModel<T>
 
 	}
 
-	public TaskManager<?> getTaskManager()
-	{
-		return taskManager;
-	}
-
-	public void setTaskManager(TaskManager<T> taskManager)
-	{
-		if(this.taskManager != null)
-		{
-			this.taskManager.removeTaskListener(taskListener);
-		}
-		this.taskManager = taskManager;
-		if(this.taskManager != null)
-		{
-			this.taskManager.addTaskListener(taskListener);
-		}
-		if(!paused)
-		{
-			initTasks();
-		}
-		else
-		{
-			clearTasks();
-		}
-	}
-
 	private class UpdateViewTaskListener
 		implements TaskListener<T>
 	{
+		@Override
 		public void taskCreated(Task<T> task)
 		{
 			if(!paused)
@@ -303,6 +282,7 @@ public class TaskTableModel<T>
 			}
 		}
 
+		@Override
 		public void executionFailed(Task<T> task, ExecutionException exception)
 		{
 			if(!paused)
@@ -311,6 +291,7 @@ public class TaskTableModel<T>
 			}
 		}
 
+		@Override
 		public void executionFinished(Task<T> task, T result)
 		{
 			if(!paused)
@@ -319,6 +300,7 @@ public class TaskTableModel<T>
 			}
 		}
 
+		@Override
 		public void executionCanceled(Task<T> task)
 		{
 			if(!paused)
@@ -327,6 +309,7 @@ public class TaskTableModel<T>
 			}
 		}
 
+		@Override
 		public void progressUpdated(Task<T> task, int progress)
 		{
 			if(!paused)

@@ -1,53 +1,53 @@
 /*
  * Lilith - a log event viewer.
- * Copyright (C) 2007-2011 Joern Huxhorn
- * 
+ * Copyright (C) 2007-2017 Joern Huxhorn
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package de.huxhorn.lilith.swing.preferences;
 
 import de.huxhorn.lilith.swing.ApplicationPreferences;
-
-import java.awt.*;
-
-import javax.swing.*;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.GridLayout;
+import javax.swing.JCheckBox;
+import javax.swing.JPanel;
 import javax.swing.border.EtchedBorder;
 import javax.swing.border.TitledBorder;
 
 public class StartupShutdownPanel
 	extends JPanel
 {
-	private ApplicationPreferences applicationPreferences;
+	private static final long serialVersionUID = -9006510598658979763L;
+
+	private final ApplicationPreferences applicationPreferences;
 
 	// Startup
-	private JCheckBox showSplashCheckbox;
-	private JCheckBox showTipOfTheDayCheckbox;
-	private JCheckBox checkForUpdateCheckbox;
-	private JCheckBox checkForSnapshotCheckbox;
+	private final JCheckBox showSplashCheckbox;
+	private final JCheckBox showTipOfTheDayCheckbox;
+	private final JCheckBox checkForUpdateCheckbox;
+	private final JCheckBox checkForSnapshotCheckbox;
 
 	// Shutdown
-	private JCheckBox askBeforeQuitCheckbox;
-	private JCheckBox cleaningLogsOnExitCheckbox;
+	private final JCheckBox askBeforeQuitCheckbox;
+	private final JCheckBox cleaningLogsOnExitCheckbox;
 
-	public StartupShutdownPanel(PreferencesDialog preferencesDialog)
+	StartupShutdownPanel(PreferencesDialog preferencesDialog)
 	{
 		this.applicationPreferences = preferencesDialog.getApplicationPreferences();
-		createUI();
-	}
 
-	private void createUI()
-	{
 		showSplashCheckbox = new JCheckBox("Show splash screen.");
 		checkForUpdateCheckbox = new JCheckBox("Check for updates on startup.");
 		checkForSnapshotCheckbox = new JCheckBox("Check also for pre-release versions instead of just releases.");
@@ -99,7 +99,7 @@ public class StartupShutdownPanel
 		cleaningLogsOnExitCheckbox.setSelected(applicationPreferences.isCleaningLogsOnExit());
 	}
 
-	public void saveSettings()
+	void saveSettings()
 	{
 		applicationPreferences.setSplashScreenDisabled(!showSplashCheckbox.isSelected());
 		applicationPreferences.setCheckingForUpdate(checkForUpdateCheckbox.isSelected());
@@ -110,17 +110,17 @@ public class StartupShutdownPanel
 		applicationPreferences.setCleaningLogsOnExit(cleaningLogsOnExitCheckbox.isSelected());
 	}
 
-	public void setShowingTipOfTheDay(boolean showingTipOfTheDay)
+	void setShowingTipOfTheDay(boolean showingTipOfTheDay)
 	{
 		showTipOfTheDayCheckbox.setSelected(showingTipOfTheDay);
 	}
 
-	public void setCheckingForUpdate(boolean checkingForUpdate)
+	void setCheckingForUpdate(boolean checkingForUpdate)
 	{
 		checkForUpdateCheckbox.setSelected(checkingForUpdate);
 	}
 
-	public void setCheckingForSnapshot(boolean checkingForSnapshot)
+	void setCheckingForSnapshot(boolean checkingForSnapshot)
 	{
 		checkForSnapshotCheckbox.setSelected(checkingForSnapshot);
 	}

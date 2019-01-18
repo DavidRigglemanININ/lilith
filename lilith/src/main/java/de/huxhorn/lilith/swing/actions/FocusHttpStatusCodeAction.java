@@ -1,6 +1,6 @@
 /*
  * Lilith - a log event viewer.
- * Copyright (C) 2007-2013 Joern Huxhorn
+ * Copyright (C) 2007-2018 Joern Huxhorn
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,13 +15,14 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package de.huxhorn.lilith.swing.actions;
 
 import de.huxhorn.lilith.conditions.HttpStatusCodeCondition;
 import de.huxhorn.lilith.data.access.HttpStatus;
 import de.huxhorn.sulky.conditions.Condition;
-
-import javax.swing.*;
+import java.awt.event.ActionEvent;
+import javax.swing.Action;
 
 public class FocusHttpStatusCodeAction
 		extends AbstractAccessFilterAction
@@ -31,64 +32,54 @@ public class FocusHttpStatusCodeAction
 
 	public FocusHttpStatusCodeAction()
 	{
-		super("Status code");
+		super("Status code", false);
 	}
 
 	protected void setStatusCode(Integer statusCode)
 	{
-		this.statusCode = statusCode;
-		if(statusCode != null)
+		if(statusCode == null || statusCode < 100 || statusCode >= 600)
 		{
-			HttpStatus status = HttpStatus.getStatus(statusCode);
-			if(status != null)
-			{
-				putValue(Action.SHORT_DESCRIPTION, status.getCode() + " - " + status.getDescription());
-			}
-			else
-			{
-				putValue(Action.SHORT_DESCRIPTION, statusCode);
-			}
-
-			setEnabled(true);
-		}
-		else
-		{
+			this.statusCode = null;
 			putValue(Action.SHORT_DESCRIPTION, null);
 
 			setEnabled(false);
+			return;
 		}
+
+		this.statusCode = statusCode;
+		HttpStatus status = HttpStatus.getStatus(statusCode);
+		if(status != null)
+		{
+			putValue(Action.SHORT_DESCRIPTION, status.getCode() + " - " + status.getDescription());
+		}
+		else
+		{
+			putValue(Action.SHORT_DESCRIPTION, Integer.toString(statusCode));
+		}
+
+		setEnabled(true);
 	}
 
 	@Override
 	protected void updateState()
 	{
-		if(viewContainer == null)
-		{
-			setStatusCode(null);
-			return;
-		}
-
 		if(accessEvent != null)
 		{
-			int statusCode = accessEvent.getStatusCode();
-			if(statusCode < 100 || statusCode >= 600)
-			{
-				setStatusCode(null);
-			}
-			else
-			{
-				setStatusCode(statusCode);
-			}
+			setStatusCode(accessEvent.getStatusCode());
+		}
+		else
+		{
+			setStatusCode(null);
 		}
 	}
 
 	@Override
-	public Condition resolveCondition()
+	public Condition resolveCondition(ActionEvent e)
 	{
-		if(statusCode == null)
+		if(!isEnabled())
 		{
 			return null;
 		}
-		return new HttpStatusCodeCondition(""+statusCode);
+		return new HttpStatusCodeCondition(Integer.toString(statusCode));
 	}
 }

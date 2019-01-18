@@ -1,20 +1,21 @@
 /*
  * Lilith - a log event viewer.
- * Copyright (C) 2007-2011 Joern Huxhorn
- * 
+ * Copyright (C) 2007-2018 Joern Huxhorn
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package de.huxhorn.lilith.swing.preferences;
 
 import de.huxhorn.lilith.data.eventsource.EventWrapper;
@@ -26,12 +27,7 @@ import de.huxhorn.lilith.swing.LilithKeyStrokes;
 import de.huxhorn.lilith.swing.MainFrame;
 import de.huxhorn.sulky.conditions.Condition;
 import de.huxhorn.sulky.swing.KeyStrokes;
-
 import groovy.ui.Console;
-import org.apache.commons.io.IOUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.awt.BorderLayout;
 import java.awt.CardLayout;
 import java.awt.Component;
@@ -39,78 +35,115 @@ import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.event.ActionEvent;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
 import java.awt.event.KeyEvent;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
-
 import javax.swing.AbstractAction;
 import javax.swing.Action;
-import javax.swing.DefaultComboBoxModel;
+import javax.swing.DefaultListModel;
 import javax.swing.JButton;
-import javax.swing.JComboBox;
 import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JList;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTextPane;
 import javax.swing.KeyStroke;
 import javax.swing.ListCellRenderer;
 import javax.swing.SwingConstants;
+import javax.swing.border.EmptyBorder;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
+import org.apache.commons.io.IOUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class PreferencesDialog
 	extends JDialog
 {
+	private static final long serialVersionUID = 8313102215860746241L;
+
+	@SuppressWarnings("PMD.FieldNamingConventions")
 	public enum Panes
 	{
-		General,
-		StartupShutdown,
-		Windows,
-		Sounds,
-		Sources,
-		SourceLists,
-		SourceFiltering,
-		Conditions,
-		LoggingLevels,
-		AccessStatus,
-		Troubleshooting
+		General("General"),
+		StartupShutdown("Startup & Shutdown", "Configure behavior at startup and shutdown."),
+		Windows("Windows"),
+		Sounds("Sounds", "Configure sounds or mute them entirely."),
+		Sources("Sources", "Configure human-readable names for source IP addresses."),
+		SourceLists("Source Lists", "Manage lists of sources. Those are used for Source filtering."),
+		SourceFiltering("Source Filtering", "Configure which hosts are allowed to connect."),
+		Conditions("Conditions", "Manage saved conditions and configure their styling."),
+		LoggingLevels("Logging levels", "Configure the styling of the different logging levels."),
+		AccessStatus("Access status types", "Configure the styling of the different access status types."),
+		Troubleshooting("Troubleshooting", "Got a problem? Broke something? Take a look here.");
+
+		private final String title;
+		private final String tooltip;
+
+		Panes(String title)
+		{
+			this(title, title);
+		}
+
+		Panes(String title, String tooltip)
+		{
+			this.title = Objects.requireNonNull(title, "title must not be null!");
+			this.tooltip = Objects.requireNonNull(tooltip, "tooltip must not be null!");
+		}
+
+		public String getTitle()
+		{
+			return title;
+		}
+
+		public String getTooltip()
+		{
+			return tooltip;
+		}
+	}
+
+	@SuppressWarnings("PMD.FieldNamingConventions")
+	public enum Actions
+	{
+		reinitializeDetailsViewFiles
 	}
 
 	private final Logger logger = LoggerFactory.getLogger(PreferencesDialog.class);
 
-	private ApplicationPreferences applicationPreferences;
-	private MainFrame mainFrame;
+	private final ApplicationPreferences applicationPreferences;
+	private final MainFrame mainFrame;
 
-	private JComboBox comboBox;
-	private DefaultComboBoxModel comboBoxModel;
-	private CardLayout cardLayout;
-	private JPanel content;
+	private final JList<Panes> paneSelectionList;
+	private final CardLayout cardLayout;
+	private final JPanel content;
 
-	private GeneralPanel generalPanel;
-	private StartupShutdownPanel startupShutdownPanel;
-	private WindowsPanel windowsPanel;
-	private SoundsPanel soundsPanel;
-	private SourcesPanel sourcesPanel;
-	private SourceListsPanel sourceListsPanel;
-	private ConditionsPanel conditionsPanel;
-	private LoggingLevelPanel loggingLevelPanel;
-	private AccessStatusTypePanel accessStatusTypePanel;
+	private final GeneralPanel generalPanel;
+	private final StartupShutdownPanel startupShutdownPanel;
+	private final WindowsPanel windowsPanel;
+	private final SoundsPanel soundsPanel;
+	private final SourcesPanel sourcesPanel;
+	private final SourceListsPanel sourceListsPanel;
+	private final ConditionsPanel conditionsPanel;
+	private final LoggingLevelPanel loggingLevelPanel;
+	private final AccessStatusTypePanel accessStatusTypePanel;
+	private final SourceFilteringPanel sourceFilteringPanel;
 
 	private Map<String, String> sourceNames;
 	private Map<String, Set<String>> sourceLists;
-	private SourceFilteringPanel sourceFilteringPanel;
 	private String blackListName;
 	private String whiteListName;
 	private LilithPreferences.SourceFiltering sourceFiltering;
@@ -120,21 +153,7 @@ public class PreferencesDialog
 		super(mainFrame, "Preferences");
 		this.mainFrame = mainFrame;
 		this.applicationPreferences = mainFrame.getApplicationPreferences();
-		createUI();
-	}
 
-	public ApplicationPreferences getApplicationPreferences()
-	{
-		return applicationPreferences;
-	}
-
-	public MainFrame getMainFrame()
-	{
-		return mainFrame;
-	}
-
-	private void createUI()
-	{
 		generalPanel = new GeneralPanel(this);
 		startupShutdownPanel = new StartupShutdownPanel(this);
 		windowsPanel = new WindowsPanel(this);
@@ -147,19 +166,21 @@ public class PreferencesDialog
 		accessStatusTypePanel = new AccessStatusTypePanel(this);
 		TroubleshootingPanel troubleshootingPanel = new TroubleshootingPanel(this);
 
-		comboBoxModel = new DefaultComboBoxModel();
+		DefaultListModel<Panes> paneSelectionListModel = new DefaultListModel<>();
 		for(Panes current : Panes.values())
 		{
-			comboBoxModel.addElement(current);
+			paneSelectionListModel.addElement(current);
 		}
-		comboBox = new JComboBox(comboBoxModel);
-		comboBox.setRenderer(new MyComboBoxRenderer());
-		comboBox.setEditable(false);
-		comboBox.addItemListener(new ComboItemListener());
+		paneSelectionList = new JList<>(paneSelectionListModel);
+		paneSelectionList.setCellRenderer(new PaneSelectionListCellRenderer());
+		paneSelectionList.setSelectedValue(Panes.General, true);
+		paneSelectionList.addListSelectionListener(new PaneSelectionListener());
+		paneSelectionList.setBorder(new EmptyBorder(4, 4, 0, 4));
 
 		cardLayout = new CardLayout();
 		content = new JPanel(cardLayout);
 		content.setPreferredSize(new Dimension(600, 500));
+		content.setBorder(new EmptyBorder(4, 4, 0, 4));
 
 		content.add(generalPanel, Panes.General.toString());
 		content.add(startupShutdownPanel, Panes.StartupShutdown.toString());
@@ -185,7 +206,7 @@ public class PreferencesDialog
 
 		Container contentPane = getContentPane();
 		contentPane.setLayout(new BorderLayout());
-		contentPane.add(comboBox, BorderLayout.NORTH);
+		contentPane.add(paneSelectionList, BorderLayout.WEST);
 		contentPane.add(content, BorderLayout.CENTER);
 		contentPane.add(buttonPanel, BorderLayout.SOUTH);
 		KeyStrokes.registerCommand(content, okAction, "OK_ACTION");
@@ -204,11 +225,11 @@ public class PreferencesDialog
 		sourceNames = applicationPreferences.getSourceNames();
 		if(sourceNames == null)
 		{
-			sourceNames = new HashMap<String, String>();
+			sourceNames = new HashMap<>();
 		}
 		else
 		{
-			sourceNames = new HashMap<String, String>(sourceNames);
+			sourceNames = new HashMap<>(sourceNames);
 		}
 		sourceLists = applicationPreferences.getSourceLists();
 		conditionsPanel.initUI();
@@ -219,19 +240,22 @@ public class PreferencesDialog
 		accessStatusTypePanel.initUI();
 	}
 
-	public Map<String, String> getSourceNames()
+	public ApplicationPreferences getApplicationPreferences()
+	{
+		return applicationPreferences;
+	}
+
+	public MainFrame getMainFrame()
+	{
+		return mainFrame;
+	}
+
+	Map<String, String> getSourceNames()
 	{
 		return sourceNames;
 	}
 
-	public void setSourceNames(Map<String, String> sourceNames)
-	{
-		this.sourceNames = sourceNames;
-		sourcesPanel.initUI();
-		sourceListsPanel.initUI();
-	}
-
-	public void setSourceName(String oldIdentifier, String newIdentifier, String sourceName)
+	void setSourceName(String oldIdentifier, String newIdentifier, String sourceName)
 	{
 		if(sourceNames.containsKey(oldIdentifier))
 		{
@@ -242,13 +266,13 @@ public class PreferencesDialog
 		sourceListsPanel.initUI();
 	}
 
-	public void setSourceList(String oldName, String newName, List<Source> sourceList)
+	void setSourceList(String oldName, String newName, List<Source> sourceList)
 	{
 		if(sourceLists.containsKey(oldName))
 		{
 			sourceLists.remove(oldName);
 		}
-		Set<String> newList = new HashSet<String>();
+		Set<String> newList = new HashSet<>();
 		for(Source s : sourceList)
 		{
 			newList.add(s.getIdentifier());
@@ -263,15 +287,15 @@ public class PreferencesDialog
 	 * @param name the name of the source list
 	 * @return the source list of the given name or an empty List
 	 */
-	public List<Source> getSourceList(String name)
+	List<Source> getSourceList(String name)
 	{
 		Set<String> srcList = sourceLists.get(name);
 		if(srcList != null)
 		{
-			List<Source> result = new ArrayList<Source>();
+			List<Source> result = new ArrayList<>();
 			for(String current : srcList)
 			{
-				Source s = new Source();
+				Source s = new Source(); // NOPMD - AvoidInstantiatingObjectsInLoops
 				s.setIdentifier(current);
 				s.setName(getSourceName(current));
 				result.add(s);
@@ -279,7 +303,7 @@ public class PreferencesDialog
 			Collections.sort(result);
 			return result;
 		}
-		return new ArrayList<Source>();
+		return new ArrayList<>();
 	}
 
 	private String getSourceName(String identifier)
@@ -311,10 +335,11 @@ public class PreferencesDialog
 
 	private void resetSettings()
 	{
-		// just reinit from preferences, nobody would expect anything else...
+		// just re-init from preferences, nobody would expect anything else...
 		initUI();
 	}
 
+	@Override
 	public void setVisible(boolean visible)
 	{
 		if(visible != isVisible())
@@ -327,12 +352,12 @@ public class PreferencesDialog
 		}
 	}
 
-	public List<String> getSourceListNames()
+	List<String> getSourceListNames()
 	{
-		return new ArrayList<String>(sourceLists.keySet());
+		return new ArrayList<>(sourceLists.keySet());
 	}
 
-	public void removeSourceList(String sourceListName)
+	void removeSourceList(String sourceListName)
 	{
 		if(sourceLists.containsKey(sourceListName))
 		{
@@ -342,7 +367,7 @@ public class PreferencesDialog
 		}
 	}
 
-	public String getBlackListName()
+	String getBlackListName()
 	{
 		if(blackListName == null)
 		{
@@ -351,7 +376,7 @@ public class PreferencesDialog
 		return blackListName;
 	}
 
-	public String getWhiteListName()
+	String getWhiteListName()
 	{
 		if(whiteListName == null)
 		{
@@ -360,7 +385,7 @@ public class PreferencesDialog
 		return whiteListName;
 	}
 
-	public LilithPreferences.SourceFiltering getSourceFiltering()
+	LilithPreferences.SourceFiltering getSourceFiltering()
 	{
 		if(sourceFiltering == null)
 		{
@@ -369,17 +394,17 @@ public class PreferencesDialog
 		return sourceFiltering;
 	}
 
-	public void setSourceFiltering(LilithPreferences.SourceFiltering sourceFiltering)
+	void setSourceFiltering(LilithPreferences.SourceFiltering sourceFiltering)
 	{
 		this.sourceFiltering = sourceFiltering;
 	}
 
-	public void setBlackListName(String blackListName)
+	void setBlackListName(String blackListName)
 	{
 		this.blackListName = blackListName;
 	}
 
-	public void setWhiteListName(String whiteListName)
+	void setWhiteListName(String whiteListName)
 	{
 		this.whiteListName = whiteListName;
 	}
@@ -404,7 +429,7 @@ public class PreferencesDialog
 	{
 		private static final long serialVersionUID = 3395474960394431088L;
 
-		public OkAction()
+		OkAction()
 		{
 			super("Ok");
 			KeyStroke accelerator = LilithKeyStrokes.getKeyStroke(LilithKeyStrokes.ENTER);
@@ -412,6 +437,7 @@ public class PreferencesDialog
 			putValue(Action.MNEMONIC_KEY, KeyEvent.VK_O);
 		}
 
+		@Override
 		public void actionPerformed(ActionEvent e)
 		{
 			saveSettings();
@@ -424,12 +450,13 @@ public class PreferencesDialog
 	{
 		private static final long serialVersionUID = -4047672339764590549L;
 
-		public ApplyAction()
+		ApplyAction()
 		{
 			super("Apply");
 			putValue(Action.MNEMONIC_KEY, KeyEvent.VK_A);
 		}
 
+		@Override
 		public void actionPerformed(ActionEvent e)
 		{
 			saveSettings();
@@ -441,12 +468,13 @@ public class PreferencesDialog
 	{
 		private static final long serialVersionUID = -7109027518233905200L;
 
-		public ResetAction()
+		ResetAction()
 		{
 			super("Reset");
 			putValue(Action.MNEMONIC_KEY, KeyEvent.VK_R);
 		}
 
+		@Override
 		public void actionPerformed(ActionEvent e)
 		{
 			resetSettings();
@@ -458,7 +486,7 @@ public class PreferencesDialog
 	{
 		private static final long serialVersionUID = 6933499606501725571L;
 
-		public CancelAction()
+		CancelAction()
 		{
 			super("Cancel");
 			KeyStroke accelerator = LilithKeyStrokes.getKeyStroke(LilithKeyStrokes.ESCAPE);
@@ -466,6 +494,7 @@ public class PreferencesDialog
 			putValue(Action.MNEMONIC_KEY, KeyEvent.VK_C);
 		}
 
+		@Override
 		public void actionPerformed(ActionEvent e)
 		{
 			setVisible(false);
@@ -478,20 +507,93 @@ public class PreferencesDialog
 		sourcesPanel.editSourceName(sourceIdentifier);
 	}
 
+	public void executeAction(Actions action)
+	{
+		if(logger.isInfoEnabled()) logger.info("Execute action {}.", action);
+		if(action == null)
+		{
+			return;
+		}
+		if(action == Actions.reinitializeDetailsViewFiles)
+		{
+			reinitializeDetailsViewFiles();
+		}
+	}
+
 	public void showPane(Panes pane)
 	{
-		if(pane != null)
+		if(pane == null)
 		{
-			cardLayout.show(content, pane.toString());
-			if(!pane.equals(comboBox.getSelectedItem()))
-			{
-				comboBox.setSelectedItem(pane);
-			}
+			return;
+		}
+		cardLayout.show(content, pane.toString());
+		if(!pane.equals(paneSelectionList.getSelectedValue()))
+		{
+			paneSelectionList.setSelectedValue(pane, true);
 		}
 		if(!isVisible())
 		{
 			mainFrame.showPreferencesDialog();
 		}
+	}
+
+	void reinitializeDetailsViewFiles()
+	{
+		String dialogTitle = "Reinitialize details view files?";
+		String message = "This resets all details view related files, all manual changes will be lost!\nReinitialize details view right now?";
+		int result = JOptionPane.showConfirmDialog(this, message, dialogTitle,
+				JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
+		// TODO: add "Show in Finder/Explorer" button if running on Mac/Windows
+		if(JOptionPane.OK_OPTION != result)
+		{
+			return;
+		}
+
+		applicationPreferences.initDetailsViewRoot(true);
+	}
+
+	void reinitializeGroovyConditions()
+	{
+		String dialogTitle = "Reinitialize example groovy conditions?";
+		String message = "This overwrites all example groovy conditions. Other conditions are not changed!\nReinitialize example groovy conditions right now?";
+		int result = JOptionPane.showConfirmDialog(this, message, dialogTitle,
+				JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
+		// TODO: add "Show in Finder/Explorer" button if running on Mac/Windows
+		if(JOptionPane.OK_OPTION != result)
+		{
+			return;
+		}
+
+		applicationPreferences.installExampleConditions();
+	}
+
+	void reinitializeGroovyClipboardFormatters()
+	{
+		String dialogTitle = "Reinitialize example groovy clipboard formatters?";
+		String message = "This overwrites all example groovy clipboard formatters. Other clipboard formatters are not changed!\nReinitialize example groovy clipboard formatters right now?";
+		int result = JOptionPane.showConfirmDialog(this, message, dialogTitle,
+				JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
+		// TODO: add "Show in Finder/Explorer" button if running on Mac/Windows
+		if(JOptionPane.OK_OPTION != result)
+		{
+			return;
+		}
+
+		applicationPreferences.installExampleClipboardFormatters();
+	}
+
+	void deleteAllLogs()
+	{
+		String dialogTitle = "Delete all log files?";
+		String message = "This deletes *all* log files, even the Lilith logs and the global logs!\nDelete all log files right now?";
+		int result = JOptionPane.showConfirmDialog(this, message, dialogTitle,
+				JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
+		if(JOptionPane.OK_OPTION != result)
+		{
+			return;
+		}
+
+		mainFrame.deleteAllLogs();
 	}
 
 	public void editDetailsFormatter()
@@ -500,7 +602,7 @@ public class PreferencesDialog
 		File messageViewRoot = applicationPreferences.getDetailsViewRoot();
 		File messageViewGroovyFile = new File(messageViewRoot, ApplicationPreferences.DETAILS_VIEW_GROOVY_FILENAME);
 
-		EventWrapper<LoggingEvent> eventWrapper = new EventWrapper<LoggingEvent>(new SourceIdentifier("identifier", "secondaryIdentifier"), 17, new LoggingEvent());
+		EventWrapper<LoggingEvent> eventWrapper = new EventWrapper<>(new SourceIdentifier("identifier", "secondaryIdentifier"), 17, new LoggingEvent());
 		console.setVariable("eventWrapper", eventWrapper);
 
 		console.setCurrentFileChooserDir(messageViewRoot);
@@ -511,23 +613,20 @@ public class PreferencesDialog
 		}
 		if(messageViewGroovyFile.isFile())
 		{
-			InputStream is;
-			try
+			try(InputStream is = Files.newInputStream(messageViewGroovyFile.toPath()))
 			{
-				is = new FileInputStream(messageViewGroovyFile);
-				List lines = IOUtils.readLines(is, "UTF-8");
+				List<String> lines = IOUtils.readLines(is, StandardCharsets.UTF_8);
 				boolean isFirst = true;
 				StringBuilder textBuffer = new StringBuilder();
-				for(Object o : lines)
+				for(String s : lines)
 				{
-					String s = (String) o;
 					if(isFirst)
 					{
 						isFirst = false;
 					}
 					else
 					{
-						textBuffer.append("\n");
+						textBuffer.append('\n');
 					}
 					textBuffer.append(s);
 				}
@@ -535,10 +634,7 @@ public class PreferencesDialog
 			}
 			catch(IOException e)
 			{
-				if(logger.isInfoEnabled())
-				{
-					logger.info("Exception while reading '" + messageViewGroovyFile.getAbsolutePath() + "'.", e);
-				}
+				if(logger.isInfoEnabled()) logger.info("Exception while reading '{}'.", messageViewGroovyFile.getAbsolutePath(), e);
 			}
 		}
 		else
@@ -553,8 +649,8 @@ public class PreferencesDialog
 		Document doc = inputArea.getDocument();
 		try
 		{
-			doc.remove( 0, doc.getLength() );
-			doc.insertString( 0, text, null );
+			doc.remove(0, doc.getLength());
+			doc.insertString(0, text, null);
 		}
 		catch(BadLocationException e)
 		{
@@ -563,8 +659,6 @@ public class PreferencesDialog
 		console.setDirty(false);
 		inputArea.setCaretPosition(0);
 		inputArea.requestFocusInWindow();
-//		console.selectFilename();
-//		console.fileOpen();
 	}
 
 
@@ -574,20 +668,22 @@ public class PreferencesDialog
 		conditionsPanel.editCondition(condition);
 	}
 
-	private static class MyComboBoxRenderer
-		implements ListCellRenderer
+	private static class PaneSelectionListCellRenderer
+		implements ListCellRenderer<Panes>
 	{
-		private JLabel label;
+		private final JLabel label;
 
-		public MyComboBoxRenderer()
+		PaneSelectionListCellRenderer()
 		{
 			label = new JLabel();
 			label.setOpaque(true);
 			label.setHorizontalAlignment(SwingConstants.LEFT);
 			label.setVerticalAlignment(SwingConstants.CENTER);
+			label.setBorder(new EmptyBorder(2,2,2,2));
 		}
 
-		public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus)
+		@Override
+		public Component getListCellRendererComponent(JList<? extends Panes> list, Panes value, int index, boolean isSelected, boolean cellHasFocus)
 		{
 			if(isSelected)
 			{
@@ -601,76 +697,29 @@ public class PreferencesDialog
 			}
 
 			String title = null;
-			String toolTip = null;
+			String toolTipText = null;
 
-			if(value != null && value.getClass() == Panes.class)
+			if(value != null)
 			{
-				Panes panes = (Panes) value;
-
-				switch(panes)
-				{
-					case General:
-						title="General";
-						toolTip=null;
-						break;
-					case StartupShutdown:
-						title="Startup & Shutdown";
-						toolTip=null;
-						break;
-					case Windows:
-						title="Windows";
-						toolTip=null;
-						break;
-					case Sounds:
-						title="Sounds";
-						toolTip=null;
-						break;
-					case Sources:
-						title="Sources";
-						toolTip=null;
-						break;
-					case SourceLists:
-						title="Source Lists";
-						toolTip=null;
-						break;
-					case SourceFiltering:
-						title="Source Filtering";
-						toolTip=null;
-						break;
-					case Conditions:
-						title="Conditions";
-						toolTip=null;
-						break;
-					case LoggingLevels:
-						title="Logging levels";
-						toolTip=null;
-						break;
-					case AccessStatus:
-						title="Access status types";
-						toolTip=null;
-						break;
-					case Troubleshooting:
-						title="Troubleshooting";
-						toolTip=null;
-						break;
-				}
+				title = value.getTitle();
+				toolTipText = value.getTooltip();
 			}
 			label.setText(title);
-			label.setToolTipText(toolTip);
+			label.setToolTipText(toolTipText);
 
 			return label;
 		}
 	}
 
-	private class ComboItemListener
-		implements ItemListener
+	private class PaneSelectionListener
+		implements ListSelectionListener
 	{
-		public void itemStateChanged(ItemEvent e)
+		@Override
+		public void valueChanged(ListSelectionEvent e)
 		{
-			Object item = comboBoxModel.getSelectedItem();
-			if(item instanceof Panes)
+			Panes pane = paneSelectionList.getSelectedValue();
+			if(pane != null)
 			{
-				Panes pane = (Panes) item;
 				showPane(pane);
 			}
 		}

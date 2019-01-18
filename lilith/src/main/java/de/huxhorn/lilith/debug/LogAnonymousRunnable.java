@@ -1,6 +1,6 @@
 /*
  * Lilith - a log event viewer.
- * Copyright (C) 2007-2011 Joern Huxhorn
+ * Copyright (C) 2007-2018 Joern Huxhorn
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,6 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package de.huxhorn.lilith.debug;
 
 import org.slf4j.Logger;
@@ -23,9 +24,7 @@ import org.slf4j.LoggerFactory;
 public class LogAnonymousRunnable
 	extends AbstractDebugRunnable
 {
-	private final Logger logger = LoggerFactory.getLogger(LogAnonymousRunnable.class);
-
-	public LogAnonymousRunnable(int delay)
+	LogAnonymousRunnable(int delay)
 	{
 		super(delay);
 	}
@@ -35,13 +34,17 @@ public class LogAnonymousRunnable
 		void logStuff();
 	}
 
+	@Override
 	public void runIt()
 	{
 		class MethodInternal
 			implements StuffLogger
 		{
+			@Override
 			public void logStuff()
 			{
+				final Logger logger = LoggerFactory.getLogger(MethodInternal.class);
+
 				if(logger.isErrorEnabled()) logger.error("MethodInternalClass");
 
 			}
@@ -52,8 +55,11 @@ public class LogAnonymousRunnable
 			class AnonymousInternalClass
 				implements StuffLogger
 			{
+				@Override
 				public void logStuff()
 				{
+					final Logger logger = LoggerFactory.getLogger(AnonymousInternalClass.class);
+
 					if(logger.isErrorEnabled()) logger.error("AnonymousInternalClass");
 
 				}
@@ -61,14 +67,19 @@ public class LogAnonymousRunnable
 
 			StuffLogger stuffLogger = new StuffLogger()
 			{
+				@Override
 				public void logStuff()
 				{
+					final Logger logger = LoggerFactory.getLogger(this.getClass());
+
 					if(logger.isWarnEnabled()) logger.warn("SecondLevelAnonymous");
 				}
 			};
 
+			@Override
 			public void logStuff()
 			{
+				final Logger logger = LoggerFactory.getLogger(this.getClass());
 				if(logger.isInfoEnabled()) logger.info("FirstLevelAnonymous");
 				stuffLogger.logStuff();
 				new AnonymousInternalClass().logStuff();

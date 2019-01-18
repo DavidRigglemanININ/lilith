@@ -1,6 +1,6 @@
 /*
  * Lilith - a log event viewer.
- * Copyright (C) 2007-2011 Joern Huxhorn
+ * Copyright (C) 2007-2017 Joern Huxhorn
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -17,7 +17,7 @@
  */
 
 /*
- * Copyright 2007-2011 Joern Huxhorn
+ * Copyright 2007-2017 Joern Huxhorn
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,24 +36,23 @@ package de.huxhorn.lilith.logback.classic;
 
 import de.huxhorn.lilith.data.logging.Message;
 
-public class NDC
+@SuppressWarnings("PMD.ShortClassName")
+public final class NDC
 {
-	private static final NDCAdapter ndcAdapter;
+	private static final NDCAdapter NDC_ADAPTER;
 
 	static
 	{
 		// TODO: configuration
-		ndcAdapter = new SimpleNDCAdapter();
+		NDC_ADAPTER = new SimpleNDCAdapter();
+		new NDC(); // stfu
 	}
 
-	private NDC()
-	{
-
-	}
+	private NDC() {}
 
 	public static void push(String messagePattern, Object... arguments)
 	{
-		ndcAdapter.push(messagePattern, arguments);
+		NDC_ADAPTER.push(messagePattern, arguments);
 	}
 
 	/**
@@ -63,27 +62,27 @@ public class NDC
 	 */
 	public static void pop()
 	{
-		ndcAdapter.pop();
+		NDC_ADAPTER.pop();
 	}
 
 	public static int getDepth()
 	{
-		return ndcAdapter.getDepth();
+		return NDC_ADAPTER.getDepth();
 	}
 
 	public static void setMaximumDepth(int maximumDepth)
 	{
-		ndcAdapter.setMaximumDepth(maximumDepth);
+		NDC_ADAPTER.setMaximumDepth(maximumDepth);
 	}
 
 	public static boolean isEmpty()
 	{
-		return ndcAdapter.isEmpty();
+		return NDC_ADAPTER.isEmpty();
 	}
 
 	public static void clear()
 	{
-		ndcAdapter.clear();
+		NDC_ADAPTER.clear();
 	}
 
 	/**
@@ -95,6 +94,6 @@ public class NDC
 	 */
 	public static Message[] getContextStack()
 	{
-		return ndcAdapter.getContextStack();
+		return NDC_ADAPTER.getContextStack();
 	}
 }

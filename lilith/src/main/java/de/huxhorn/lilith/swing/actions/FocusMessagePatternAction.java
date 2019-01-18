@@ -1,6 +1,6 @@
 /*
  * Lilith - a log event viewer.
- * Copyright (C) 2007-2013 Joern Huxhorn
+ * Copyright (C) 2007-2017 Joern Huxhorn
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,14 +15,13 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package de.huxhorn.lilith.swing.actions;
 
 import de.huxhorn.lilith.conditions.MessagePatternEqualsCondition;
 import de.huxhorn.lilith.data.logging.Message;
-import de.huxhorn.lilith.swing.TextPreprocessor;
 import de.huxhorn.sulky.conditions.Condition;
-
-import javax.swing.*;
+import java.awt.event.ActionEvent;
 
 public class FocusMessagePatternAction
 		extends AbstractLoggingFilterAction
@@ -30,16 +29,16 @@ public class FocusMessagePatternAction
 	private static final long serialVersionUID = -4237035769242851225L;
 	private String messagePattern;
 
-	public FocusMessagePatternAction()
+	public FocusMessagePatternAction(boolean htmlTooltip)
 	{
-		super("Message pattern");
+		super("Message pattern", htmlTooltip);
 	}
 
 	protected void setMessagePattern(String messagePattern)
 	{
 		this.messagePattern = messagePattern;
 
-		putValue(Action.SHORT_DESCRIPTION, TextPreprocessor.preformattedTooltip(TextPreprocessor.cropTextBlock(messagePattern)));
+		initializeCroppedTooltip(messagePattern);
 
 		setEnabled(messagePattern != null);
 	}
@@ -47,12 +46,6 @@ public class FocusMessagePatternAction
 	@Override
 	protected void updateState()
 	{
-		if(viewContainer == null)
-		{
-			setMessagePattern(null);
-			return;
-		}
-
 		String messagePattern = null;
 		if(loggingEvent != null)
 		{
@@ -62,12 +55,9 @@ public class FocusMessagePatternAction
 			{
 				String formattedMessage = message.getMessage();
 				messagePattern = message.getMessagePattern();
-				if(formattedMessage != null)
+				if(formattedMessage != null && formattedMessage.equals(messagePattern))
 				{
-					if(formattedMessage.equals(messagePattern))
-					{
-						messagePattern = null;
-					}
+					messagePattern = null;
 				}
 			}
 		}
@@ -75,9 +65,9 @@ public class FocusMessagePatternAction
 	}
 
 	@Override
-	public Condition resolveCondition()
+	public Condition resolveCondition(ActionEvent e)
 	{
-		if(messagePattern == null)
+		if(!isEnabled())
 		{
 			return null;
 		}

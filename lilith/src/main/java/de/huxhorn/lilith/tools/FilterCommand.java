@@ -1,6 +1,6 @@
 /*
  * Lilith - a log event viewer.
- * Copyright (C) 2007-2011 Joern Huxhorn
+ * Copyright (C) 2007-2018 Joern Huxhorn
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,6 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package de.huxhorn.lilith.tools;
 
 import de.huxhorn.lilith.api.FileConstants;
@@ -38,17 +39,23 @@ import de.huxhorn.sulky.codec.filebuffer.FileHeader;
 import de.huxhorn.sulky.codec.filebuffer.FileHeaderStrategy;
 import de.huxhorn.sulky.codec.filebuffer.MetaData;
 import de.huxhorn.sulky.codec.filebuffer.ReadOnlyExclusiveCodecFileBuffer;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-public class FilterCommand
+public final class FilterCommand
 {
+	static
+	{
+		new FilterCommand(); // stfu
+	}
+
+	private FilterCommand() {}
+
 	public static boolean filterFile(File inputFile, File outputFile, File conditionFile, String searchString, String pattern, boolean overwrite, boolean keepRunning, boolean exclusive)
 	{
 		final Logger logger = LoggerFactory.getLogger(FilterCommand.class);
@@ -108,11 +115,11 @@ public class FilterCommand
 		{
 			if(outputDataFile.delete())
 			{
-				if(logger.isDebugEnabled()) logger.debug("Deleted {}.", outputDataFileStr);
+				if(logger.isDebugEnabled()) logger.debug("Deleted {}.", outputDataFileStr); // NOPMD
 			}
 			if(outputIndexFile.delete())
 			{
-				if(logger.isDebugEnabled()) logger.debug("Deleted {}.", outputIndexFileStr);
+				if(logger.isDebugEnabled()) logger.debug("Deleted {}.", outputIndexFileStr); // NOPMD
 			}
 		}
 
@@ -157,12 +164,10 @@ public class FilterCommand
 				return false;
 			}
 			MetaData metaData = header.getMetaData();
-			if (metaData == null || metaData.getData() == null)
+			if (metaData == null)
 			{
-				if (logger.isWarnEnabled())
-				{
-					logger.warn("Couldn't read meta data from '{}'!", inputDataFileStr);
-				}
+				if (logger.isWarnEnabled()) logger.warn("Couldn't read meta data from '{}'!", inputDataFileStr);
+
 				return false;
 			}
 			Map<String, String> data = metaData.getData();
@@ -173,7 +178,7 @@ public class FilterCommand
 
 			if (FileConstants.CONTENT_TYPE_VALUE_LOGGING.equals(contentType))
 			{
-				Map<String, String> loggingMetaData = new HashMap<String, String>();
+				Map<String, String> loggingMetaData = new HashMap<>();
 				loggingMetaData.put(FileConstants.CONTENT_TYPE_KEY, FileConstants.CONTENT_TYPE_VALUE_LOGGING);
 				loggingMetaData.put(FileConstants.CONTENT_FORMAT_KEY, FileConstants.CONTENT_FORMAT_VALUE_PROTOBUF);
 				loggingMetaData.put(FileConstants.COMPRESSION_KEY, FileConstants.COMPRESSION_VALUE_GZIP);
@@ -182,7 +187,7 @@ public class FilterCommand
 				Buffer<EventWrapper<LoggingEvent>> inputBuffer;
 				if(exclusive)
 				{
-					ReadOnlyExclusiveCodecFileBuffer<EventWrapper<LoggingEvent>> input = new ReadOnlyExclusiveCodecFileBuffer<EventWrapper<LoggingEvent>>(inputDataFile, inputIndexFile);
+					ReadOnlyExclusiveCodecFileBuffer<EventWrapper<LoggingEvent>> input = new ReadOnlyExclusiveCodecFileBuffer<>(inputDataFile, inputIndexFile);
 					input.setCodec(fileBufferFactory.resolveCodec(metaData));
 					inputBuffer = input;
 				}
@@ -208,7 +213,7 @@ public class FilterCommand
 			}
 			else if (FileConstants.CONTENT_TYPE_VALUE_ACCESS.equals(contentType))
 			{
-				Map<String, String> accessMetaData = new HashMap<String, String>();
+				Map<String, String> accessMetaData = new HashMap<>();
 				accessMetaData.put(FileConstants.CONTENT_TYPE_KEY, FileConstants.CONTENT_TYPE_VALUE_ACCESS);
 				accessMetaData.put(FileConstants.CONTENT_FORMAT_KEY, FileConstants.CONTENT_FORMAT_VALUE_PROTOBUF);
 				accessMetaData.put(FileConstants.COMPRESSION_KEY, FileConstants.COMPRESSION_VALUE_GZIP);
@@ -217,7 +222,7 @@ public class FilterCommand
 				Buffer<EventWrapper<AccessEvent>> inputBuffer;
 				if(exclusive)
 				{
-					ReadOnlyExclusiveCodecFileBuffer<EventWrapper<AccessEvent>> input = new ReadOnlyExclusiveCodecFileBuffer<EventWrapper<AccessEvent>>(inputDataFile, inputIndexFile);
+					ReadOnlyExclusiveCodecFileBuffer<EventWrapper<AccessEvent>> input = new ReadOnlyExclusiveCodecFileBuffer<>(inputDataFile, inputIndexFile);
 					input.setCodec(fileBufferFactory.resolveCodec(metaData));
 					inputBuffer = input;
 				}
@@ -257,6 +262,7 @@ public class FilterCommand
 		return false;
 	}
 
+	@SuppressWarnings("PMD.SystemPrintln")
 	private static <T extends Serializable> long filterContent(Buffer<EventWrapper<T>> inputBuffer, AppendOperation<EventWrapper<T>> outputBuffer, GroovyCondition groovyCondition, Formatter<EventWrapper<T>>  formatter)
 	{
 		long bufferSize=inputBuffer.getSize();
@@ -264,26 +270,24 @@ public class FilterCommand
 		for (i = 0; i < bufferSize; i++)
 		{
 			EventWrapper<T> current = inputBuffer.get(i);
-			if (current != null)
+			if (current != null && groovyCondition.isTrue(current))
 			{
-				if(groovyCondition.isTrue(current))
+				if(formatter != null)
 				{
-					if(formatter != null)
+					String msg = formatter.format(current);
+					if (msg != null)
 					{
-						String msg = formatter.format(current);
-						if (msg != null)
-						{
-							System.out.print(msg);
-							System.out.flush();
-						}
+						System.out.print(msg);
+						System.out.flush();
 					}
-					outputBuffer.add(current);
 				}
+				outputBuffer.add(current);
 			}
 		}
 		return i;
 	}
 
+	@SuppressWarnings("PMD.SystemPrintln")
 	private static <T extends Serializable> void pollFile(Buffer<EventWrapper<T>> inputBuffer, AppendOperation<EventWrapper<T>> outputBuffer, GroovyCondition groovyCondition, Formatter<EventWrapper<T>>  formatter, File inputDataFile, File inputIndexFile, long index)
 	{
 		final Logger logger = LoggerFactory.getLogger(FilterCommand.class);
@@ -295,7 +299,7 @@ public class FilterCommand
 			if (indexModified < dataModified)
 			{
 				// Index file is outdated.
-				IndexingCallable callable=new IndexingCallable(inputDataFile, inputIndexFile, true);
+				IndexingCallable callable=new IndexingCallable(inputDataFile, inputIndexFile, true); // NOPMD - AvoidInstantiatingObjectsInLoops
 				try
 				{
 					callable.call();
@@ -308,21 +312,18 @@ public class FilterCommand
 				for(;index < inputBuffer.getSize();index++)
 				{
 					EventWrapper<T> current = inputBuffer.get(index);
-					if (current != null)
+					if (current != null && groovyCondition.isTrue(current))
 					{
-						if(groovyCondition.isTrue(current))
+						if(formatter != null)
 						{
-							if(formatter != null)
+							String msg = formatter.format(current);
+							if (msg != null)
 							{
-								String msg = formatter.format(current);
-								if (msg != null)
-								{
-									System.out.print(msg);
-									System.out.flush();
-								}
+								System.out.print(msg);
+								System.out.flush();
 							}
-							outputBuffer.add(current);
 						}
+						outputBuffer.add(current);
 					}
 				}
 			}

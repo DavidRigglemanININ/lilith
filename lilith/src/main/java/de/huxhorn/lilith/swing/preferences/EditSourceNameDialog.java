@@ -1,56 +1,60 @@
 /*
  * Lilith - a log event viewer.
- * Copyright (C) 2007-2011 Joern Huxhorn
- * 
+ * Copyright (C) 2007-2017 Joern Huxhorn
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package de.huxhorn.lilith.swing.preferences;
 
 import de.huxhorn.lilith.swing.LilithKeyStrokes;
 import de.huxhorn.sulky.swing.KeyStrokes;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Dialog;
+import java.awt.FlowLayout;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
-
-import javax.swing.*;
+import javax.swing.AbstractAction;
+import javax.swing.Action;
+import javax.swing.JButton;
+import javax.swing.JDialog;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JTextField;
+import javax.swing.KeyStroke;
 
 public class EditSourceNameDialog
 	extends JDialog
 {
-	private final Logger logger = LoggerFactory.getLogger(EditSourceNameDialog.class);
+	private static final long serialVersionUID = -5435322391092309240L;
 
-	private JTextField sourceIdentifier;
-	private JTextField sourceName;
-	private OkAction okAction;
+	private final JTextField sourceIdentifier;
+	private final JTextField sourceName;
+	private final OkAction okAction;
+
 	private boolean adding;
 	private boolean canceled;
 
-	public EditSourceNameDialog(Dialog owner)
+	EditSourceNameDialog(Dialog owner)
 	{
 		super(owner);
 		setModal(true);
-		createUi();
-	}
 
-	private void createUi()
-	{
 		okAction = new OkAction();
 		Action cancelAction = new CancelAction();
 
@@ -97,21 +101,22 @@ public class EditSourceNameDialog
 
 	}
 
-	public void setAdding(boolean adding)
+	void setAdding(boolean adding)
 	{
 		this.adding = adding;
 		if(adding)
 		{
-			setTitle("Add source name...");
+			setTitle("Add source name…");
 			//sourceIdentifier.setEditable(true);
 		}
 		else
 		{
-			setTitle("Edit source name...");
+			setTitle("Edit source name…");
 			//sourceIdentifier.setEditable(false);
 		}
 	}
 
+	@Override
 	public void setVisible(boolean b)
 	{
 		if(b)
@@ -135,22 +140,17 @@ public class EditSourceNameDialog
 		okAction.update();
 	}
 
-	public boolean isAdding()
-	{
-		return adding;
-	}
-
 	public boolean isCanceled()
 	{
 		return canceled;
 	}
 
-	public void setSourceName(String sourceName)
+	void setSourceName(String sourceName)
 	{
 		this.sourceName.setText(sourceName);
 	}
 
-	public String getSourceName()
+	String getSourceName()
 	{
 		return sourceName.getText();
 	}
@@ -173,7 +173,9 @@ public class EditSourceNameDialog
 	private class OkAction
 		extends AbstractAction
 	{
-		public OkAction()
+		private static final long serialVersionUID = -1070599097881915176L;
+
+		OkAction()
 		{
 			super("Ok");
 		}
@@ -192,6 +194,7 @@ public class EditSourceNameDialog
 			}
 		}
 
+		@Override
 		public void actionPerformed(ActionEvent e)
 		{
 			String source = sourceIdentifier.getText();
@@ -207,13 +210,16 @@ public class EditSourceNameDialog
 		extends AbstractAction
 	{
 
-		public CancelAction()
+		private static final long serialVersionUID = 7826699096883767188L;
+
+		CancelAction()
 		{
 			super("Cancel");
 			KeyStroke accelerator = LilithKeyStrokes.getKeyStroke(LilithKeyStrokes.ESCAPE);
 			putValue(Action.ACCELERATOR_KEY, accelerator);
 		}
 
+		@Override
 		public void actionPerformed(ActionEvent e)
 		{
 			canceled = true;
@@ -224,6 +230,7 @@ public class EditSourceNameDialog
 	private class SourceNameActionListener
 		implements ActionListener
 	{
+		@Override
 		public void actionPerformed(ActionEvent e)
 		{
 			String name = sourceName.getText();
@@ -237,6 +244,7 @@ public class EditSourceNameDialog
 	private class SourceIdentifierActionListener
 		implements ActionListener
 	{
+		@Override
 		public void actionPerformed(ActionEvent e)
 		{
 			String source = sourceIdentifier.getText();
@@ -251,18 +259,22 @@ public class EditSourceNameDialog
 	private class TextKeyListener
 		implements KeyListener
 	{
+		@Override
 		public void keyTyped(KeyEvent e)
 		{
 			updateActions();
 		}
 
+		@Override
 		public void keyPressed(KeyEvent e)
 		{
+			// no-op
 		}
 
+		@Override
 		public void keyReleased(KeyEvent e)
 		{
+			// no-op
 		}
 	}
-
 }

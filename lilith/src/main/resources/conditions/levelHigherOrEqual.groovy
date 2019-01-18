@@ -1,6 +1,3 @@
-import de.huxhorn.lilith.data.logging.LoggingEvent
-import de.huxhorn.lilith.data.logging.LoggingEvent.Level
-
 /*
  * Lilith - a log event viewer.
  * Copyright (C) 2007-2011 Joern Huxhorn
@@ -19,6 +16,8 @@ import de.huxhorn.lilith.data.logging.LoggingEvent.Level
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+import de.huxhorn.lilith.data.logging.LoggingEvent
+
 /**
  * Returns true if the logging event has a level higher or equal to the
  * one provided with the searchString.
@@ -27,29 +26,29 @@ import de.huxhorn.lilith.data.logging.LoggingEvent.Level
 if(searchString == null || '' == searchString)
 {
 	// so no string doesn't filter anything
-	return true;
+	return true
 }
 
-def event = input?.event;
+def event = input?.event
 
 if(event instanceof LoggingEvent)
 {
-	def level = event.level;
+	def level = event.level
 
 	if(level)
 	{
 		try
 		{
-			def threshold=LoggingEvent.Level.valueOf(searchString);
+			def threshold=LoggingEvent.Level.valueOf(searchString)
 			if(level >= threshold)
 			{
-				return true;
+				return true
 			}
 		}
-		catch(IllegalArgumentException ex)
+		catch(IllegalArgumentException ignored)
 		{
 			// ignore
 		}
 	}
 }
-return false;
+return false

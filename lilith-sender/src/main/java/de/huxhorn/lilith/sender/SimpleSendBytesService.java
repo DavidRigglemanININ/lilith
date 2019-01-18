@@ -1,23 +1,23 @@
 /*
  * Lilith - a log event viewer.
- * Copyright (C) 2007-2011 Joern Huxhorn
- * 
+ * Copyright (C) 2007-2018 Joern Huxhorn
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 /*
- * Copyright 2007-2011 Joern Huxhorn
+ * Copyright 2007-2018 Joern Huxhorn
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,12 +34,11 @@
 
 package de.huxhorn.lilith.sender;
 
-import de.huxhorn.sulky.io.IOUtilities;
-
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -51,60 +50,57 @@ public class SimpleSendBytesService
 	/**
 	 * The default reconnection delay (30000 milliseconds or 30 seconds).
 	 */
-	public static final int DEFAULT_RECONNECTION_DELAY = 30000;
+	public static final int DEFAULT_RECONNECTION_DELAY = 30_000;
 
 	public static final int DEFAULT_QUEUE_SIZE = 1000;
 
-	public static final int DEFAULT_POLL_INTERVALL = 100;
+	public static final int DEFAULT_POLL_INTERVAL = 100;
 
 	private final Object lock = new Object();
+
+	private final DataOutputStreamFactory dataOutputStreamFactory;
+	private final WriteByteStrategy writeByteStrategy;
+	private final int queueSize;
+	private final long reconnectionDelay;
+	private final int pollInterval;
+
 	private final BlockingQueue<byte[]> localEventBytes;
 
-	private WriteByteStrategy writeByteStrategy;
-	private DataOutputStreamFactory dataOutputStreamFactory;
-	//private boolean shutdown;
-	private final int reconnectionDelay;
-	private final int queueSize;
-	private final int pollIntervall;
+	private final AtomicReference<ConnectionState> connectionState=new AtomicReference<>(ConnectionState.OFFLINE);
+	private final AtomicBoolean shutdownIndicator = new AtomicBoolean(false);
 
-	private final AtomicReference<ConnectionState> connectionState=new AtomicReference<ConnectionState>(ConnectionState.Offline);
-	private final AtomicBoolean shutdown=new AtomicBoolean(false);
 	private SendBytesThread sendBytesThread;
 	private boolean debug;
 
 	public SimpleSendBytesService(DataOutputStreamFactory dataOutputStreamFactory, WriteByteStrategy writeByteStrategy)
 	{
-		this(dataOutputStreamFactory, writeByteStrategy, DEFAULT_QUEUE_SIZE, DEFAULT_RECONNECTION_DELAY, DEFAULT_POLL_INTERVALL);
+		this(dataOutputStreamFactory, writeByteStrategy, DEFAULT_QUEUE_SIZE, DEFAULT_RECONNECTION_DELAY, DEFAULT_POLL_INTERVAL);
 	}
 
-	public SimpleSendBytesService(DataOutputStreamFactory dataOutputStreamFactory, WriteByteStrategy writeByteStrategy, int queueSize, int reconnectionDelay, int pollIntervall)
+	public SimpleSendBytesService(DataOutputStreamFactory dataOutputStreamFactory, WriteByteStrategy writeByteStrategy, int queueSize, long reconnectionDelay, int pollInterval)
 	{
-		if(dataOutputStreamFactory == null)
-		{
-			throw new IllegalArgumentException("dataOutputStreamFactory must not be null!");
-		}
-		if(writeByteStrategy == null)
-		{
-			throw new IllegalArgumentException("writeByteStrategy must not be null!");
-		}
+		this.dataOutputStreamFactory = Objects.requireNonNull(dataOutputStreamFactory, "dataOutputStreamFactory must not be null!");
+		this.writeByteStrategy = Objects.requireNonNull(writeByteStrategy, "writeByteStrategy must not be null!");
+
 		if(queueSize <= 0)
 		{
-			throw new IllegalArgumentException("queueSize must be greater than zero!");
+			throw new IllegalArgumentException("queueSize must be greater than zero but was "+queueSize+"!");
 		}
+		this.queueSize = queueSize;
+
 		if(reconnectionDelay <= 0)
 		{
-			throw new IllegalArgumentException("reconnectionDelay must be greater than zero!");
+			throw new IllegalArgumentException("reconnectionDelay must be greater than zero but was "+reconnectionDelay+"!");
 		}
-		if(pollIntervall <= 0)
-		{
-			throw new IllegalArgumentException("pollIntervall must be greater than zero!");
-		}
-		this.localEventBytes = new ArrayBlockingQueue<byte[]>(queueSize, true);
-		this.dataOutputStreamFactory = dataOutputStreamFactory;
-		this.writeByteStrategy = writeByteStrategy;
-		this.queueSize = queueSize;
 		this.reconnectionDelay = reconnectionDelay;
-		this.pollIntervall = pollIntervall;
+
+		if(pollInterval <= 0)
+		{
+			throw new IllegalArgumentException("pollInterval must be greater than zero but was "+pollInterval+"!");
+		}
+		this.pollInterval = pollInterval;
+
+		this.localEventBytes = new ArrayBlockingQueue<>(queueSize, true);
 	}
 
 	public boolean isDebug()
@@ -122,9 +118,10 @@ public class SimpleSendBytesService
 		return connectionState.get();
 	}
 
+	@Override
 	public void sendBytes(byte[] bytes)
 	{
-		if(connectionState.get() == ConnectionState.Connected && sendBytesThread != null && bytes != null)
+		if(connectionState.get() == ConnectionState.CONNECTED && sendBytesThread != null && bytes != null)
 		{
 			try
 			{
@@ -137,25 +134,27 @@ public class SimpleSendBytesService
 		}
 	}
 
+	@Override
 	public void startUp()
 	{
 		synchronized(lock)
 		{
 			if(sendBytesThread == null)
 			{
-				shutdown.set(false);
+				shutdownIndicator.set(false);
 				sendBytesThread = new SendBytesThread();
 				sendBytesThread.start();
 			}
 		}
 	}
 
+	@Override
 	public void shutDown()
 	{
-		shutdown.set(true);
+		shutdownIndicator.set(true);
 		synchronized(lock)
 		{
-			connectionState.set(ConnectionState.Canceled);
+			connectionState.set(ConnectionState.CANCELED);
 		}
 		if(sendBytesThread != null)
 		{
@@ -178,13 +177,13 @@ public class SimpleSendBytesService
 	{
 		private DataOutputStream dataOutputStream;
 
-		public SendBytesThread()
+		SendBytesThread()
 		{
 			super("SendBytes@" + dataOutputStreamFactory);
 			setDaemon(true);
 		}
 
-		public void closeConnection()
+		void closeConnection()
 		{
 			synchronized(lock)
 			{
@@ -202,31 +201,32 @@ public class SimpleSendBytesService
 						// ignore
 					}
 					dataOutputStream = null;
-					if(connectionState.get() != ConnectionState.Canceled)
+					if(connectionState.get() != ConnectionState.CANCELED)
 					{
-						connectionState.set(ConnectionState.Offline);
+						connectionState.set(ConnectionState.OFFLINE);
 					}
 					if(debug)
 					{
-						System.err.println("Closed dataOutputStream.");
+						System.err.println("Closed dataOutputStream."); // NOPMD
 					}
 				}
 				lock.notifyAll();
 			}
 		}
 
+		@Override
 		public void run()
 		{
 			Thread reconnectionThread = new ReconnectionThread();
 			reconnectionThread.start();
 
-			List<byte[]> copy = new ArrayList<byte[]>(queueSize);
-			for(; ;)
+			List<byte[]> copy = new ArrayList<>(queueSize);
+			for(;;)
 			{
 				try
 				{
 					localEventBytes.drainTo(copy);
-					if(copy.size() > 0)
+					if(!copy.isEmpty())
 					{
 						DataOutputStream outputStream;
 						synchronized(lock)
@@ -235,7 +235,6 @@ public class SimpleSendBytesService
 						}
 						if(outputStream != null)
 						{
-//								System.out.println(this+" - about to write "+copy.size()+" events...");
 							try
 							{
 								for(byte[] current : copy)
@@ -243,30 +242,23 @@ public class SimpleSendBytesService
 									writeByteStrategy.writeBytes(outputStream, current);
 								}
 								outputStream.flush();
-//									System.out.println(this+" wrote "+copy.size()+" events.");
 							}
 							catch(Throwable e)
 							{
-								IOUtilities.interruptIfNecessary(e);
 								closeConnection();
 							}
 						}
 						copy.clear();
 					}
-//						else
-//						{
-//							System.out.println(this+" ignored "+copy.size()+" events because of missing connection.");
-//						}
-					if(shutdown.get())
+					if(shutdownIndicator.get())
 					{
 						break;
 					}
-					Thread.sleep(pollIntervall);
+					Thread.sleep(pollInterval);
 				}
 				catch(InterruptedException e)
 				{
 					break;
-					//e.printStackTrace();
 				}
 			}
 			reconnectionThread.interrupt();
@@ -274,7 +266,7 @@ public class SimpleSendBytesService
 			{
 				reconnectionThread.join();
 			}
-			catch(InterruptedException e1)
+			catch(InterruptedException e)
 			{
 				// this is ok.
 			}
@@ -284,23 +276,24 @@ public class SimpleSendBytesService
 		private class ReconnectionThread
 			extends Thread
 		{
-			public ReconnectionThread()
+			ReconnectionThread()
 			{
 				super("Reconnection@" + dataOutputStreamFactory);
 				setDaemon(true);
 			}
 
+			@Override
 			public void run()
 			{
-				for(; ;)
+				for(;;)
 				{
 					boolean connect = false;
 					synchronized(lock)
 					{
-						if(dataOutputStream == null && connectionState.get() != ConnectionState.Canceled)
+						if(dataOutputStream == null && connectionState.get() != ConnectionState.CANCELED)
 						{
 							connect = true;
-							connectionState.set(ConnectionState.Connecting);
+							connectionState.set(ConnectionState.CONNECTING);
 						}
 					}
 					DataOutputStream newStream = null;
@@ -322,7 +315,7 @@ public class SimpleSendBytesService
 						{
 							if(newStream != null)
 							{
-								if(connectionState.get() == ConnectionState.Canceled)
+								if(connectionState.get() == ConnectionState.CANCELED)
 								{
 									// cleanup
 									try
@@ -337,12 +330,12 @@ public class SimpleSendBytesService
 								else
 								{
 									dataOutputStream = newStream;
-									connectionState.set(ConnectionState.Connected);
+									connectionState.set(ConnectionState.CONNECTED);
 								}
 							}
-							else if(connectionState.get() != ConnectionState.Canceled)
+							else if(connectionState.get() != ConnectionState.CANCELED)
 							{
-								connectionState.set(ConnectionState.Offline);
+								connectionState.set(ConnectionState.OFFLINE);
 							}
 						}
 						try

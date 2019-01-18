@@ -17,10 +17,9 @@
  */
 package de.huxhorn.lilith.debug;
 
+import java.util.Date;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.Date;
 
 public class LogDateRunnable
 	extends AbstractDebugRunnable
@@ -32,6 +31,7 @@ public class LogDateRunnable
 		super(delay);
 	}
 
+	@Override
 	public void runIt()
 		throws InterruptedException
 	{

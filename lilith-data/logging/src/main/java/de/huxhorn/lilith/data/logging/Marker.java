@@ -1,23 +1,23 @@
 /*
  * Lilith - a log event viewer.
- * Copyright (C) 2007-2011 Joern Huxhorn
- * 
+ * Copyright (C) 2007-2017 Joern Huxhorn
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 /*
- * Copyright 2007-2011 Joern Huxhorn
+ * Copyright 2007-2017 Joern Huxhorn
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,7 +40,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-public class Marker
+public final class Marker
 	implements Serializable
 {
 	private static final long serialVersionUID = -4828769420328139691L;
@@ -62,7 +62,7 @@ public class Marker
 	{
 		if(name == null)
 		{
-			throw new IllegalArgumentException("Markername must not be null!");
+			throw new IllegalArgumentException("Marker name must not be null!");
 		}
 		this.name = name;
 	}
@@ -78,7 +78,7 @@ public class Marker
 		{
 			return null;
 		}
-		return new HashMap<String, Marker>(references);
+		return new HashMap<>(references);
 	}
 
 	public void remove(Marker marker)
@@ -93,7 +93,7 @@ public class Marker
 	{
 		if(references == null)
 		{
-			references = new HashMap<String, Marker>();
+			references = new HashMap<>();
 		}
 		if(!references.containsKey(marker.getName()))
 		{
@@ -108,7 +108,7 @@ public class Marker
 
 	public boolean hasReferences()
 	{
-		return references != null && references.size() != 0;
+		return references != null && !references.isEmpty();
 	}
 
 	public boolean contains(Marker other)
@@ -160,7 +160,7 @@ public class Marker
 	{
 		if(collectedMarkerNames == null)
 		{
-			collectedMarkerNames = new HashSet<String>();
+			collectedMarkerNames = new HashSet<>();
 		}
 		if(!collectedMarkerNames.contains(marker.getName()))
 		{
@@ -181,6 +181,7 @@ public class Marker
 		return collectedMarkerNames;
 	}
 
+	@Override
 	public boolean equals(Object o)
 	{
 		if(this == o) return true;
@@ -191,6 +192,7 @@ public class Marker
 		return !(name != null ? !name.equals(marker.name) : marker.name != null);
 	}
 
+	@Override
 	public int hashCode()
 	{
 		return (name != null ? name.hashCode() : 0);

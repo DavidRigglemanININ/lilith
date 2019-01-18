@@ -1,6 +1,6 @@
 /*
  * Lilith - a log event viewer.
- * Copyright (C) 2007-2011 Joern Huxhorn
+ * Copyright (C) 2007-2018 Joern Huxhorn
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,32 +15,31 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package de.huxhorn.lilith.swing.taskmanager.table;
 
 import de.huxhorn.sulky.tasks.Task;
-
+import java.awt.Component;
+import javax.swing.JProgressBar;
+import javax.swing.JTable;
+import javax.swing.table.TableCellRenderer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.awt.*;
-
-import javax.swing.*;
-import javax.swing.table.TableCellRenderer;
-
-
-public class TaskProgressRenderer
+class TaskProgressRenderer
 	implements TableCellRenderer
 {
 	private final Logger logger = LoggerFactory.getLogger(TaskProgressRenderer.class);
-	private JProgressBar progressBar;
+	private final JProgressBar progressBar;
 
-	public TaskProgressRenderer()
+	TaskProgressRenderer()
 	{
 		super();
 		progressBar = new JProgressBar();
 		progressBar.setStringPainted(true);
 	}
 
+	@Override
 	public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int rowIndex, int vColIndex)
 	{
 		int progress = -1;
@@ -65,7 +64,7 @@ public class TaskProgressRenderer
 		else
 		{
 			progressBar.setValue(progress);
-			progressBar.setString("" + progress + "%");
+			progressBar.setString(Integer.toString(progress) + "%");
 		}
 
 		return progressBar;

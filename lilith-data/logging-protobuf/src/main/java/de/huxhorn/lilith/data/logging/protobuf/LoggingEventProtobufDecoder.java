@@ -1,6 +1,6 @@
 /*
  * Lilith - a log event viewer.
- * Copyright (C) 2007-2011 Joern Huxhorn
+ * Copyright (C) 2007-2017 Joern Huxhorn
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -17,7 +17,7 @@
  */
 
 /*
- * Copyright 2007-2011 Joern Huxhorn
+ * Copyright 2007-2017 Joern Huxhorn
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,6 +34,7 @@
 
 package de.huxhorn.lilith.data.logging.protobuf;
 
+import de.huxhorn.lilith.data.eventsource.LoggerContext;
 import de.huxhorn.lilith.data.logging.ExtendedStackTraceElement;
 import de.huxhorn.lilith.data.logging.LoggingEvent;
 import de.huxhorn.lilith.data.logging.Marker;
@@ -41,11 +42,7 @@ import de.huxhorn.lilith.data.logging.Message;
 import de.huxhorn.lilith.data.logging.ThreadInfo;
 import de.huxhorn.lilith.data.logging.ThrowableInfo;
 import de.huxhorn.lilith.data.logging.protobuf.generated.LoggingProto;
-import de.huxhorn.lilith.data.eventsource.LoggerContext;
 import de.huxhorn.sulky.codec.Decoder;
-
-import com.google.protobuf.InvalidProtocolBufferException;
-
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.HashMap;
@@ -53,12 +50,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.zip.GZIPInputStream;
 
-public class LoggingEventProtobufDecoder
+class LoggingEventProtobufDecoder
 	implements Decoder<LoggingEvent>
 {
-	private boolean compressing;
+	private final boolean compressing;
 
-	public LoggingEventProtobufDecoder(boolean compressing)
+	LoggingEventProtobufDecoder(boolean compressing)
 	{
 		this.compressing = compressing;
 	}
@@ -68,42 +65,31 @@ public class LoggingEventProtobufDecoder
 		return compressing;
 	}
 
-	public void setCompressing(boolean compressing)
-	{
-		this.compressing = compressing;
-	}
-
+	@Override
 	public LoggingEvent decode(byte[] bytes)
 	{
 		if(bytes == null)
 		{
 			return null;
 		}
-		LoggingProto.LoggingEvent parsedEvent = null;
-		if(!compressing)
+		LoggingProto.LoggingEvent parsedEvent;
+		try
 		{
-			try
+			if(!compressing)
 			{
 				parsedEvent = LoggingProto.LoggingEvent.parseFrom(bytes);
 			}
-			catch(InvalidProtocolBufferException e)
+			else
 			{
-				// ignore
-			}
-		}
-		else
-		{
-			ByteArrayInputStream in = new ByteArrayInputStream(bytes);
-			try
-			{
+				ByteArrayInputStream in = new ByteArrayInputStream(bytes);
 				GZIPInputStream gis = new GZIPInputStream(in);
 				parsedEvent = LoggingProto.LoggingEvent.parseFrom(gis);
 				gis.close();
 			}
-			catch(IOException e)
-			{
-				// ignore
-			}
+		}
+		catch(IOException e)
+		{
+			parsedEvent = null;
 		}
 		return convert(parsedEvent);
 	}
@@ -114,7 +100,7 @@ public class LoggingEventProtobufDecoder
 		{
 			return null;
 		}
-		Map<String, Marker> markers = new HashMap<String, Marker>();
+		Map<String, Marker> markers = new HashMap<>();
 		return convert(marker, markers);
 	}
 
@@ -152,6 +138,22 @@ public class LoggingEventProtobufDecoder
 		}
 
 		ExtendedStackTraceElement result = new ExtendedStackTraceElement();
+
+		if(ste.hasClassLoaderName())
+		{
+			result.setClassLoaderName(ste.getClassLoaderName());
+		}
+
+		if(ste.hasModuleName())
+		{
+			result.setModuleName(ste.getModuleName());
+		}
+
+		if(ste.hasModuleVersion())
+		{
+			result.setModuleVersion(ste.getModuleVersion());
+		}
+
 		if(ste.hasMethodName())
 		{
 			result.setMethodName(ste.getMethodName());
@@ -305,7 +307,12 @@ public class LoggingEventProtobufDecoder
 		{
 			threadGroupName = parsedThreadInfo.getGroupName();
 		}
-		return new ThreadInfo(threadId, threadName, threadGroupId, threadGroupName);
+		ThreadInfo result = new ThreadInfo(threadId, threadName, threadGroupId, threadGroupName);
+		if(parsedThreadInfo.hasPriority())
+		{
+			result.setPriority(parsedThreadInfo.getPriority());
+		}
+		return result;
 	}
 
 	public static LoggerContext convert(LoggingProto.LoggerContext loggerContext)
@@ -338,7 +345,7 @@ public class LoggingEventProtobufDecoder
 		}
 		if(stringMap.getEntryCount() > 0)
 		{
-			Map<String, String> result = new HashMap<String, String>();
+			Map<String, String> result = new HashMap<>();
 			List<LoggingProto.StringMapEntry> mdcList = stringMap.getEntryList();
 			for(LoggingProto.StringMapEntry current : mdcList)
 			{
@@ -401,7 +408,7 @@ public class LoggingEventProtobufDecoder
 				case WARN:
 					result.setLevel(LoggingEvent.Level.WARN);
 					break;
-				case ERROR:
+				default: // ERROR
 					result.setLevel(LoggingEvent.Level.ERROR);
 					break;
 			}

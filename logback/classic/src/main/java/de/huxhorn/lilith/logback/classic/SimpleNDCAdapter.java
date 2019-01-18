@@ -1,6 +1,6 @@
 /*
  * Lilith - a log event viewer.
- * Copyright (C) 2007-2011 Joern Huxhorn
+ * Copyright (C) 2007-2018 Joern Huxhorn
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -17,7 +17,7 @@
  */
 
 /*
- * Copyright 2007-2011 Joern Huxhorn
+ * Copyright 2007-2018 Joern Huxhorn
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,16 +36,16 @@ package de.huxhorn.lilith.logback.classic;
 
 import de.huxhorn.lilith.data.logging.Message;
 import de.huxhorn.lilith.data.logging.MessageFormatter;
-
 import java.util.LinkedList;
 import java.util.List;
 
 public class SimpleNDCAdapter
 	implements NDCAdapter
 {
-	private ThreadLocal<List<String>> threadLocalMessagePatterns =new ThreadLocal<List<String>>();
-	private ThreadLocal<List<String[]>> threadLocalMessageArguments =new ThreadLocal<List<String[]>>();
+	private final ThreadLocal<List<String>> threadLocalMessagePatterns =new ThreadLocal<>();
+	private final ThreadLocal<List<String[]>> threadLocalMessageArguments =new ThreadLocal<>();
 
+	@Override
 	public void push(String messagePattern, Object... arguments)
 	{
 		String[] processedArgs=null;
@@ -62,8 +62,8 @@ public class SimpleNDCAdapter
 		List<String[]> args = threadLocalMessageArguments.get();
 		if(messages == null)
 		{
-			messages = new LinkedList<String>();
-			args = new LinkedList<String[]>();
+			messages = new LinkedList<>();
+			args = new LinkedList<>();
 			threadLocalMessagePatterns.set(messages);
 			threadLocalMessageArguments.set(args);
 		}
@@ -71,6 +71,7 @@ public class SimpleNDCAdapter
 		args.add(processedArgs);
 	}
 
+	@Override
 	public void pop()
 	{
 		List<String> messages = threadLocalMessagePatterns.get();
@@ -89,6 +90,7 @@ public class SimpleNDCAdapter
 		args.remove(count -1);
 	}
 
+	@Override
 	public int getDepth()
 	{
 		List<String> messages = threadLocalMessagePatterns.get();
@@ -105,6 +107,7 @@ public class SimpleNDCAdapter
 		return count;
 	}
 
+	@Override
 	public void setMaximumDepth(int maximumDepth)
 	{
 		int overflow = getDepth() - maximumDepth;
@@ -114,17 +117,21 @@ public class SimpleNDCAdapter
 		}
 	}
 
+	@Override
 	public boolean isEmpty()
 	{
 		return getDepth()==0;
 	}
 
+	@Override
 	public void clear()
 	{
 		threadLocalMessagePatterns.remove();
 		threadLocalMessageArguments.remove();
 	}
 
+	@Override
+	@SuppressWarnings("PMD.AvoidInstantiatingObjectsInLoops")
 	public Message[] getContextStack()
 	{
 		List<String> messages = threadLocalMessagePatterns.get();

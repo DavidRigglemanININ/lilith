@@ -1,6 +1,6 @@
 /*
  * Lilith - a log event viewer.
- * Copyright (C) 2007-2011 Joern Huxhorn
+ * Copyright (C) 2007-2017 Joern Huxhorn
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -17,7 +17,7 @@
  */
 
 /*
- * Copyright 2007-2011 Joern Huxhorn
+ * Copyright 2007-2017 Joern Huxhorn
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,19 +34,18 @@
 
 package de.huxhorn.lilith.data.logging.logback;
 
-import de.huxhorn.lilith.data.converter.Converter;
-import de.huxhorn.sulky.codec.Encoder;
-import de.huxhorn.lilith.data.eventsource.LoggerContext;
-
 import ch.qos.logback.classic.spi.LoggingEvent;
-
+import de.huxhorn.lilith.data.converter.Converter;
+import de.huxhorn.lilith.data.eventsource.LoggerContext;
+import de.huxhorn.lilith.data.logging.logback.converter.SameThreadLogbackLoggingConverter;
+import de.huxhorn.sulky.codec.Encoder;
 import java.util.HashMap;
 import java.util.Map;
 
 public class TransformingEncoder
 		implements Encoder<LoggingEvent>
 {
-	private Converter<de.huxhorn.lilith.data.logging.LoggingEvent> converter = new SameThreadLogbackLoggingConverter();
+	private final Converter<de.huxhorn.lilith.data.logging.LoggingEvent> converter = new SameThreadLogbackLoggingConverter();
 	private Encoder<de.huxhorn.lilith.data.logging.LoggingEvent> lilithEncoder;
 	private String applicationIdentifier;
 	private String uuid;
@@ -81,6 +80,7 @@ public class TransformingEncoder
 		this.uuid = uuid;
 	}
 
+	@Override
 	public byte[] encode(LoggingEvent logbackEvent)
 	{
 		de.huxhorn.lilith.data.logging.LoggingEvent lilithEvent = converter.convert(logbackEvent);
@@ -94,7 +94,7 @@ public class TransformingEncoder
 			Map<String, String> props = loggerContext.getProperties();
 			if(props == null)
 			{
-				props = new HashMap<String, String>();
+				props = new HashMap<>();
 			}
 
 			if(applicationIdentifier != null)

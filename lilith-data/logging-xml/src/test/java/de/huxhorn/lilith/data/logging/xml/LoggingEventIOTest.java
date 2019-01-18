@@ -1,23 +1,23 @@
 /*
  * Lilith - a log event viewer.
- * Copyright (C) 2007-2014 Joern Huxhorn
- * 
+ * Copyright (C) 2007-2018 Joern Huxhorn
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 /*
- * Copyright 2007-2014 Joern Huxhorn
+ * Copyright 2007-2018 Joern Huxhorn
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,37 +34,48 @@
 
 package de.huxhorn.lilith.data.logging.xml;
 
+import de.huxhorn.lilith.data.eventsource.LoggerContext;
 import de.huxhorn.lilith.data.logging.ExtendedStackTraceElement;
 import de.huxhorn.lilith.data.logging.LoggingEvent;
 import de.huxhorn.lilith.data.logging.Marker;
 import de.huxhorn.lilith.data.logging.Message;
 import de.huxhorn.lilith.data.logging.ThreadInfo;
 import de.huxhorn.lilith.data.logging.ThrowableInfo;
-import de.huxhorn.lilith.data.eventsource.LoggerContext;
 import de.huxhorn.sulky.stax.IndentingXMLStreamWriter;
-
-import static org.junit.Assert.assertEquals;
-import org.junit.Before;
-import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
-import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
-
 import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLOutputFactory;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 import javax.xml.stream.XMLStreamWriter;
+import org.junit.Before;
+import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 public class LoggingEventIOTest
 {
+	// thread-safe, see http://www.cowtowncoder.com/blog/archives/2006/06/entry_2.html
+	// XMLInputFactory.newFactory() is not deprecated. See http://bugs.java.com/bugdatabase/view_bug.do?bug_id=JDK-8183519
+	@SuppressWarnings("deprecation")
+	private static final XMLInputFactory XML_INPUT_FACTORY = XMLInputFactory.newFactory();
+	static
+	{
+		XML_INPUT_FACTORY.setProperty(XMLInputFactory.IS_SUPPORTING_EXTERNAL_ENTITIES, false);
+		XML_INPUT_FACTORY.setProperty(XMLInputFactory.SUPPORT_DTD, false);
+		XML_INPUT_FACTORY.setProperty(XMLInputFactory.IS_VALIDATING, false);
+	}
+	private static final XMLOutputFactory XML_OUTPUT_FACTORY = XMLOutputFactory.newFactory();
+
 	private final Logger logger = LoggerFactory.getLogger(LoggingEventIOTest.class);
 	private LoggingEventWriter loggingEventWriter;
 	private LoggingEventReader loggingEventReader;
@@ -78,8 +89,22 @@ public class LoggingEventIOTest
 	}
 
 	@Test
+	public void correctOutputFactoryIsObtained()
+	{
+		String factoryClassName = XML_OUTPUT_FACTORY.getClass().getName();
+		assertTrue(factoryClassName, factoryClassName.startsWith("com.ctc.wstx.stax"));
+	}
+
+	@Test
+	public void correctInputFactoryIsObtained()
+	{
+		String factoryClassName = XML_INPUT_FACTORY.getClass().getName();
+		assertTrue(factoryClassName, factoryClassName.startsWith("com.ctc.wstx.stax"));
+	}
+
+	@Test
 	public void minimal()
-		throws XMLStreamException, UnsupportedEncodingException
+		throws XMLStreamException
 	{
 		LoggingEvent event = createMinimalEvent();
 		check(event, true);
@@ -87,7 +112,7 @@ public class LoggingEventIOTest
 
 	@Test
 	public void sequenceNumber()
-		throws XMLStreamException, UnsupportedEncodingException
+		throws XMLStreamException
 	{
 		LoggingEvent event = createMinimalEvent();
 		Long value = 17L;
@@ -97,13 +122,13 @@ public class LoggingEventIOTest
 
 	@Test
 	public void loggerContext()
-		throws XMLStreamException, UnsupportedEncodingException
+		throws XMLStreamException
 	{
 		LoggingEvent event = createMinimalEvent();
 		LoggerContext value = new LoggerContext();
 		value.setName("ContextName");
-		value.setBirthTime(1234567890000L);
-		Map<String, String> propperties = new HashMap<String, String>();
+		value.setBirthTime(1_234_567_890_000L);
+		Map<String, String> propperties = new HashMap<>();
 		propperties.put("foo", "bar");
 		value.setProperties(propperties);
 		event.setLoggerContext(value);
@@ -112,26 +137,26 @@ public class LoggingEventIOTest
 
 	@Test
 	public void loggerContextMissingName()
-		throws XMLStreamException, UnsupportedEncodingException
+		throws XMLStreamException
 	{
 		LoggingEvent event = createMinimalEvent();
 		LoggerContext value = new LoggerContext();
-		value.setBirthTime(1234567890000L);
-		Map<String, String> propperties = new HashMap<String, String>();
-		propperties.put("foo", "bar");
-		value.setProperties(propperties);
+		value.setBirthTime(1_234_567_890_000L);
+		Map<String, String> properties = new HashMap<>();
+		properties.put("foo", "bar");
+		value.setProperties(properties);
 		event.setLoggerContext(value);
 		check(event, true);
 	}
 
 	@Test
 	public void loggerContextMissingBirthTime()
-		throws XMLStreamException, UnsupportedEncodingException
+		throws XMLStreamException
 	{
 		LoggingEvent event = createMinimalEvent();
 		LoggerContext value = new LoggerContext();
 		value.setName("ContextName");
-		Map<String, String> propperties = new HashMap<String, String>();
+		Map<String, String> propperties = new HashMap<>();
 		propperties.put("foo", "bar");
 		value.setProperties(propperties);
 		event.setLoggerContext(value);
@@ -141,19 +166,19 @@ public class LoggingEventIOTest
 
 	@Test
 	public void loggerContextMissingProperties()
-		throws XMLStreamException, UnsupportedEncodingException
+		throws XMLStreamException
 	{
 		LoggingEvent event = createMinimalEvent();
 		LoggerContext value = new LoggerContext();
 		value.setName("ContextName");
-		value.setBirthTime(1234567890000L);
+		value.setBirthTime(1_234_567_890_000L);
 		event.setLoggerContext(value);
 		check(event, true);
 	}
 
 	@Test
 	public void threadInfo()
-		throws XMLStreamException, UnsupportedEncodingException
+		throws XMLStreamException
 	{
 		LoggingEvent event = createMinimalEvent();
 		ThreadInfo threadInfo = new ThreadInfo(17L, "Thread-Name", 42L, "ThreadGroup-Name");
@@ -163,7 +188,7 @@ public class LoggingEventIOTest
 
 	@Test
 	public void arguments()
-		throws XMLStreamException, UnsupportedEncodingException
+		throws XMLStreamException
 	{
 		LoggingEvent event = createMinimalEvent();
 		String[] arguments = new String[]{"arg1", "arg2", "arg3"};
@@ -173,7 +198,7 @@ public class LoggingEventIOTest
 
 	@Test
 	public void nullArgument()
-		throws XMLStreamException, UnsupportedEncodingException
+		throws XMLStreamException
 	{
 		LoggingEvent event = createMinimalEvent();
 		String[] arguments = new String[]{"arg1", null, "arg3"};
@@ -183,7 +208,7 @@ public class LoggingEventIOTest
 
 	@Test
 	public void singleThrowable()
-		throws XMLStreamException, UnsupportedEncodingException
+		throws XMLStreamException
 	{
 		LoggingEvent event = createMinimalEvent();
 		ThrowableInfo ti = createThrowableInfo("the.exception.class.Name", "Huhu! Exception Message");
@@ -193,7 +218,7 @@ public class LoggingEventIOTest
 
 	@Test
 	public void multiThrowable()
-		throws XMLStreamException, UnsupportedEncodingException
+		throws XMLStreamException
 	{
 		LoggingEvent event = createMinimalEvent();
 		ThrowableInfo ti = createThrowableInfo("the.exception.class.Name", "Huhu! Exception Message");
@@ -208,10 +233,10 @@ public class LoggingEventIOTest
 
 	@Test
 	public void mdc()
-		throws XMLStreamException, UnsupportedEncodingException
+		throws XMLStreamException
 	{
 		LoggingEvent event = createMinimalEvent();
-		Map<String, String> mdc = new HashMap<String, String>();
+		Map<String, String> mdc = new HashMap<>();
 		mdc.put("key1", "value1");
 		mdc.put("key2", "value2");
 		mdc.put("key3", "value3");
@@ -221,12 +246,12 @@ public class LoggingEventIOTest
 
 	@Test
 	public void ndc()
-		throws UnsupportedEncodingException, XMLStreamException
+		throws XMLStreamException
 	{
 		LoggingEvent event = createMinimalEvent();
 		Message[] ndc = new Message[]{
 			new Message("Pattern 1 {} {}", new String[]{"foo", "bar"}),
-			new Message("Pattern 2 {} {}", new String[]{"foo", "bar"})
+			new Message("Pattern 2 {} {}", new String[]{"foo", "bar"}),
 		};
 		event.setNdc(ndc);
 		check(event, true);
@@ -234,7 +259,7 @@ public class LoggingEventIOTest
 
 	@Test
 	public void singleMarker()
-		throws XMLStreamException, UnsupportedEncodingException
+		throws XMLStreamException
 	{
 		LoggingEvent event = createMinimalEvent();
 		Marker marker = new Marker("marker");
@@ -244,14 +269,14 @@ public class LoggingEventIOTest
 
 	@Test
 	public void referenceMarker()
-		throws XMLStreamException, UnsupportedEncodingException
+		throws XMLStreamException
 	{
 		LoggingEvent event = createMinimalEvent();
 		Marker marker = new Marker("marker");
-		Marker marker2_1 = new Marker("marker2-1");
-		Marker marker2_2 = new Marker("marker2-2");
-		marker.add(marker2_1);
-		marker.add(marker2_2);
+		Marker markerTwo1 = new Marker("markerTwo1");
+		Marker markerTwo2 = new Marker("markerTwo2");
+		marker.add(markerTwo1);
+		marker.add(markerTwo2);
 		event.setMarker(marker);
 		check(event, true);
 	}
@@ -261,24 +286,24 @@ public class LoggingEventIOTest
 	 */
 	@Test
 	public void recursiveMarker()
-		throws XMLStreamException, UnsupportedEncodingException
+		throws XMLStreamException
 	{
 		LoggingEvent event = createMinimalEvent();
 		Marker marker = new Marker("marker");
-		Marker marker2_1 = new Marker("marker2-1");
-		Marker marker2_2 = new Marker("marker2-2");
-		Marker marker3_1 = new Marker("marker3-1");
-		marker.add(marker2_1);
-		marker.add(marker2_2);
-		marker2_2.add(marker3_1);
-		marker3_1.add(marker2_1);
+		Marker markerTwo1 = new Marker("markerTwo1");
+		Marker markerTwo2 = new Marker("markerTwo2");
+		Marker markerThree = new Marker("markerThree");
+		marker.add(markerTwo1);
+		marker.add(markerTwo2);
+		markerTwo2.add(markerThree);
+		markerThree.add(markerTwo1);
 		event.setMarker(marker);
 		check(event, true);
 	}
 
 	@Test
 	public void callStack()
-		throws XMLStreamException, UnsupportedEncodingException
+		throws XMLStreamException
 	{
 		LoggingEvent event = createMinimalEvent();
 		event.setCallStack(createStackTraceElements());
@@ -287,7 +312,7 @@ public class LoggingEventIOTest
 
 	@Test
 	public void full()
-		throws XMLStreamException, UnsupportedEncodingException
+		throws XMLStreamException
 	{
 		LoggingEvent event = createMinimalEvent();
 
@@ -315,7 +340,7 @@ public class LoggingEventIOTest
 		ti2.setCause(ti3);
 		event.setThrowable(ti);
 
-		Map<String, String> mdc = new HashMap<String, String>();
+		Map<String, String> mdc = new HashMap<>();
 		mdc.put("key1", "value1");
 		mdc.put("key2", "value2");
 		mdc.put("key3", "value3");
@@ -323,18 +348,18 @@ public class LoggingEventIOTest
 
 		Message[] ndc = new Message[]{
 			new Message("Pattern 1 {} {}", new String[]{"foo", "bar"}),
-			new Message("Pattern 2 {} {}", new String[]{"foo", "bar"})
+			new Message("Pattern 2 {} {}", new String[]{"foo", "bar"}),
 		};
 		event.setNdc(ndc);
 
 		Marker marker = new Marker("marker");
-		Marker marker2_1 = new Marker("marker2-1");
-		Marker marker2_2 = new Marker("marker2-2");
-		Marker marker3_1 = new Marker("marker3-1");
-		marker.add(marker2_1);
-		marker.add(marker2_2);
-		marker2_2.add(marker3_1);
-		marker3_1.add(marker2_1);
+		Marker markerTwo1 = new Marker("markerTwo1");
+		Marker markerTwo2 = new Marker("markerTwo2");
+		Marker markerThree = new Marker("markerThree");
+		marker.add(markerTwo1);
+		marker.add(markerTwo2);
+		markerTwo2.add(markerThree);
+		markerThree.add(markerTwo1);
 		event.setMarker(marker);
 
 		event.setCallStack(createStackTraceElements());
@@ -343,7 +368,7 @@ public class LoggingEventIOTest
 
 	@Test
 	public void fullWithPrefix()
-		throws XMLStreamException, UnsupportedEncodingException
+		throws XMLStreamException
 	{
 		loggingEventWriter.setPreferredPrefix("foo");
 		loggingEventWriter.setWritingSchemaLocation(true);
@@ -362,7 +387,7 @@ public class LoggingEventIOTest
 		ti2.setCause(ti3);
 		event.setThrowable(ti);
 
-		Map<String, String> mdc = new HashMap<String, String>();
+		Map<String, String> mdc = new HashMap<>();
 		mdc.put("key1", "value1");
 		mdc.put("key2", "value2");
 		mdc.put("key3", "value3");
@@ -370,18 +395,18 @@ public class LoggingEventIOTest
 
 		Message[] ndc = new Message[]{
 			new Message("Pattern 1 {} {}", new String[]{"foo", "bar"}),
-			new Message("Pattern 2 {} {}", new String[]{"foo", "bar"})
+			new Message("Pattern 2 {} {}", new String[]{"foo", "bar"}),
 		};
 		event.setNdc(ndc);
 
 		Marker marker = new Marker("marker");
-		Marker marker2_1 = new Marker("marker2-1");
-		Marker marker2_2 = new Marker("marker2-2");
-		Marker marker3_1 = new Marker("marker3-1");
-		marker.add(marker2_1);
-		marker.add(marker2_2);
-		marker2_2.add(marker3_1);
-		marker3_1.add(marker2_1);
+		Marker markerTwo1 = new Marker("markerTwo1");
+		Marker markerTwo2 = new Marker("markerTwo2");
+		Marker markerThree = new Marker("markerThree");
+		marker.add(markerTwo1);
+		marker.add(markerTwo2);
+		markerTwo2.add(markerThree);
+		markerThree.add(markerTwo1);
 		event.setMarker(marker);
 
 		event.setCallStack(createStackTraceElements());
@@ -393,7 +418,7 @@ public class LoggingEventIOTest
 		LoggingEvent event = new LoggingEvent();
 		event.setLogger("Logger");
 		event.setLevel(LoggingEvent.Level.INFO);
-		event.setTimeStamp(1234567890000L);
+		event.setTimeStamp(1_234_567_890_000L);
 		return event;
 	}
 
@@ -407,7 +432,7 @@ public class LoggingEventIOTest
 		for(int i = 0; i < original.length; i++)
 		{
 			StackTraceElement current = original[i];
-			result[i] = new ExtendedStackTraceElement(current);
+			result[i] = new ExtendedStackTraceElement(current); // NOPMD - AvoidInstantiatingObjectsInLoops
 
 			if(i == 0)
 			{
@@ -438,11 +463,11 @@ public class LoggingEventIOTest
 	}
 
 	private void check(LoggingEvent event, boolean indent)
-		throws UnsupportedEncodingException, XMLStreamException
+		throws XMLStreamException
 	{
 		if(logger.isDebugEnabled()) logger.debug("Processing LoggingEvent:\n{}", event);
 		byte[] bytes = write(event, indent);
-		String eventStr = new String(bytes, "UTF-8");
+		String eventStr = new String(bytes, StandardCharsets.UTF_8);
 		if(logger.isDebugEnabled()) logger.debug("LoggingEvent marshalled to:\n{}", eventStr);
 		LoggingEvent readEvent = read(bytes);
 		if(logger.isDebugEnabled()) logger.debug("LoggingEvent read.");
@@ -451,24 +476,16 @@ public class LoggingEventIOTest
 		assertEquals(event, readEvent);
 		if(logger.isDebugEnabled()) logger.debug("LoggingEvents were equal.");
 		bytes = write(event, indent);
-		String readEventStr = new String(bytes, "UTF-8");
+		String readEventStr = new String(bytes, StandardCharsets.UTF_8);
 		assertEquals(eventStr, readEventStr);
 		if(logger.isDebugEnabled()) logger.debug("LoggingEvents xml were equal.");
 	}
 
 	private byte[] write(LoggingEvent event, boolean indent)
-		throws XMLStreamException, UnsupportedEncodingException
+		throws XMLStreamException
 	{
-		XMLOutputFactory outputFactory = XMLOutputFactory.newInstance();
-
 		ByteArrayOutputStream out = new ByteArrayOutputStream();
-		XMLStreamWriter writer = outputFactory.createXMLStreamWriter(new OutputStreamWriter(out, "utf-8"));
-		if(indent && writer.getClass().getName().equals("com.bea.xml.stream.XMLWriterBase"))
-		{
-
-			if(logger.isInfoEnabled()) logger.info("Won't indent because of http://jira.codehaus.org/browse/STAX-42");
-			indent = false;
-		}
+		XMLStreamWriter writer = XML_OUTPUT_FACTORY.createXMLStreamWriter(new OutputStreamWriter(out, StandardCharsets.UTF_8));
 		if(indent)
 		{
 			writer = new IndentingXMLStreamWriter(writer);
@@ -479,15 +496,10 @@ public class LoggingEventIOTest
 	}
 
 	private LoggingEvent read(byte[] bytes)
-		throws XMLStreamException, UnsupportedEncodingException
+		throws XMLStreamException
 	{
-		XMLInputFactory inputFactory = XMLInputFactory.newInstance();
-		inputFactory.setProperty(XMLInputFactory.IS_SUPPORTING_EXTERNAL_ENTITIES, false);
-		inputFactory.setProperty(XMLInputFactory.SUPPORT_DTD, false);
-		inputFactory.setProperty(XMLInputFactory.IS_VALIDATING, false);
-
 		ByteArrayInputStream in = new ByteArrayInputStream(bytes);
-		XMLStreamReader reader = inputFactory.createXMLStreamReader(new InputStreamReader(in, "utf-8"));
+		XMLStreamReader reader = XML_INPUT_FACTORY.createXMLStreamReader(new InputStreamReader(in, StandardCharsets.UTF_8));
 		return loggingEventReader.read(reader);
 	}
 
@@ -498,7 +510,7 @@ public class LoggingEventIOTest
 			return null;
 		}
 		StringBuilder result = new StringBuilder();
-		Map<String, Marker> processedMarkers = new HashMap<String, Marker>();
+		Map<String, Marker> processedMarkers = new HashMap<>();
 		recursiveToString(result, processedMarkers, marker);
 		return result.toString();
 	}
@@ -530,9 +542,9 @@ public class LoggingEventIOTest
 					}
 					recursiveToString(result, processedMarkers, current.getValue());
 				}
-				result.append("}");
+				result.append('}');
 			}
-			result.append("]");
+			result.append(']');
 		}
 	}
 }

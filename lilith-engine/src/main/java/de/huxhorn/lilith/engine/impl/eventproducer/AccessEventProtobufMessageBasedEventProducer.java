@@ -1,6 +1,6 @@
 /*
  * Lilith - a log event viewer.
- * Copyright (C) 2007-2011 Joern Huxhorn
+ * Copyright (C) 2007-2017 Joern Huxhorn
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,6 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package de.huxhorn.lilith.engine.impl.eventproducer;
 
 import de.huxhorn.lilith.data.access.AccessEvent;
@@ -22,20 +23,13 @@ import de.huxhorn.lilith.data.access.protobuf.AccessEventProtobufDecoder;
 import de.huxhorn.lilith.data.eventsource.EventWrapper;
 import de.huxhorn.lilith.data.eventsource.SourceIdentifier;
 import de.huxhorn.sulky.buffers.AppendOperation;
-import de.huxhorn.sulky.codec.Decoder;
-
 import java.io.InputStream;
 
 public class AccessEventProtobufMessageBasedEventProducer
-	extends AbstractMessageBasedEventProducer<AccessEvent>
+	extends MessageBasedEventProducer<AccessEvent>
 {
 	public AccessEventProtobufMessageBasedEventProducer(SourceIdentifier sourceIdentifier, AppendOperation<EventWrapper<AccessEvent>> eventQueue, InputStream inputStream, boolean compressing)
 	{
-		super(sourceIdentifier, eventQueue, new AccessEventSourceIdentifierUpdater(), inputStream, compressing);
-	}
-
-	protected Decoder<AccessEvent> createDecoder()
-	{
-		return new AccessEventProtobufDecoder(isCompressing());
+		super(sourceIdentifier, eventQueue, new AccessEventSourceIdentifierUpdater(), new AccessEventProtobufDecoder(compressing), inputStream, true);
 	}
 }

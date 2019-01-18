@@ -1,69 +1,75 @@
 /*
  * Lilith - a log event viewer.
- * Copyright (C) 2007-2011 Joern Huxhorn
- * 
+ * Copyright (C) 2007-2017 Joern Huxhorn
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package de.huxhorn.lilith.swing.preferences;
 
 import de.huxhorn.lilith.swing.ApplicationPreferences;
-import de.huxhorn.lilith.swing.EventWrapperViewPanel;
+import de.huxhorn.lilith.swing.Icons;
+import de.huxhorn.lilith.swing.LilithActionId;
 import de.huxhorn.lilith.swing.filefilters.Mp3FileFilter;
 import de.huxhorn.sulky.sounds.Sounds;
 import de.huxhorn.sulky.sounds.jlayer.JLayerSounds;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
-import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
-
-import javax.swing.*;
+import javax.swing.AbstractAction;
+import javax.swing.Action;
+import javax.swing.JButton;
+import javax.swing.JCheckBox;
+import javax.swing.JFileChooser;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTable;
+import javax.swing.JToolBar;
+import javax.swing.ListSelectionModel;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.filechooser.FileFilter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class SoundsPanel
 	extends JPanel
 {
+	private static final long serialVersionUID = 4941824789717300256L;
+
 	final Logger logger = LoggerFactory.getLogger(SoundsPanel.class);
 
-	private BrowseSoundAction browseSoundAction;
-	private PlaySoundAction playSoundAction;
-	private JCheckBox muteCheckbox;
-	private JFileChooser soundFileChooser;
-	private SoundLocationTableModel soundLocationTableModel;
-	private JTable soundLocationTable;
-	private Sounds sounds;
-	private PreferencesDialog preferencesDialog;
-	private ApplicationPreferences applicationPreferences;
+	private final BrowseSoundAction browseSoundAction;
+	private final PlaySoundAction playSoundAction;
+	private final JCheckBox muteCheckbox;
+	private final JFileChooser soundFileChooser;
+	private final SoundLocationTableModel soundLocationTableModel;
+	private final JTable soundLocationTable;
+	private final Sounds sounds;
+	private final PreferencesDialog preferencesDialog;
+	private final ApplicationPreferences applicationPreferences;
 
-	public SoundsPanel(PreferencesDialog preferencesDialog)
+	SoundsPanel(PreferencesDialog preferencesDialog)
 	{
 		this.preferencesDialog = preferencesDialog;
 		applicationPreferences = preferencesDialog.getApplicationPreferences();
 		this.sounds = new JLayerSounds();
-		createUI();
-	}
 
-	private void createUI()
-	{
 		setLayout(new BorderLayout());
 		// Sounds
 		muteCheckbox = new JCheckBox("Mute");
@@ -74,7 +80,7 @@ public class SoundsPanel
 		soundFileChooser.setFileFilter(mp3FileFilter);
 		//JPanel soundsPanel = new JPanel(new BorderLayout());
 		//soundsPanel.add(muteCheckbox, BorderLayout.NORTH);
-		Map<String, String> soundLocations = new HashMap<String, String>();
+		Map<String, String> soundLocations = new HashMap<>();
 		soundLocationTableModel = new SoundLocationTableModel(soundLocations);
 		soundLocationTable = new JTable(soundLocationTableModel);
 		soundLocationTable.setRowSelectionAllowed(true);
@@ -111,14 +117,14 @@ public class SoundsPanel
 		Map<String, String> soundLocations = applicationPreferences.getSoundLocations();
 		if(soundLocations == null)
 		{
-			soundLocations = new HashMap<String, String>();
+			soundLocations = new HashMap<>();
 		}
 		soundLocationTableModel.setData(soundLocations);
 		sounds.setSoundLocations(soundLocations);
 		updateSounds(mute);
 	}
 
-	public void saveSettings()
+	void saveSettings()
 	{
 		applicationPreferences.setMute(muteCheckbox.isSelected());
 		applicationPreferences.setSoundLocations(soundLocationTableModel.getData());
@@ -138,6 +144,7 @@ public class SoundsPanel
 	private class MuteActionListener
 		implements ActionListener
 	{
+		@Override
 		public void actionPerformed(ActionEvent e)
 		{
 			boolean mute = muteCheckbox.isSelected();
@@ -148,6 +155,7 @@ public class SoundsPanel
 	private class SoundLocationTableRowSelectionListener
 		implements ListSelectionListener
 	{
+		@Override
 		public void valueChanged(ListSelectionEvent e)
 		{
 			boolean mute = muteCheckbox.isSelected();
@@ -158,25 +166,16 @@ public class SoundsPanel
 	private class PlaySoundAction
 		extends AbstractAction
 	{
-		public PlaySoundAction()
+		private static final long serialVersionUID = 5777380069273022677L;
+
+		PlaySoundAction()
 		{
 			super();
-			Icon icon;
-			{
-				URL url = EventWrapperViewPanel.class.getResource("/tango/16x16/actions/media-playback-start.png");
-				if(url != null)
-				{
-					icon = new ImageIcon(url);
-				}
-				else
-				{
-					icon = null;
-				}
-			}
-			putValue(Action.SMALL_ICON, icon);
+			putValue(Action.SMALL_ICON, Icons.PAUSED_MENU_ICON);
 			putValue(Action.SHORT_DESCRIPTION, "Play the selected sound.");
 		}
 
+		@Override
 		public void actionPerformed(ActionEvent e)
 		{
 			if(logger.isDebugEnabled()) logger.debug("Play");
@@ -195,25 +194,16 @@ public class SoundsPanel
 	private class BrowseSoundAction
 		extends AbstractAction
 	{
-		public BrowseSoundAction()
+		private static final long serialVersionUID = 4433633396782474246L;
+
+		BrowseSoundAction()
 		{
 			super();
-			Icon icon;
-			{
-				URL url = EventWrapperViewPanel.class.getResource("/tango/16x16/actions/document-open.png");
-				if(url != null)
-				{
-					icon = new ImageIcon(url);
-				}
-				else
-				{
-					icon = null;
-				}
-			}
-			putValue(Action.SMALL_ICON, icon);
+			putValue(Action.SMALL_ICON, Icons.resolveMenuIcon(LilithActionId.OPEN));
 			putValue(Action.SHORT_DESCRIPTION, "Browse for a sound file.");
 		}
 
+		@Override
 		public void actionPerformed(ActionEvent e)
 		{
 			soundFileChooser.setCurrentDirectory(applicationPreferences.getSoundPath());
